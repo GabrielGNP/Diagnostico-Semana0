@@ -30,7 +30,7 @@ model
 repository
 service
 
-Adicionalmente en la carpeta de resources debe existir un archivo pedidos.json y usuarios.json
+Adicionalmente en la carpeta de resources debe existir un archivo orders.json y users.json
 
 En la carpeta frontend debes crear un proyecto de react en la versión especificada con vite
 
@@ -38,3 +38,26 @@ Crea un archivo docker para cada proyecto backend y frontend
 
 
 Consulta antes de crear el proyecto y espera mi confirmación
+
+
+En el archivo users.json debe haber la siguiente estructura:
+{
+    int id
+    String name
+    String password
+    String mail
+    boolean active
+}
+
+En el archivo orders.json debe haber la siguiente estructura:
+{
+    int id
+    String name
+    String description
+    int idUser
+    State state
+    boolean active
+}
+
+Cuando esté listo, agrega datos a los archivos json con al menos 5 usuarios y 5 pedidos.
+Cada pedido debe estar asociado a un usuario mediante el campo idUser.
