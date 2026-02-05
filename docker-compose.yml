@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - microservicios-network
+
+  usuario-service:
+    build: ./Backend/usuario-service
+    ports:
+      - "8081:8080"
+    environment:
+      - SPRING_RABBITMQ_HOST=rabbitmq
+    depends_on:
+      - rabbitmq
+    networks:
+      - microservicios-network
+
+  pedido-service:
+    build: ./Backend/pedido-service
+    ports:
+      - "8082:8080"
+    environment:
+      - SPRING_RABBITMQ_HOST=rabbitmq
+    depends_on:
+      - rabbitmq
+    networks:
+      - microservicios-network
+
+  frontend:
+    build: ./Frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - usuario-service
+      - pedido-service
+    networks:
+      - microservicios-network
+
+networks:
+  microservicios-network:
+    driver: bridge
