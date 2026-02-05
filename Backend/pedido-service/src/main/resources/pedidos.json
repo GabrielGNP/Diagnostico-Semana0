@@ -1,0 +1,14 @@
+[
+  {
+    "id": 1,
+    "producto": "Laptop",
+    "cantidad": 1,
+    "usuarioId": 1
+  },
+  {
+    "id": 2,
+    "producto": "Mouse",
+    "cantidad": 2,
+    "usuarioId": 2
+  }
+]
