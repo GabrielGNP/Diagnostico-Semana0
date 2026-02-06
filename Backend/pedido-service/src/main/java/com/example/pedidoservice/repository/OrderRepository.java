@@ -8,6 +8,7 @@ import tools.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Repository;
 
 import java.io.File;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -15,17 +16,21 @@ import java.util.Optional;
 @Repository
 public class OrderRepository {
 
-    private final String FILE_PATH = "src/main/resources/orders.json";
+    private final String FILE_PATH = "data/orders.json";
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     public List<Order> findAll() {
+
         File file = new File(FILE_PATH);
+
         if (!file.exists()) {
             return new ArrayList<>();
         }
-        return objectMapper.readValue(file, new TypeReference<List<Order>>() {
-        });
+
+        return objectMapper.readValue(file, new TypeReference<List<Order>>() {});
     }
+
+
 
     public Order save(Order order) {
         List<Order> orders = findAll();

@@ -23,13 +23,13 @@ public class OrderController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteOrder(@PathVariable int id) {
+    public ResponseEntity<Void> deleteOrder(@PathVariable("id") int id) {
         orderService.deleteOrder(id);
         return ResponseEntity.ok().build();
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<OrderDto> showOrderById(@PathVariable int id) {
+    public ResponseEntity<OrderDto> showOrderById(@PathVariable("id") int id) {
         OrderDto orderDto = orderService.showOrderById(id);
         if (orderDto != null) {
             return ResponseEntity.ok(orderDto);
@@ -39,13 +39,13 @@ public class OrderController {
     }
 
     @GetMapping("/user/{idUser}")
-    public ResponseEntity<List<OrderDto>> listOrdersByIdUser(@PathVariable int idUser) {
+    public ResponseEntity<List<OrderDto>> listOrdersByIdUser(@PathVariable("idUser") int idUser) {
         List<OrderDto> orders = orderService.listOrdersByIdUser(idUser);
         return ResponseEntity.ok(orders);
     }
 
     @PatchMapping("/{id}")
-    public ResponseEntity<OrderDto> changeStateOrder(@PathVariable int id, @RequestBody OrderDto orderDto) {
+    public ResponseEntity<OrderDto> changeStateOrder(@PathVariable("id") int id, @RequestBody OrderDto orderDto) {
         State newState = orderDto.getState();
         if (newState == null) {
             return ResponseEntity.badRequest().build();

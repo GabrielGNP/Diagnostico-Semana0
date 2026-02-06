@@ -62,3 +62,9 @@ ShowOrderById
 
 Por último OrderRepository contendrá la funcionalidad de persistencia, pero en lugar de usar una base de datos se usará el archivo /resources/orders.json 
 
+
+
+Corrección de errores:
+
+#OrderController
+Spring no puede resolver cual es la variable que se pasa en la request http en el controller, debes indicar el nombre de la variable dentro de cada @PathVariable
