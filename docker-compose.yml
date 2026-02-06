@@ -35,9 +35,9 @@ services:
     build: ./Frontend
     ports:
       - "3000:80"
-    depends_on:
-      - usuario-service
-      - pedido-service
+    # depends_on:
+    #   - usuario-service
+    #   - pedido-service
     networks:
       - microservicios-network
 
