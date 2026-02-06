@@ -11,6 +11,8 @@ interface FormData {
 
 const AddOrder: React.FC = () => {
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState<FormData>({
     email: "",
     producto: "",
@@ -25,17 +27,56 @@ const AddOrder: React.FC = () => {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>): void => {
+  const handleSubmit = async (
+    e: React.FormEvent<HTMLFormElement>,
+  ): Promise<void> => {
     e.preventDefault();
-    console.log("Pedido enviado:", formData);
-    // Aquí conectarías con tu endpoint POST
-    navigate("/");
+    setLoading(true);
+    setError(null);
+
+    try {
+      const userResponse = await fetch(
+        `http://localhost:8081/users/email/${formData.email}`,
+      );
+
+      let idUser: number;
+      if (userResponse.ok) {
+        const userData = await userResponse.json();
+        idUser = userData.id;
+      } else {
+        throw new Error("Usuario no encontrado. Verifica el email.");
+      }
+
+      const response = await fetch("http://localhost:8082/orders/add", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: formData.producto,
+          description: formData.notas || formData.producto,
+          idUser: idUser,
+          state: "PROCESSING",
+          active: true,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Error al crear el pedido");
+      }
+
+      console.log("Pedido creado exitosamente");
+      navigate("/");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error desconocido");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="min-h-screen bg-slate-50 md:py-12 px-4">
       <div className="max-w-xl mx-auto bg-white min-h-screen md:min-h-fit md:rounded-[2.5rem] md:shadow-xl md:shadow-slate-200/50 overflow-hidden border border-slate-100">
-        {/* Header de navegación */}
         <div className="flex justify-between items-center p-6 border-b border-slate-50">
           <button
             onClick={() => navigate("/")}
@@ -53,7 +94,6 @@ const AddOrder: React.FC = () => {
         </div>
 
         <div className="p-8">
-          {/* Título y descripción */}
           <div className="mb-10">
             <h1 className="text-3xl font-extrabold text-slate-900 mb-3 tracking-tight">
               Crear Pedido
@@ -65,7 +105,11 @@ const AddOrder: React.FC = () => {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-8">
-            {/* Campo Email */}
+            {error && (
+              <div className="bg-red-50 text-red-600 px-4 py-3 rounded-xl text-sm font-medium">
+                {error}
+              </div>
+            )}
             <div className="space-y-3">
               <label className="text-sm font-bold text-slate-800 ml-1">
                 Email del Usuario
@@ -88,7 +132,6 @@ const AddOrder: React.FC = () => {
               </div>
             </div>
 
-            {/* Campo Producto */}
             <div className="space-y-3">
               <label className="text-sm font-bold text-slate-800 ml-1">
                 Nombre del Producto
@@ -105,7 +148,6 @@ const AddOrder: React.FC = () => {
               />
             </div>
 
-            {/* Campo Notas */}
             <div className="space-y-3">
               <label className="text-sm font-bold text-slate-800 ml-1">
                 Notas adicionales
@@ -121,13 +163,13 @@ const AddOrder: React.FC = () => {
               />
             </div>
 
-            {/* Botón de envío */}
             <button
               type="submit"
-              className="w-full py-5 bg-blue-500 hover:bg-blue-600 text-white font-bold rounded-3xl shadow-lg shadow-blue-200 active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-4"
+              disabled={loading}
+              className="w-full py-5 bg-blue-500 hover:bg-blue-600 disabled:bg-blue-300 text-white font-bold rounded-3xl shadow-lg shadow-blue-200 active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-4"
             >
-              Crear Pedido
-              <ArrowRight size={20} />
+              {loading ? "Creando..." : "Crear Pedido"}
+              {!loading && <ArrowRight size={20} />}
             </button>
           </form>
         </div>

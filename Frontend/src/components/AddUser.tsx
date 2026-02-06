@@ -11,24 +11,51 @@ interface FormData {
 const AddUser: React.FC = () => {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState<FormData>({
     nombre: "",
     email: "",
     password: "",
   });
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>): void => {
+  const handleSubmit = async (
+    e: React.FormEvent<HTMLFormElement>,
+  ): Promise<void> => {
     e.preventDefault();
-    console.log("Registro enviado:", formData);
-    // Aquí conectarías con tu endpoint POST /usuarios
-    navigate("/");
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch("http://localhost:8081/users/add", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: formData.nombre,
+          mail: formData.email,
+          password: formData.password,
+          active: true,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Error al crear el usuario");
+      }
+
+      console.log("Usuario creado exitosamente");
+      navigate("/");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error desconocido");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="min-h-screen bg-white md:bg-slate-50 flex items-center justify-center p-4">
-      {/* Contenedor Principal con efecto responsive */}
       <div className="w-full max-w-md bg-white md:p-10 md:rounded-[2.5rem] md:shadow-xl md:shadow-slate-200/50">
-        {/* Header con botón atrás */}
         <div className="flex items-center justify-between mb-12">
           <button
             onClick={() => navigate("/")}
@@ -38,10 +65,8 @@ const AddUser: React.FC = () => {
           </button>
           <h2 className="text-lg font-bold text-slate-800">Crear cuenta</h2>
           <div className="w-10"></div>
-          {/* Espaciador para centrar el título */}
         </div>
 
-        {/* Títulos */}
         <div className="mb-10 text-center md:text-left">
           <h1 className="text-3xl font-extrabold text-slate-900 mb-3 tracking-tight">
             Registro de Administrador
@@ -52,7 +77,11 @@ const AddUser: React.FC = () => {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Campo Nombre */}
+          {error && (
+            <div className="bg-red-50 text-red-600 px-4 py-3 rounded-xl text-sm font-medium">
+              {error}
+            </div>
+          )}
           <div className="space-y-2">
             <label className="text-sm font-bold text-slate-800 ml-1">
               Nombre completo
@@ -69,7 +98,6 @@ const AddUser: React.FC = () => {
             />
           </div>
 
-          {/* Campo Email */}
           <div className="space-y-2">
             <label className="text-sm font-bold text-slate-800 ml-1">
               Correo electrónico
@@ -92,7 +120,6 @@ const AddUser: React.FC = () => {
             </div>
           </div>
 
-          {/* Campo Contraseña */}
           <div className="space-y-2">
             <label className="text-sm font-bold text-slate-800 ml-1">
               Contraseña
@@ -124,16 +151,15 @@ const AddUser: React.FC = () => {
             <p className="text-xs text-slate-400 ml-1">Mínimo 8 caracteres</p>
           </div>
 
-          {/* Botón Registrar */}
           <button
             type="submit"
-            className="w-full py-5 bg-[#2589f5] hover:bg-blue-600 text-white font-bold rounded-2xl shadow-lg shadow-blue-200 active:scale-[0.98] transition-all flex items-center justify-center mt-4"
+            disabled={loading}
+            className="w-full py-5 bg-[#2589f5] hover:bg-blue-600 disabled:bg-blue-300 text-white font-bold rounded-2xl shadow-lg shadow-blue-200 active:scale-[0.98] transition-all flex items-center justify-center mt-4"
           >
-            Registrar Administrador
+            {loading ? "Registrando..." : "Registrar Administrador"}
           </button>
         </form>
 
-        {/* Footer del formulario */}
         <div className="mt-12 text-center">
           <p className="text-slate-500">
             ¿Ya tienes una cuenta?{" "}
