@@ -55,6 +55,12 @@ public class OrderService {
                 .collect(Collectors.toList());
     }
 
+    public List<OrderDto> listAllOrders() {
+        return orderRepository.findAll().stream()
+                .map(orderMapper::toDto)
+                .collect(Collectors.toList());
+    }
+
     public OrderDto showOrderById(int id) {
         return orderRepository.findById(id)
                 .map(orderMapper::toDto)

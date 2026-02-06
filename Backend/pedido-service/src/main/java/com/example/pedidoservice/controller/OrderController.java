@@ -44,6 +44,12 @@ public class OrderController {
         return ResponseEntity.ok(orders);
     }
 
+    @GetMapping("/all")
+    public ResponseEntity<List<OrderDto>> listAllOrders() {
+        List<OrderDto> orders = orderService.listAllOrders();
+        return ResponseEntity.ok(orders);
+    }
+
     @PatchMapping("/{id}")
     public ResponseEntity<OrderDto> changeStateOrder(@PathVariable("id") int id, @RequestBody OrderDto orderDto) {
         State newState = orderDto.getState();

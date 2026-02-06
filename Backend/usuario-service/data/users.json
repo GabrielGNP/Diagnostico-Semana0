@@ -22,4 +22,22 @@
   "password" : "clara123",
   "mail" : "clara@example.com",
   "active" : true
+}, {
+  "id" : 5,
+  "name" : "Test",
+  "password" : "pw",
+  "mail" : "t@t.com",
+  "active" : true
+}, {
+  "id" : 6,
+  "name" : "Test",
+  "password" : "pw",
+  "mail" : "t@t.com",
+  "active" : true
+}, {
+  "id" : 7,
+  "name" : "Test",
+  "password" : "pw",
+  "mail" : "t@t.com",
+  "active" : true
 } ]
