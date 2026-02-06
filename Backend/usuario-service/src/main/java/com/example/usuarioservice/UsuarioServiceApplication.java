@@ -4,13 +4,10 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.Bean;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.config.annotation.CorsRegistry;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import jakarta.annotation.PostConstruct;
 import java.io.File;
@@ -26,6 +23,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 @SpringBootApplication
 @RestController
+@CrossOrigin(origins = "http://localhost:3001")
 public class UsuarioServiceApplication {
 
 	private final ObjectMapper mapper = new ObjectMapper();
@@ -37,15 +35,7 @@ public class UsuarioServiceApplication {
 		SpringApplication.run(UsuarioServiceApplication.class, args);
 	}
 
-	@Bean
-	public WebMvcConfigurer corsConfigurer() {
-		return new WebMvcConfigurer() {
-			@Override
-			public void addCorsMappings(CorsRegistry registry) {
-				registry.addMapping("/**").allowedOrigins("*").allowedMethods("*");
-			}
-		};
-	}
+	// CORS configured via CorsConfig class in package config
 
 	@PostConstruct
 	public void init() throws IOException {
@@ -152,12 +142,30 @@ public class UsuarioServiceApplication {
 		return users.values();
 	}
 
-	// GET /user/{id}
-	@GetMapping("/user/{id}")
-	public ResponseEntity<User> getUser(@PathVariable int id) {
-		User u = users.get(id);
-		if (u == null) return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-		return ResponseEntity.ok(u);
+	// GET /user/{identifier} - if identifier contains '@' search by email, otherwise by id
+	@GetMapping("/user/{identifier}")
+	public ResponseEntity<User> getUser(@PathVariable String identifier) {
+		if (identifier == null) return ResponseEntity.badRequest().build();
+
+		// if looks like an email, search by mail field
+		if (identifier.contains("@")) {
+			for (User u : users.values()) {
+				if (u.getMail() != null && u.getMail().equalsIgnoreCase(identifier)) {
+					return ResponseEntity.ok(u);
+				}
+			}
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+		}
+
+		// otherwise try parse id
+		try {
+			int id = Integer.parseInt(identifier);
+			User u = users.get(id);
+			if (u == null) return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+			return ResponseEntity.ok(u);
+		} catch (NumberFormatException ex) {
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+		}
 	}
 
 	// DELETE /user/{id}
