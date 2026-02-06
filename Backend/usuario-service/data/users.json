@@ -22,10 +22,4 @@
   "password" : "clara123",
   "mail" : "clara@example.com",
   "active" : true
-}, {
-  "id" : 5,
-  "name" : "TestPersist",
-  "password" : "t",
-  "mail" : "t@example.com",
-  "active" : true
 } ]
