@@ -6,7 +6,9 @@ import Dashboard from "./components/Dashboard";
 function App() {
   return (
     <BrowserRouter>
-      <Routes></Routes>
+      <Routes>
+        <Route path="/" element={<Dashboard />} />
+      </Routes>
     </BrowserRouter>
   );
 }
