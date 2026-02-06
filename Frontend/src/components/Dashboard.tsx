@@ -160,15 +160,15 @@ const Dashboard = () => {
           <Home size={24} />
           <span className="text-[10px] font-bold">Inicio</span>
         </button>
-        <button 
-          onClick={() => navigate('/addUser')}
+        <button
+          onClick={() => navigate("/addUser")}
           className="flex flex-col items-center gap-1 text-slate-600 hover:text-blue-500 transition-colors"
         >
           <UserPlus size={24} />
           <span className="text-[10px] font-bold">Agregar Usuario</span>
         </button>
-        <button 
-          onClick={() => navigate('/agregar-pedido')}
+        <button
+          onClick={() => navigate("/addOrder")}
           className="flex flex-col items-center gap-1 text-slate-600 hover:text-blue-500 transition-colors"
         >
           <PackagePlus size={24} />

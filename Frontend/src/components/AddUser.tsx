@@ -21,7 +21,7 @@ const AddUser: React.FC = () => {
     e.preventDefault();
     console.log("Registro enviado:", formData);
     // Aquí conectarías con tu endpoint POST /usuarios
-    navigate('/');
+    navigate("/");
   };
 
   return (
@@ -30,8 +30,8 @@ const AddUser: React.FC = () => {
       <div className="w-full max-w-md bg-white md:p-10 md:rounded-[2.5rem] md:shadow-xl md:shadow-slate-200/50">
         {/* Header con botón atrás */}
         <div className="flex items-center justify-between mb-12">
-          <button 
-            onClick={() => navigate('/')}
+          <button
+            onClick={() => navigate("/")}
             className="p-2 -ml-2 hover:bg-slate-50 rounded-full transition-colors"
           >
             <ArrowLeft className="text-slate-800" size={24} />
