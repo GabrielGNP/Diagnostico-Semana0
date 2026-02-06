@@ -36,14 +36,43 @@ public class UsuarioServiceApplication {
 
 	@PostConstruct
 	public void init() throws IOException {
-		// Prefer project resource file for persistence so additions are written to src/main/resources/users.json
+		// Support external USERS_FILE env var (useful for Docker volume mounting)
+		String usersFileEnv = System.getenv("USERS_FILE");
+		File external = null;
+		if (usersFileEnv != null && !usersFileEnv.isBlank()) {
+			external = new File(usersFileEnv);
+		}
+
 		File resourceFile = new File("src/main/resources/users.json");
 		File targetFile = new File("target/classes/users.json");
 
-		jsonFile = resourceFile;
+		// Priority: external USERS_FILE -> resourceFile -> targetFile -> create resourceFile
+		if (external != null) {
+			jsonFile = external;
+			if (jsonFile.exists()) {
+				try {
+					Collection<User> fromFile = mapper.readValue(jsonFile, new TypeReference<Collection<User>>() {});
+					for (User u : fromFile) {
+						Integer uid = u.getId();
+						int assigned;
+						if (uid == null || uid <= 0) {
+							assigned = nextId.getAndIncrement();
+							u.setId(assigned);
+						} else {
+							assigned = uid;
+						}
+						users.put(assigned, u);
+						nextId.updateAndGet(x -> Math.max(x, assigned + 1));
+					}
+					return;
+				} catch (Exception ex) {
+					// ignore parse errors and continue to other fallbacks
+				}
+			}
+		}
 
-		// Try read from resourceFile first (project resource)
 		if (resourceFile.exists()) {
+			jsonFile = resourceFile;
 			try {
 				Collection<User> fromFile = mapper.readValue(resourceFile, new TypeReference<Collection<User>>() {});
 				for (User u : fromFile) {
@@ -58,15 +87,14 @@ public class UsuarioServiceApplication {
 					users.put(assigned, u);
 					nextId.updateAndGet(x -> Math.max(x, assigned + 1));
 				}
-				// ensure resource file exists (it does) and is kept as jsonFile
 				return;
 			} catch (Exception ex) {
-				// ignore parse errors and fallthrough to try target/classes
+				// ignore parse errors and fallthrough
 			}
 		}
 
-		// Fallback: if target/classes/users.json exists (built resource), load it and then ensure src resource exists for persistence
 		if (targetFile.exists()) {
+			jsonFile = targetFile;
 			try {
 				Collection<User> fromFile = mapper.readValue(targetFile, new TypeReference<Collection<User>>() {});
 				for (User u : fromFile) {
@@ -81,19 +109,14 @@ public class UsuarioServiceApplication {
 					users.put(assigned, u);
 					nextId.updateAndGet(x -> Math.max(x, assigned + 1));
 				}
-				// ensure src resource exists so future writes persist to project resource
-				if (!resourceFile.exists()) {
-					File parent = resourceFile.getParentFile();
-					if (parent != null) parent.mkdirs();
-					writeToFile();
-				}
 				return;
 			} catch (Exception ex) {
 				// ignore and start empty
 			}
 		}
 
-		// If neither exists, create src/main/resources/users.json as empty array
+		// fallback: create resourceFile
+		jsonFile = resourceFile;
 		File parent = resourceFile.getParentFile();
 		if (parent != null) parent.mkdirs();
 		writeToFile();
