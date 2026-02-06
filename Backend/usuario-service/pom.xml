@@ -40,6 +40,15 @@
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
 		</dependency>
+		<!-- Explicit Jackson and Jakarta annotations in case parent BOM doesn't provide them at compile time -->
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>jakarta.annotation</groupId>
+			<artifactId>jakarta.annotation-api</artifactId>
+		</dependency>
         <!-- Mockito is included in spring-boot-starter-test, but adding explicit if requested or necessary for specific version control -->
         <dependency>
             <groupId>org.mockito</groupId>
