@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Package,
   Home,
@@ -22,6 +23,7 @@ interface Pedido {
 }
 
 const Dashboard = () => {
+  const navigate = useNavigate();
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [usuarioSeleccionado, setUsuarioSeleccionado] = useState("");
   const [pedidosFiltrados, setPedidosFiltrados] = useState<Pedido[]>([]);
@@ -158,11 +160,17 @@ const Dashboard = () => {
           <Home size={24} />
           <span className="text-[10px] font-bold">Inicio</span>
         </button>
-        <button className="flex flex-col items-center gap-1 text-slate-600 hover:text-blue-500 transition-colors">
+        <button 
+          onClick={() => navigate('/addUser')}
+          className="flex flex-col items-center gap-1 text-slate-600 hover:text-blue-500 transition-colors"
+        >
           <UserPlus size={24} />
           <span className="text-[10px] font-bold">Agregar Usuario</span>
         </button>
-        <button className="flex flex-col items-center gap-1 text-slate-600 hover:text-blue-500 transition-colors">
+        <button 
+          onClick={() => navigate('/agregar-pedido')}
+          className="flex flex-col items-center gap-1 text-slate-600 hover:text-blue-500 transition-colors"
+        >
           <PackagePlus size={24} />
           <span className="text-[10px] font-bold">Agregar Pedido</span>
         </button>
