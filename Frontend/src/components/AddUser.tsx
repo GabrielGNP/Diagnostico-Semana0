@@ -27,7 +27,7 @@ const AddUser: React.FC = () => {
     setError(null);
 
     try {
-      const response = await fetch("http://localhost:8081/users/add", {
+      const response = await fetch("http://localhost:8083/user/add", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

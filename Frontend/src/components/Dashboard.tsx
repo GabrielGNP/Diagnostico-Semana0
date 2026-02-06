@@ -10,72 +10,63 @@ import {
 
 interface Usuario {
   id: number;
-  nombre: string;
-  email: string;
+  name: string;
+  mail: string;
+  active: boolean;
 }
 
 interface Pedido {
-  id: string;
-  email: string;
-  producto: string;
-  status: string;
-  color: string;
+  id: number;
+  name: string;
+  description: string;
+  idUser: number;
+  state: string;
+  active: boolean;
 }
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
-  const [usuarioSeleccionado, setUsuarioSeleccionado] = useState("");
-  const [pedidosFiltrados, setPedidosFiltrados] = useState<Pedido[]>([]);
+  const [pedidos, setPedidos] = useState<Pedido[]>([]);
+  const [usuarioSeleccionado, setUsuarioSeleccionado] = useState<number | "">("");
+  const [loading, setLoading] = useState(true);
+
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const [usersRes, ordersRes] = await Promise.all([
+        fetch("http://localhost:8083/users"),
+        fetch("http://localhost:8082/order/all"),
+      ]);
+
+      if (usersRes.ok) {
+        const usersData = await usersRes.json();
+        setUsuarios(usersData.filter((u: Usuario) => u.active));
+      }
+
+      if (ordersRes.ok) {
+        const ordersData = await ordersRes.json();
+        setPedidos(ordersData.filter((o: Pedido) => o.active));
+      }
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const mockUsuarios = [
-      { id: 1, nombre: "Juan Pérez", email: "juan@email.com" },
-      { id: 2, nombre: "María Gómez", email: "maria@test.com" },
-      { id: 3, nombre: "Alex Tech", email: "alex@corp.com" },
-    ];
-    setUsuarios(mockUsuarios);
+    fetchData();
+  }, []);
 
-    const mockTodosLosPedidos = [
-      {
-        id: "3029",
-        email: "juan@email.com",
-        producto: "Laptop Pro",
-        status: "NUEVO",
-        color: "emerald",
-      },
-      {
-        id: "3028",
-        email: "maria@test.com",
-        producto: "Teclado Mecánico",
-        status: "EN RUTA",
-        color: "orange",
-      },
-      {
-        id: "3027",
-        email: "juan@email.com",
-        producto: "Monitor 4K",
-        status: "PROCESADO",
-        color: "slate",
-      },
-      {
-        id: "3026",
-        email: "alex@corp.com",
-        producto: "Mouse Gamer",
-        status: "NUEVO",
-        color: "emerald",
-      },
-    ];
+  const pedidosFiltrados = usuarioSeleccionado
+    ? pedidos.filter((p) => p.idUser === usuarioSeleccionado)
+    : pedidos;
 
-    if (usuarioSeleccionado) {
-      const filtrados = mockTodosLosPedidos.filter(
-        (p) => p.email === usuarioSeleccionado,
-      );
-      setPedidosFiltrados(filtrados);
-    } else {
-      setPedidosFiltrados(mockTodosLosPedidos);
-    }
-  }, [usuarioSeleccionado]);
+  const getUsuarioEmail = (idUser: number): string => {
+    const usuario = usuarios.find((u) => u.id === idUser);
+    return usuario?.mail || "Usuario desconocido";
+  };
 
   return (
     <div className="min-h-screen bg-[#F8F9FB] pb-28 font-sans text-slate-900">
@@ -91,12 +82,12 @@ const Dashboard = () => {
           <select
             className="w-full pl-5 pr-12 py-4 bg-white border-none rounded-2xl shadow-sm appearance-none outline-none focus:ring-2 focus:ring-blue-400 font-bold text-slate-700 transition-all cursor-pointer"
             value={usuarioSeleccionado}
-            onChange={(e) => setUsuarioSeleccionado(e.target.value)}
+            onChange={(e) => setUsuarioSeleccionado(e.target.value ? Number(e.target.value) : "")}
           >
             <option value="">Todos los clientes</option>
             {usuarios.map((u) => (
-              <option key={u.id} value={u.email}>
-                {u.nombre} ({u.email})
+              <option key={u.id} value={u.id}>
+                {u.name} ({u.mail})
               </option>
             ))}
           </select>
@@ -111,7 +102,7 @@ const Dashboard = () => {
         <div className="flex justify-between items-center mb-6">
           <h3 className="text-xl font-black text-[#1A1C1E]">
             {usuarioSeleccionado
-              ? `Pedidos de ${usuarioSeleccionado}`
+              ? `Pedidos del usuario #${usuarioSeleccionado}`
               : "Todos los Pedidos"}
           </h3>
           <span className="bg-blue-50 text-blue-600 px-3 py-1 rounded-full text-xs font-bold">
@@ -120,7 +111,11 @@ const Dashboard = () => {
         </div>
 
         <div className="space-y-4">
-          {pedidosFiltrados.length > 0 ? (
+          {loading ? (
+            <div className="text-center py-10 bg-white rounded-3xl border border-slate-100">
+              <p className="text-slate-400 font-medium">Cargando...</p>
+            </div>
+          ) : pedidosFiltrados.length > 0 ? (
             pedidosFiltrados.map((pedido) => (
               <div
                 key={pedido.id}
@@ -132,13 +127,13 @@ const Dashboard = () => {
                   </div>
                   <div>
                     <h4 className="font-bold text-slate-900 leading-tight">
-                      #{pedido.id} - {pedido.producto}
+                      #{pedido.id} - {pedido.name}
                     </h4>
-                    <p className="text-slate-400 text-sm">{pedido.email}</p>
+                    <p className="text-slate-400 text-sm">{getUsuarioEmail(pedido.idUser)}</p>
                   </div>
                 </div>
                 <span className="text-[9px] font-black px-2 py-1 rounded-md tracking-widest bg-slate-100 text-slate-600 uppercase">
-                  {pedido.status}
+                  {pedido.state}
                 </span>
               </div>
             ))

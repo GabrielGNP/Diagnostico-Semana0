@@ -36,7 +36,7 @@ const AddOrder: React.FC = () => {
 
     try {
       const userResponse = await fetch(
-        `http://localhost:8081/users/email/${formData.email}`,
+        `http://localhost:8083/user/${formData.email}`,
       );
 
       let idUser: number;
@@ -47,12 +47,13 @@ const AddOrder: React.FC = () => {
         throw new Error("Usuario no encontrado. Verifica el email.");
       }
 
-      const response = await fetch("http://localhost:8082/orders/add", {
+      const response = await fetch("http://localhost:8082/order/add", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
+          id: 0,
           name: formData.producto,
           description: formData.notas || formData.producto,
           idUser: idUser,
