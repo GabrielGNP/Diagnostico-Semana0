@@ -27,7 +27,7 @@ const AddUser: React.FC = () => {
     setError(null);
 
     try {
-      const response = await fetch("http://localhost:8083/user/add", {
+      const response = await fetch(`${import.meta.env.VITE_APIUSER}/user/add`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

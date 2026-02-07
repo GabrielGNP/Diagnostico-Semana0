@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Mail, ArrowRight, Minus, Plus } from "lucide-react";
+import { ArrowLeft, Mail, ArrowRight } from "lucide-react";
 
 interface FormData {
   email: string;
@@ -20,13 +20,6 @@ const AddOrder: React.FC = () => {
     notas: "",
   });
 
-  const handleCantidad = (valor: number): void => {
-    setFormData((prev) => ({
-      ...prev,
-      cantidad: Math.max(1, prev.cantidad + valor),
-    }));
-  };
-
   const handleSubmit = async (
     e: React.FormEvent<HTMLFormElement>,
   ): Promise<void> => {
@@ -36,7 +29,7 @@ const AddOrder: React.FC = () => {
 
     try {
       const userResponse = await fetch(
-        `http://localhost:8083/user/${formData.email}`,
+        `${import.meta.env.VITE_APIUSER}/user/${formData.email}`,
       );
 
       let idUser: number;
@@ -47,20 +40,23 @@ const AddOrder: React.FC = () => {
         throw new Error("Usuario no encontrado. Verifica el email.");
       }
 
-      const response = await fetch("http://localhost:8082/order/add", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+      const response = await fetch(
+        `${import.meta.env.VITE_APIORDER}/order/add`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            id: 0,
+            name: formData.producto,
+            description: formData.notas || formData.producto,
+            idUser: idUser,
+            state: "PROCESSING",
+            active: true,
+          }),
         },
-        body: JSON.stringify({
-          id: 0,
-          name: formData.producto,
-          description: formData.notas || formData.producto,
-          idUser: idUser,
-          state: "PROCESSING",
-          active: true,
-        }),
-      });
+      );
 
       if (!response.ok) {
         throw new Error("Error al crear el pedido");

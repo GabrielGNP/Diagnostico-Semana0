@@ -28,15 +28,17 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
-  const [usuarioSeleccionado, setUsuarioSeleccionado] = useState<number | "">("");
+  const [usuarioSeleccionado, setUsuarioSeleccionado] = useState<number | "">(
+    "",
+  );
   const [loading, setLoading] = useState(true);
 
   const fetchData = async () => {
     setLoading(true);
     try {
       const [usersRes, ordersRes] = await Promise.all([
-        fetch("http://localhost:8083/users"),
-        fetch("http://localhost:8082/order/all"),
+        fetch(`${import.meta.env.VITE_APIUSER}/users`),
+        fetch(`${import.meta.env.VITE_APIORDER}/order/all`),
       ]);
 
       if (usersRes.ok) {
@@ -82,7 +84,11 @@ const Dashboard = () => {
           <select
             className="w-full pl-5 pr-12 py-4 bg-white border-none rounded-2xl shadow-sm appearance-none outline-none focus:ring-2 focus:ring-blue-400 font-bold text-slate-700 transition-all cursor-pointer"
             value={usuarioSeleccionado}
-            onChange={(e) => setUsuarioSeleccionado(e.target.value ? Number(e.target.value) : "")}
+            onChange={(e) =>
+              setUsuarioSeleccionado(
+                e.target.value ? Number(e.target.value) : "",
+              )
+            }
           >
             <option value="">Todos los clientes</option>
             {usuarios.map((u) => (
@@ -129,7 +135,9 @@ const Dashboard = () => {
                     <h4 className="font-bold text-slate-900 leading-tight">
                       #{pedido.id} - {pedido.name}
                     </h4>
-                    <p className="text-slate-400 text-sm">{getUsuarioEmail(pedido.idUser)}</p>
+                    <p className="text-slate-400 text-sm">
+                      {getUsuarioEmail(pedido.idUser)}
+                    </p>
                   </div>
                 </div>
                 <span className="text-[9px] font-black px-2 py-1 rounded-md tracking-widest bg-slate-100 text-slate-600 uppercase">
