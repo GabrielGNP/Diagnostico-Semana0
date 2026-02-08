@@ -123,9 +123,10 @@ const Dashboard = () => {
             </div>
           ) : pedidosFiltrados.length > 0 ? (
             pedidosFiltrados.map((pedido) => (
-              <div
+              <button
                 key={pedido.id}
-                className="bg-white p-4 rounded-3xl flex items-center justify-between border border-slate-50 shadow-sm animate-in fade-in zoom-in duration-300"
+                className="bg-white p-4 rounded-3xl flex items-center justify-between border border-slate-50 shadow-sm animate-in fade-in zoom-in duration-300 w-full text-left hover:bg-blue-50 transition-colors"
+                onClick={() => navigate(`/order/${pedido.id}`)}
               >
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center text-blue-500">
@@ -143,7 +144,7 @@ const Dashboard = () => {
                 <span className="text-[9px] font-black px-2 py-1 rounded-md tracking-widest bg-slate-100 text-slate-600 uppercase">
                   {pedido.state}
                 </span>
-              </div>
+              </button>
             ))
           ) : (
             <div className="text-center py-10 bg-white rounded-3xl border border-dashed border-slate-200">
