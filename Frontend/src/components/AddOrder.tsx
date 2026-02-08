@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Mail, ArrowRight } from "lucide-react";
+import FormHeader from "./FormHeader";
+import FormTitleAndSubtitle from "./FormTitleAndSubtitle";
 
 interface FormData {
   email: string;
@@ -72,34 +74,15 @@ const AddOrder: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 md:py-12 px-4">
-      <div className="max-w-xl mx-auto bg-white min-h-screen md:min-h-fit md:rounded-[2.5rem] md:shadow-xl md:shadow-slate-200/50 overflow-hidden border border-slate-100">
-        <div className="flex justify-between items-center p-6 border-b border-slate-50">
-          <button
-            onClick={() => navigate("/")}
-            className="p-2 hover:bg-slate-50 rounded-full transition-colors"
-          >
-            <ArrowLeft className="text-slate-600" size={24} />
-          </button>
-          <h2 className="font-bold text-slate-800 text-lg">Nuevo Pedido</h2>
-          <button
-            onClick={() => navigate("/")}
-            className="text-slate-400 font-medium hover:text-slate-600 px-2"
-          >
-            Cancelar
-          </button>
-        </div>
+    <div className="min-h-screen bg-slate-50 md:bg-slate-50 flex items-center justify-center p-4">
+      <div className="w-full max-w-xl bg-white md:p-10 md:rounded-[2.5rem] md:shadow-xl md:shadow-slate-200/50">
+        <FormHeader title="Nuevo Pedido" cancelText="Cancelar" showCancel />
 
         <div className="p-8">
-          <div className="mb-10">
-            <h1 className="text-3xl font-extrabold text-slate-900 mb-3 tracking-tight">
-              Crear Pedido
-            </h1>
-            <p className="text-slate-500 leading-relaxed">
-              Introduce el correo electrónico del usuario para vincular el
-              pedido rápidamente sin necesidad de iniciar sesión.
-            </p>
-          </div>
+          <FormTitleAndSubtitle
+            title="Nuevo Pedido"
+            subtitle="Introduce el correo electrónico del usuario para vincular el pedido rápidamente sin necesidad de iniciar sesión."
+          />
 
           <form onSubmit={handleSubmit} className="space-y-8">
             {error && (

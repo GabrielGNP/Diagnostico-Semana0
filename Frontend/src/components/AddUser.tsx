@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Mail, Lock, Eye, EyeOff } from "lucide-react";
+import FormHeader from "./FormHeader";
+import FormTitleAndSubtitle from "./FormTitleAndSubtitle";
 
 interface FormData {
   nombre: string;
@@ -55,26 +57,13 @@ const AddUser: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-white md:bg-slate-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-md bg-white md:p-10 md:rounded-[2.5rem] md:shadow-xl md:shadow-slate-200/50">
-        <div className="flex items-center justify-between mb-12">
-          <button
-            onClick={() => navigate("/")}
-            className="p-2 -ml-2 hover:bg-slate-50 rounded-full transition-colors"
-          >
-            <ArrowLeft className="text-slate-800" size={24} />
-          </button>
-          <h2 className="text-lg font-bold text-slate-800">Crear cuenta</h2>
-          <div className="w-10"></div>
-        </div>
+      <div className="w-full max-w-xl bg-white md:p-10 md:rounded-[2.5rem] md:shadow-xl md:shadow-slate-200/50">
+        <FormHeader title="Registro de Administrador" />
 
-        <div className="mb-10 text-center md:text-left">
-          <h1 className="text-3xl font-extrabold text-slate-900 mb-3 tracking-tight">
-            Registro de Administrador
-          </h1>
-          <p className="text-slate-500 text-lg leading-relaxed">
-            Ingresa tus datos para gestionar pedidos y clientes.
-          </p>
-        </div>
+        <FormTitleAndSubtitle
+          title="Registro de Administrador"
+          subtitle="Ingresa tus datos para gestionar pedidos y clientes."
+        />
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {error && (
