@@ -1,0 +1,49 @@
+[ {
+  "id" : 1,
+  "name" : "Alice",
+  "password" : "alice123",
+  "mail" : "alice@example.com",
+  "active" : true
+}, {
+  "id" : 2,
+  "name" : "Bob",
+  "password" : "bob123",
+  "mail" : "bob@example.com",
+  "active" : true
+}, {
+  "id" : 3,
+  "name" : "Clara",
+  "password" : "clara123",
+  "mail" : "clara@example.com",
+  "active" : true
+}, {
+  "id" : 4,
+  "name" : "Clara",
+  "password" : "clara123",
+  "mail" : "clara@example.com",
+  "active" : true
+}, {
+  "id" : 5,
+  "name" : "Test",
+  "password" : "pw",
+  "mail" : "t@t.com",
+  "active" : true
+}, {
+  "id" : 6,
+  "name" : "Test",
+  "password" : "pw",
+  "mail" : "t@t.com",
+  "active" : true
+}, {
+  "id" : 7,
+  "name" : "Test",
+  "password" : "pw",
+  "mail" : "t@t.com",
+  "active" : true
+}, {
+  "id" : 8,
+  "name" : "jorgito",
+  "password" : "12345678",
+  "mail" : "no-existo@sofka.arg",
+  "active" : true
+} ]
