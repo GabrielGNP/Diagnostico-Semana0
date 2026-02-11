@@ -1,29 +1,16 @@
 package com.example.pedidoservice.service;
 
 import com.example.pedidoservice.dto.OrderDto;
-<<<<<<< HEAD
-<<<<<<< HEAD
-import com.example.pedidoservice.mapper.OrderMapper;
-=======
 import com.example.pedidoservice.dto.OrderWithUserDto;
 import com.example.pedidoservice.mapper.OrderMapper;
 import com.example.pedidoservice.messaging.UserResponse;
 import com.example.pedidoservice.messaging.UserServiceConsumer;
 import com.example.pedidoservice.messaging.UserServiceProducer;
->>>>>>> ab6c4255fa1a3e189b475473b95fdd5cdd95b37a
-=======
-import com.example.pedidoservice.dto.OrderWithUserDto;
-import com.example.pedidoservice.mapper.OrderMapper;
-import com.example.pedidoservice.messaging.UserResponse;
-import com.example.pedidoservice.messaging.UserServiceConsumer;
-import com.example.pedidoservice.messaging.UserServiceProducer;
->>>>>>> 20046a0775b26f20b6321e01ab7470e09dc3970d
 import com.example.pedidoservice.model.Order;
 import com.example.pedidoservice.model.State;
 import com.example.pedidoservice.repository.OrderRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -37,11 +24,7 @@ public class OrderService {
     @Autowired
     private OrderMapper orderMapper;
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-=======
->>>>>>> 20046a0775b26f20b6321e01ab7470e09dc3970d
+
     @Autowired
     private UserServiceProducer userServiceProducer;
 
@@ -50,10 +33,7 @@ public class OrderService {
 
     private static final long USER_REQUEST_TIMEOUT = 3000; // 3 seconds timeout
 
-<<<<<<< HEAD
->>>>>>> ab6c4255fa1a3e189b475473b95fdd5cdd95b37a
-=======
->>>>>>> 20046a0775b26f20b6321e01ab7470e09dc3970d
+
     public OrderDto createOrder(OrderDto orderDto) {
         Order order = orderMapper.toEntity(orderDto);
         order.setState(State.PROCESSING); // Default state? Prompt didn't specify, but PROCESSING is first.
@@ -88,11 +68,7 @@ public class OrderService {
                 .collect(Collectors.toList());
     }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-=======
->>>>>>> 20046a0775b26f20b6321e01ab7470e09dc3970d
+
     public OrderWithUserDto getOrderWithUserInfo(int orderId) {
         // Get the order first
         OrderDto orderDto = showOrderById(orderId);
@@ -124,10 +100,7 @@ public class OrderService {
         );
     }
 
-<<<<<<< HEAD
->>>>>>> ab6c4255fa1a3e189b475473b95fdd5cdd95b37a
-=======
->>>>>>> 20046a0775b26f20b6321e01ab7470e09dc3970d
+
     public List<OrderDto> listAllOrders() {
         return orderRepository.findAll().stream()
                 .map(orderMapper::toDto)
@@ -140,11 +113,3 @@ public class OrderService {
                 .orElse(null);
     }
 }
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-
->>>>>>> ab6c4255fa1a3e189b475473b95fdd5cdd95b37a
-=======
-
->>>>>>> 20046a0775b26f20b6321e01ab7470e09dc3970d

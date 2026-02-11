@@ -9,7 +9,7 @@ RUN mvn -B test
 # Si los tests pasan, construir el proyecto
 RUN mvn -B clean package -DskipTests
 
-FROM eclipse-temurin:21-jre-alpine
+FROM eclipse-temurin:21-alpine
 WORKDIR /app
 COPY --from=builder /build/target/*.jar app.jar
 EXPOSE 8080
