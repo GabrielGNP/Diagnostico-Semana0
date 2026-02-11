@@ -1,6 +1,9 @@
+<<<<<<< HEAD
 # Al ejecutar: docker-compose up --build
 # Cada servicio ejecuta sus tests durante el build. Si algún test falla,
 # la construcción de esa imagen falla y los contenedores no se levantan.
+=======
+>>>>>>> ab6c4255fa1a3e189b475473b95fdd5cdd95b37a
 version: '3.8'
 
 services:

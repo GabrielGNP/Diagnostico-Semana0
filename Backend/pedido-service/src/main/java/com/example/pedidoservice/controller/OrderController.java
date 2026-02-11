@@ -1,6 +1,10 @@
 package com.example.pedidoservice.controller;
 
 import com.example.pedidoservice.dto.OrderDto;
+<<<<<<< HEAD
+=======
+import com.example.pedidoservice.dto.OrderWithUserDto;
+>>>>>>> ab6c4255fa1a3e189b475473b95fdd5cdd95b37a
 import com.example.pedidoservice.model.State;
 import com.example.pedidoservice.service.OrderService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,6 +42,24 @@ public class OrderController {
         }
     }
 
+<<<<<<< HEAD
+=======
+    @GetMapping("/{id}/with-user-info")
+    public ResponseEntity<OrderWithUserDto> getOrderWithUserInfo(@PathVariable("id") int id) {
+        try{
+            OrderWithUserDto order = orderService.getOrderWithUserInfo(id);
+            if (order != null) {
+                return ResponseEntity.ok(order);
+            } else {
+                return ResponseEntity.notFound().build();
+            }
+        }catch(Exception e){
+            System.err.println("Error fetching order with user info: " + e.getMessage());
+            return ResponseEntity.status(500).build();
+        }
+    }
+
+>>>>>>> ab6c4255fa1a3e189b475473b95fdd5cdd95b37a
     @GetMapping("/user/{idUser}")
     public ResponseEntity<List<OrderDto>> listOrdersByIdUser(@PathVariable("idUser") int idUser) {
         List<OrderDto> orders = orderService.listOrdersByIdUser(idUser);

@@ -1,15 +1,21 @@
 package com.example.usuarioservice;
 
+<<<<<<< HEAD
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.core.io.ClassPathResource;
+=======
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+>>>>>>> ab6c4255fa1a3e189b475473b95fdd5cdd95b37a
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.annotation.PostConstruct;
+<<<<<<< HEAD
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -20,16 +26,30 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+=======
+import java.io.IOException;
+import java.util.Collection;
+import java.util.Map;
+
+import com.example.usuarioservice.model.User;
+import com.example.usuarioservice.service.UserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+>>>>>>> ab6c4255fa1a3e189b475473b95fdd5cdd95b37a
 
 @SpringBootApplication
 @RestController
 @CrossOrigin(origins = "http://localhost:3001")
 public class UsuarioServiceApplication {
 
+<<<<<<< HEAD
 	private final ObjectMapper mapper = new ObjectMapper();
 	private final Map<Integer, User> users = Collections.synchronizedMap(new HashMap<>());
 	private final AtomicInteger nextId = new AtomicInteger(1);
 	private File jsonFile;
+=======
+	@Autowired
+	private UserRepository userRepository;
+>>>>>>> ab6c4255fa1a3e189b475473b95fdd5cdd95b37a
 
 	public static void main(String[] args) {
 		SpringApplication.run(UsuarioServiceApplication.class, args);
@@ -39,6 +59,7 @@ public class UsuarioServiceApplication {
 
 	@PostConstruct
 	public void init() throws IOException {
+<<<<<<< HEAD
 		// Support external USERS_FILE env var (useful for Docker volume mounting)
 		String usersFileEnv = System.getenv("USERS_FILE");
 		File external = null;
@@ -134,12 +155,19 @@ public class UsuarioServiceApplication {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+=======
+		userRepository.init();
+>>>>>>> ab6c4255fa1a3e189b475473b95fdd5cdd95b37a
 	}
 
 	// GET all users
 	@GetMapping("/users")
 	public Collection<User> getAllUsers() {
+<<<<<<< HEAD
 		return users.values();
+=======
+		return userRepository.findAll();
+>>>>>>> ab6c4255fa1a3e189b475473b95fdd5cdd95b37a
 	}
 
 	// GET /user/{identifier} - if identifier contains '@' search by email, otherwise by id
@@ -149,10 +177,16 @@ public class UsuarioServiceApplication {
 
 		// if looks like an email, search by mail field
 		if (identifier.contains("@")) {
+<<<<<<< HEAD
 			for (User u : users.values()) {
 				if (u.getMail() != null && u.getMail().equalsIgnoreCase(identifier)) {
 					return ResponseEntity.ok(u);
 				}
+=======
+			User user = userRepository.findByEmail(identifier);
+			if (user != null) {
+				return ResponseEntity.ok(user);
+>>>>>>> ab6c4255fa1a3e189b475473b95fdd5cdd95b37a
 			}
 			return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
 		}
@@ -160,9 +194,15 @@ public class UsuarioServiceApplication {
 		// otherwise try parse id
 		try {
 			int id = Integer.parseInt(identifier);
+<<<<<<< HEAD
 			User u = users.get(id);
 			if (u == null) return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
 			return ResponseEntity.ok(u);
+=======
+			User user = userRepository.findById(id);
+			if (user == null) return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+			return ResponseEntity.ok(user);
+>>>>>>> ab6c4255fa1a3e189b475473b95fdd5cdd95b37a
 		} catch (NumberFormatException ex) {
 			return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
 		}
@@ -171,38 +211,56 @@ public class UsuarioServiceApplication {
 	// DELETE /user/{id}
 	@DeleteMapping("/user/{id}")
 	public ResponseEntity<Void> deleteUser(@PathVariable int id) {
+<<<<<<< HEAD
 		User removed = users.remove(id);
 		if (removed == null) return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
 		writeToFile();
 		return ResponseEntity.noContent().build();
+=======
+		if (userRepository.deleteById(id)) {
+			return ResponseEntity.noContent().build();
+		}
+		return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+>>>>>>> ab6c4255fa1a3e189b475473b95fdd5cdd95b37a
 	}
 
 	// POST /user/add (create)
 	@PostMapping("/user/add")
 	public ResponseEntity<User> addUser(@RequestBody User incoming) {
 		if (incoming == null) return ResponseEntity.badRequest().build();
+<<<<<<< HEAD
 		Integer id = incoming.getId();
 		if (id == null || id <= 0) id = nextId.getAndIncrement();
 		incoming.setId(id);
 		users.put(id, incoming);
 		writeToFile();
 		return ResponseEntity.status(HttpStatus.CREATED).body(incoming);
+=======
+		User saved = userRepository.save(incoming);
+		return ResponseEntity.status(HttpStatus.CREATED).body(saved);
+>>>>>>> ab6c4255fa1a3e189b475473b95fdd5cdd95b37a
 	}
 
 	// PUT /user/{id} (full replace)
 	@PutMapping("/user/{id}")
 	public ResponseEntity<User> replaceUser(@PathVariable int id, @RequestBody User incoming) {
 		if (incoming == null) return ResponseEntity.badRequest().build();
+<<<<<<< HEAD
 		incoming.setId(id);
 		users.put(id, incoming);
 		nextId.updateAndGet(x -> Math.max(x, id + 1));
 		writeToFile();
 		return ResponseEntity.ok(incoming);
+=======
+		User updated = userRepository.update(id, incoming);
+		return ResponseEntity.ok(updated);
+>>>>>>> ab6c4255fa1a3e189b475473b95fdd5cdd95b37a
 	}
 
 	// PATCH /user/{id} - partial update (only provided fields will be changed)
 	@PatchMapping("/user/{id}")
 	public ResponseEntity<User> patchUser(@PathVariable int id, @RequestBody Map<String, Object> updates) {
+<<<<<<< HEAD
 		User existing = users.get(id);
 		if (existing == null) return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
 
@@ -250,4 +308,10 @@ public class UsuarioServiceApplication {
 		public void setActive(boolean active) { this.active = active; }
 	}
 
+=======
+		User existing = userRepository.partialUpdate(id, updates);
+		if (existing == null) return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+		return ResponseEntity.ok(existing);
+	}
+>>>>>>> ab6c4255fa1a3e189b475473b95fdd5cdd95b37a
 }

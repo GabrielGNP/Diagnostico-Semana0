@@ -40,4 +40,13 @@
   "password" : "pw",
   "mail" : "t@t.com",
   "active" : true
+<<<<<<< HEAD
+=======
+}, {
+  "id" : 8,
+  "name" : "jorgito",
+  "password" : "12345678",
+  "mail" : "no-existo@sofka.arg",
+  "active" : true
+>>>>>>> ab6c4255fa1a3e189b475473b95fdd5cdd95b37a
 } ]
