@@ -25,7 +25,7 @@ jobs:
         with:
           distribution: 'temurin'
           # Si Java 25 no está disponible en el runner, usar '21' y ajustar java.version en pom.xml
-          java-version: '25'
+          java-version: '21'
           cache: 'maven'
 
       - name: Run unit tests
@@ -47,7 +47,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '25'
+          java-version: '21'
           cache: 'maven'
 
       - name: Run unit tests
@@ -73,7 +73,7 @@ jobs:
           cache-dependency-path: Frontend/package-lock.json
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install
 
       - name: Run unit tests
         run: npm run test
