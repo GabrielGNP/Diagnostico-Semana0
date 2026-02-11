@@ -2,7 +2,11 @@
 
 ## Descripción
 
+<<<<<<< HEAD
 Proyecto de microservicios para gestión de usuarios y pedidos. Incluye un frontend en React y dos servicios backend en Spring Boot, comunicados mediante RabbitMQ.
+=======
+Proyecto de microservicios para gestión de usuarios y pedidos. Incluye un frontend en React (Vite) y dos servicios backend en Spring Boot, comunicados mediante RabbitMQ.
+>>>>>>> 20046a0775b26f20b6321e01ab7470e09dc3970d
 
 ## Arquitectura
 
@@ -94,3 +98,4 @@ Diagnostico-Semana0/
 
 - **Tests unitarios:** cada subproyecto tiene su propia suite (JUnit en backend, Vitest en frontend).
 - **CI:** en cada push o PR a `main`/`master`, GitHub Actions ejecuta los tests de los tres subproyectos. Ver [docs/TESTING_AND_CI.md](docs/TESTING_AND_CI.md) para detalles y cómo exigir que los tests pasen antes de merge.
+=======

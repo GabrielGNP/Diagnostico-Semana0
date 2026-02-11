@@ -1,6 +1,7 @@
 package com.example.usuarioservice;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.boot.SpringApplication;
@@ -10,37 +11,46 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 >>>>>>> ab6c4255fa1a3e189b475473b95fdd5cdd95b37a
+=======
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+>>>>>>> 20046a0775b26f20b6321e01ab7470e09dc3970d
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.annotation.PostConstruct;
 <<<<<<< HEAD
+<<<<<<< HEAD
 import java.io.File;
+=======
+>>>>>>> 20046a0775b26f20b6321e01ab7470e09dc3970d
 import java.io.IOException;
-import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
+<<<<<<< HEAD
 import java.util.concurrent.atomic.AtomicInteger;
 =======
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
+=======
+>>>>>>> 20046a0775b26f20b6321e01ab7470e09dc3970d
 
 import com.example.usuarioservice.model.User;
 import com.example.usuarioservice.service.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+<<<<<<< HEAD
 >>>>>>> ab6c4255fa1a3e189b475473b95fdd5cdd95b37a
+=======
+>>>>>>> 20046a0775b26f20b6321e01ab7470e09dc3970d
 
 @SpringBootApplication
 @RestController
 @CrossOrigin(origins = "http://localhost:3001")
 public class UsuarioServiceApplication {
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 	private final ObjectMapper mapper = new ObjectMapper();
 	private final Map<Integer, User> users = Collections.synchronizedMap(new HashMap<>());
@@ -50,6 +60,10 @@ public class UsuarioServiceApplication {
 	@Autowired
 	private UserRepository userRepository;
 >>>>>>> ab6c4255fa1a3e189b475473b95fdd5cdd95b37a
+=======
+	@Autowired
+	private UserRepository userRepository;
+>>>>>>> 20046a0775b26f20b6321e01ab7470e09dc3970d
 
 	public static void main(String[] args) {
 		SpringApplication.run(UsuarioServiceApplication.class, args);
@@ -59,6 +73,7 @@ public class UsuarioServiceApplication {
 
 	@PostConstruct
 	public void init() throws IOException {
+<<<<<<< HEAD
 <<<<<<< HEAD
 		// Support external USERS_FILE env var (useful for Docker volume mounting)
 		String usersFileEnv = System.getenv("USERS_FILE");
@@ -158,16 +173,23 @@ public class UsuarioServiceApplication {
 =======
 		userRepository.init();
 >>>>>>> ab6c4255fa1a3e189b475473b95fdd5cdd95b37a
+=======
+		userRepository.init();
+>>>>>>> 20046a0775b26f20b6321e01ab7470e09dc3970d
 	}
 
 	// GET all users
 	@GetMapping("/users")
 	public Collection<User> getAllUsers() {
 <<<<<<< HEAD
+<<<<<<< HEAD
 		return users.values();
 =======
 		return userRepository.findAll();
 >>>>>>> ab6c4255fa1a3e189b475473b95fdd5cdd95b37a
+=======
+		return userRepository.findAll();
+>>>>>>> 20046a0775b26f20b6321e01ab7470e09dc3970d
 	}
 
 	// GET /user/{identifier} - if identifier contains '@' search by email, otherwise by id
@@ -178,6 +200,7 @@ public class UsuarioServiceApplication {
 		// if looks like an email, search by mail field
 		if (identifier.contains("@")) {
 <<<<<<< HEAD
+<<<<<<< HEAD
 			for (User u : users.values()) {
 				if (u.getMail() != null && u.getMail().equalsIgnoreCase(identifier)) {
 					return ResponseEntity.ok(u);
@@ -187,6 +210,11 @@ public class UsuarioServiceApplication {
 			if (user != null) {
 				return ResponseEntity.ok(user);
 >>>>>>> ab6c4255fa1a3e189b475473b95fdd5cdd95b37a
+=======
+			User user = userRepository.findByEmail(identifier);
+			if (user != null) {
+				return ResponseEntity.ok(user);
+>>>>>>> 20046a0775b26f20b6321e01ab7470e09dc3970d
 			}
 			return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
 		}
@@ -194,6 +222,7 @@ public class UsuarioServiceApplication {
 		// otherwise try parse id
 		try {
 			int id = Integer.parseInt(identifier);
+<<<<<<< HEAD
 <<<<<<< HEAD
 			User u = users.get(id);
 			if (u == null) return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
@@ -203,6 +232,11 @@ public class UsuarioServiceApplication {
 			if (user == null) return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
 			return ResponseEntity.ok(user);
 >>>>>>> ab6c4255fa1a3e189b475473b95fdd5cdd95b37a
+=======
+			User user = userRepository.findById(id);
+			if (user == null) return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+			return ResponseEntity.ok(user);
+>>>>>>> 20046a0775b26f20b6321e01ab7470e09dc3970d
 		} catch (NumberFormatException ex) {
 			return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
 		}
@@ -212,22 +246,29 @@ public class UsuarioServiceApplication {
 	@DeleteMapping("/user/{id}")
 	public ResponseEntity<Void> deleteUser(@PathVariable int id) {
 <<<<<<< HEAD
+<<<<<<< HEAD
 		User removed = users.remove(id);
 		if (removed == null) return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
 		writeToFile();
 		return ResponseEntity.noContent().build();
 =======
+=======
+>>>>>>> 20046a0775b26f20b6321e01ab7470e09dc3970d
 		if (userRepository.deleteById(id)) {
 			return ResponseEntity.noContent().build();
 		}
 		return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+<<<<<<< HEAD
 >>>>>>> ab6c4255fa1a3e189b475473b95fdd5cdd95b37a
+=======
+>>>>>>> 20046a0775b26f20b6321e01ab7470e09dc3970d
 	}
 
 	// POST /user/add (create)
 	@PostMapping("/user/add")
 	public ResponseEntity<User> addUser(@RequestBody User incoming) {
 		if (incoming == null) return ResponseEntity.badRequest().build();
+<<<<<<< HEAD
 <<<<<<< HEAD
 		Integer id = incoming.getId();
 		if (id == null || id <= 0) id = nextId.getAndIncrement();
@@ -239,12 +280,17 @@ public class UsuarioServiceApplication {
 		User saved = userRepository.save(incoming);
 		return ResponseEntity.status(HttpStatus.CREATED).body(saved);
 >>>>>>> ab6c4255fa1a3e189b475473b95fdd5cdd95b37a
+=======
+		User saved = userRepository.save(incoming);
+		return ResponseEntity.status(HttpStatus.CREATED).body(saved);
+>>>>>>> 20046a0775b26f20b6321e01ab7470e09dc3970d
 	}
 
 	// PUT /user/{id} (full replace)
 	@PutMapping("/user/{id}")
 	public ResponseEntity<User> replaceUser(@PathVariable int id, @RequestBody User incoming) {
 		if (incoming == null) return ResponseEntity.badRequest().build();
+<<<<<<< HEAD
 <<<<<<< HEAD
 		incoming.setId(id);
 		users.put(id, incoming);
@@ -255,24 +301,25 @@ public class UsuarioServiceApplication {
 		User updated = userRepository.update(id, incoming);
 		return ResponseEntity.ok(updated);
 >>>>>>> ab6c4255fa1a3e189b475473b95fdd5cdd95b37a
+=======
+		User updated = userRepository.update(id, incoming);
+		return ResponseEntity.ok(updated);
+>>>>>>> 20046a0775b26f20b6321e01ab7470e09dc3970d
 	}
 
 	// PATCH /user/{id} - partial update (only provided fields will be changed)
 	@PatchMapping("/user/{id}")
 	public ResponseEntity<User> patchUser(@PathVariable int id, @RequestBody Map<String, Object> updates) {
 <<<<<<< HEAD
+<<<<<<< HEAD
 		User existing = users.get(id);
+=======
+		User existing = userRepository.partialUpdate(id, updates);
+>>>>>>> 20046a0775b26f20b6321e01ab7470e09dc3970d
 		if (existing == null) return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-
-		if (updates.containsKey("name")) existing.setName((String) updates.get("name"));
-		if (updates.containsKey("password")) existing.setPassword((String) updates.get("password"));
-		if (updates.containsKey("mail")) existing.setMail((String) updates.get("mail"));
-		if (updates.containsKey("active")) existing.setActive(Boolean.parseBoolean(String.valueOf(updates.get("active"))));
-
-		users.put(id, existing);
-		writeToFile();
 		return ResponseEntity.ok(existing);
 	}
+<<<<<<< HEAD
 
 	// Simple model class
 	public static class User {
@@ -314,4 +361,6 @@ public class UsuarioServiceApplication {
 		return ResponseEntity.ok(existing);
 	}
 >>>>>>> ab6c4255fa1a3e189b475473b95fdd5cdd95b37a
+=======
+>>>>>>> 20046a0775b26f20b6321e01ab7470e09dc3970d
 }
