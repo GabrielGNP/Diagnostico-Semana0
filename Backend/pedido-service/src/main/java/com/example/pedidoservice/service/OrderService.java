@@ -1,7 +1,11 @@
 package com.example.pedidoservice.service;
 
 import com.example.pedidoservice.dto.OrderDto;
+import com.example.pedidoservice.dto.OrderWithUserDto;
 import com.example.pedidoservice.mapper.OrderMapper;
+import com.example.pedidoservice.messaging.UserResponse;
+import com.example.pedidoservice.messaging.UserServiceConsumer;
+import com.example.pedidoservice.messaging.UserServiceProducer;
 import com.example.pedidoservice.model.Order;
 import com.example.pedidoservice.model.State;
 import com.example.pedidoservice.repository.OrderRepository;
@@ -20,6 +24,14 @@ public class OrderService {
 
     @Autowired
     private OrderMapper orderMapper;
+
+    @Autowired
+    private UserServiceProducer userServiceProducer;
+
+    @Autowired
+    private UserServiceConsumer userServiceConsumer;
+
+    private static final long USER_REQUEST_TIMEOUT = 3000; // 3 seconds timeout
 
     public OrderDto createOrder(OrderDto orderDto) {
         Order order = orderMapper.toEntity(orderDto);
@@ -55,6 +67,37 @@ public class OrderService {
                 .collect(Collectors.toList());
     }
 
+    public OrderWithUserDto getOrderWithUserInfo(int orderId) {
+        // Get the order first
+        OrderDto orderDto = showOrderById(orderId);
+        if (orderDto == null) {
+            return null;
+        }
+        
+        // Request user information via RabbitMQ using the orderId's userId
+        int idUser = orderDto.getIdUser();
+        UserResponse userResponse = null;
+        try {
+            userServiceProducer.requestUserInfo(idUser);
+            // Wait for user response
+            userResponse = userServiceConsumer.getUserResponse(idUser, USER_REQUEST_TIMEOUT);
+        } catch (Exception ex) {
+            // Log and continue — return order with null user if messaging fails
+            System.err.println("Error requesting/receiving user info for userId=" + idUser + ": " + ex.getMessage());
+        }
+        
+        // Map to OrderWithUserDto including user information
+        return new OrderWithUserDto(
+                orderDto.getId(),
+                orderDto.getName(),
+                orderDto.getDescription(),
+                orderDto.getIdUser(),
+                orderDto.getState(),
+                orderDto.isActive(),
+                userResponse
+        );
+    }
+
     public List<OrderDto> listAllOrders() {
         return orderRepository.findAll().stream()
                 .map(orderMapper::toDto)
@@ -67,3 +110,4 @@ public class OrderService {
                 .orElse(null);
     }
 }
+
