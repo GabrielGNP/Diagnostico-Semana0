@@ -1,0 +1,79 @@
+# CI: ejecuta tests unitarios de los tres subproyectos antes de merge a rama principal
+name: CI - Tests unitarios
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  # -----------------------------------------
+  # Backend: pedido-service (Spring Boot + Maven)
+  # -----------------------------------------
+  pedido-service:
+    name: pedido-service
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Backend/pedido-service
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          # Si Java 25 no está disponible en el runner, usar '21' y ajustar java.version en pom.xml
+          java-version: '25'
+          cache: 'maven'
+
+      - name: Run unit tests
+        run: mvn -q test
+
+  # -----------------------------------------
+  # Backend: usuario-service (Spring Boot + Maven)
+  # -----------------------------------------
+  usuario-service:
+    name: usuario-service
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Backend/usuario-service
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '25'
+          cache: 'maven'
+
+      - name: Run unit tests
+        run: mvn -q test
+
+  # -----------------------------------------
+  # Frontend (React + Vite + Vitest)
+  # -----------------------------------------
+  frontend:
+    name: frontend
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: Frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run unit tests
+        run: npm run test
