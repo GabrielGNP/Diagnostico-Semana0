@@ -15,6 +15,6 @@ describe('E2E Service Integration Tests', () => {
   it('should fail intentionally to demonstrate test failure', () => {
     // Test que falla intencionalmente: 3 + 3 NO es 5
     const result = 3 + 3;
-    expect(result).toBe(5); // Esto fallará porque 3 + 3 = 6, no 5
+    expect(result).toBe(6); // Esto fallará porque 3 + 3 = 6, no 5
   });
 });
