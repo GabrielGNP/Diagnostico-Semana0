@@ -2,11 +2,7 @@
 
 ## Descripción
 
-<<<<<<< HEAD
-Proyecto de microservicios para gestión de usuarios y pedidos. Incluye un frontend en React y dos servicios backend en Spring Boot, comunicados mediante RabbitMQ.
-=======
 Proyecto de microservicios para gestión de usuarios y pedidos. Incluye un frontend en React (Vite) y dos servicios backend en Spring Boot, comunicados mediante RabbitMQ.
->>>>>>> 20046a0775b26f20b6321e01ab7470e09dc3970d
 
 ## Arquitectura
 
