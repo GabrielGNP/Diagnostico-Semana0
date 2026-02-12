@@ -44,9 +44,17 @@ jobs:
     uses: ./.github/workflows/ci-integration-component-frontend.yml
 
   # ============================================
-  # STAGE 3: Service Integration (necesita todo lo anterior)
+  # STAGE 3: Docker Infrastructure (necesita unitarios para validar que el código es estable antes de construir imágenes)
   # ============================================
-  integration-services:
-    name: Full Service Integration
-    needs: [integration-pedido, integration-usuario, integration-frontend]
+  docker-smoke:
+    name: Docker Smoke Tests
+    needs: [unit-frontend, unit-pedido, unit-usuario]
+    uses: ./.github/workflows/ci-docker-smoke.yml
+
+  # ============================================
+  # STAGE 4: E2E Service Integration (necesita Docker funcionando)
+  # ============================================
+  e2e-integration:
+    name: E2E Service Integration
+    needs: [docker-smoke, integration-pedido, integration-usuario, integration-frontend]
     uses: ./.github/workflows/ci-integration-services.yml

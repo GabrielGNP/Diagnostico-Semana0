@@ -1,0 +1,133 @@
+name: Docker Smoke Tests
+
+on:
+  push:
+    branches: [main, master, develop]
+    paths:
+      - 'docker-compose.yml'
+      - '**/Dockerfile'
+      - '.github/workflows/ci-docker-smoke.yml'
+  pull_request:
+    branches: [main, master, develop]
+    paths:
+      - 'docker-compose.yml'
+      - '**/Dockerfile'
+      - '.github/workflows/ci-docker-smoke.yml'
+  workflow_call:
+
+jobs:
+  # -----------------------------------------
+  # Docker Compose: Smoke test de infraestructura
+  # Verifica que:
+  # - Las imágenes se construyan correctamente
+  # - Los contenedores levanten sin errores
+  # - Los servicios respondan en sus puertos
+  # - Los healthchecks básicos pasen
+  # -----------------------------------------
+  docker-smoke:
+    name: Docker Infrastructure Smoke Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Docker images
+        run: docker compose build
+
+      - name: Start all services
+        run: docker compose up -d
+
+      - name: Wait for RabbitMQ
+        run: |
+          echo "Checking RabbitMQ management interface..."
+          for i in {1..30}; do
+            if curl -fsS http://localhost:15672 > /dev/null 2>&1; then
+              echo "✓ RabbitMQ management ready"
+              break
+            fi
+            sleep 2
+            if [ $i -eq 30 ]; then
+              echo "✗ RabbitMQ not ready after 60s"
+              docker compose logs rabbitmq
+              exit 1
+            fi
+          done
+
+      - name: Wait for usuario-service
+        run: |
+          echo "Checking usuario-service..."
+          for i in {1..30}; do
+            if curl -fsS http://localhost:8083/users > /dev/null; then
+              echo "✓ usuario-service ready"
+              break
+            fi
+            sleep 2
+            if [ $i -eq 30 ]; then
+              echo "✗ usuario-service not ready after 60s"
+              docker compose logs usuario-service
+              exit 1
+            fi
+          done
+
+      - name: Wait for pedido-service
+        run: |
+          echo "Checking pedido-service..."
+          for i in {1..30}; do
+            if curl -fsS http://localhost:8082/order/all > /dev/null; then
+              echo "✓ pedido-service ready"
+              break
+            fi
+            sleep 2
+            if [ $i -eq 30 ]; then
+              echo "✗ pedido-service not ready after 60s"
+              docker compose logs pedido-service
+              exit 1
+            fi
+          done
+
+      - name: Wait for frontend
+        run: |
+          echo "Checking frontend..."
+          for i in {1..30}; do
+            if curl -fsS http://localhost:3000 > /dev/null; then
+              echo "✓ frontend ready"
+              break
+            fi
+            sleep 2
+            if [ $i -eq 30 ]; then
+              echo "✗ frontend not ready after 60s"
+              docker compose logs frontend
+              exit 1
+            fi
+          done
+
+      - name: Verify basic endpoints
+        run: |
+          echo "Testing usuario-service /users endpoint"
+          curl -fsS http://localhost:8083/users || exit 1
+          
+          echo "Testing pedido-service /order/all endpoint"
+          curl -fsS http://localhost:8082/order/all || exit 1
+          
+          echo "✓ All services responding correctly"
+
+      - name: Show container status
+        if: always()
+        run: docker compose ps
+
+      - name: Show logs on failure
+        if: failure()
+        run: docker compose logs
+
+      - name: Shutdown services
+        if: always()
+        run: docker compose down -v
+
+  create-issue-on-failure:
+    name: Create Issue on Failure
+    needs: [docker-smoke]
+    if: failure()
+    uses: ./.github/workflows/create-issue-on-failure.yml
+    with:
+      test-type: 'docker-smoke'
+      service-name: 'infrastructure'
+      workflow-name: 'Docker Smoke Tests'

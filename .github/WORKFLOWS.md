@@ -14,11 +14,14 @@ Este proyecto utiliza GitHub Actions para ejecutar tests automáticos en tres ni
 - `ci-integration-component-usuario.yml` - Tests de integración del servicio de usuarios
 - `ci-integration-component-frontend.yml` - Tests de integración del frontend
 
+### Tests de Infraestructura Docker
+- `ci-docker-smoke.yml` - Smoke tests de infraestructura Docker (independiente)
+
 ### Tests de Integración de Servicios (E2E)
-- `ci-integration-services.yml` - Tests end-to-end del sistema completo
+- `ci-integration-services.yml` - Tests end-to-end de lógica de negocio entre servicios
 
 ### Pipeline Completo
-- `ci-full-pipeline.yml` - Orquesta todos los tests en 3 stages secuenciales
+- `ci-full-pipeline.yml` - Orquesta todos los tests en 4 stages secuenciales
 
 ### Creación de Issues
 - `create-issue-on-failure.yml` - Workflow reusable para crear issues cuando fallen tests
@@ -32,7 +35,7 @@ Cada workflow individual se ejecuta cuando:
 - Modificas archivos del servicio específico
 
 ### Pipeline Completo
-El pipeline completo (`ci-full-pipeline.yml`) ejecuta en 3 stages:
+El pipeline completo (`ci-full-pipeline.yml`) ejecuta en 4 stages:
 
 ```
 Stage 1: Unit Tests (paralelo)
@@ -45,9 +48,19 @@ Stage 2: Component Integration (paralelo)
   ├── integration-usuario (necesita unit-usuario)
   └── integration-frontend (necesita unit-frontend)
        ↓
-Stage 3: Service Integration
-  └── integration-services (necesita todos los anteriores)
+Stage 3: Docker Infrastructure
+  └── docker-smoke (necesita todos los component integration)
+       ↓
+Stage 4: E2E Service Integration
+  └── e2e-integration (necesita docker-smoke)
 ```
+
+### Ejecución Independiente de Workflows
+
+Cada workflow puede ejecutarse de forma independiente:
+- **Tests unitarios y de componentes**: No dependen de Docker
+- **Docker smoke tests**: Se ejecutan independientemente para validar cambios en Dockerfile o docker-compose.yml
+- **Tests E2E**: Se ejecutan cuando hay cambios en código de servicios o tests E2E
 
 ## 🐛 Sistema de Issues Automáticos
 
@@ -75,7 +88,8 @@ Solo los **workflows individuales** crean Issues cuando fallan:
 Los Issues se etiquetan según el tipo de test:
 - `unit-tests` - 🧪 Tests unitarios
 - `integration-tests` - 🔧 Tests de integración de componentes
-- `e2e-tests` - 🌐 Tests de integración de servicios
+- `docker-infrastructure` - 🐳 Tests de infraestructura Docker
+- `e2e-tests` - 🌐 Tests de integración de servicios (E2E)
 
 ### Extracción Automática de Errores
 El sistema extrae automáticamente las líneas relevantes de los logs que contienen:
@@ -188,7 +202,45 @@ permissions:
 Si los Issues no se crean, verifica que tu repositorio tenga habilitados los permisos de escritura para workflows en:
 `Settings` → `Actions` → `General` → `Workflow permissions`
 
-## 🔧 Personalización
+## � Separación: Docker Smoke vs E2E Integration
+
+### Docker Smoke Tests (`ci-docker-smoke.yml`)
+**Objetivo**: Validar que la infraestructura Docker funciona correctamente
+
+**Qué verifica:**
+- Las imágenes Docker se construyen sin errores
+- Los contenedores levantan correctamente
+- Los servicios responden en sus puertos esperados
+- Los healthchecks básicos pasan
+
+**Cuándo falla:**
+- Errores en Dockerfile o docker-compose.yml
+- Problemas de networking entre contenedores
+- Puertos mal configurados
+- Dependencias faltantes en imágenes
+
+**Se ejecuta independiente**: No depende de otros workflows, se puede correr solo cuando cambias configuración Docker
+
+### E2E Service Integration Tests (`ci-integration-services.yml`)
+**Objetivo**: Validar la lógica de negocio entre servicios
+
+**Qué verifica:**
+- Flujos completos de usuario (crear orden, consultar usuarios, etc.)
+- Comunicación RabbitMQ entre servicios
+- Integración frontend ↔ backends
+- Lógica de negocio end-to-end
+
+**Cuándo falla:**
+- Bugs en lógica de negocio
+- Problemas en APIs entre servicios
+- Errores en manejo de eventos RabbitMQ
+- Fallos en integración de datos
+
+**Asume**: Que Docker funciona (validado en docker-smoke)
+
+**En el pipeline completo**: Stage 3 (Docker) → Stage 4 (E2E) garantiza que primero validamos infraestructura antes de probar lógica de negocio.
+
+## �🔧 Personalización
 
 ### Agregar Nuevo Servicio
 1. Crea `ci-unit-[nuevo-servicio].yml` siguiendo el patrón de los existentes

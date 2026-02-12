@@ -45,6 +45,16 @@ jobs:
                 label: 'integration-tests',
                 description: 'Component Integration Tests'
               },
+              'docker-smoke': {
+                emoji: '🐳',
+                label: 'docker-infrastructure',
+                description: 'Docker Infrastructure Smoke Tests'
+              },
+              'e2e-tests': {
+                emoji: '🌐',
+                label: 'e2e-tests',
+                description: 'E2E Service Integration Tests'
+              },
               'integration-services': {
                 emoji: '🌐',
                 label: 'e2e-tests',
@@ -86,7 +96,9 @@ jobs:
               } else {
                 body += `   \`\`\`bash\n   cd Backend/${serviceName}-service\n   mvn verify\n   \`\`\`\n`;
               }
-            } else if (testType === 'integration-services') {
+            } else if (testType === 'docker-smoke') {
+              body += `   \`\`\`bash\n   docker compose build\n   docker compose up -d\n   # Check services manually\n   curl http://localhost:8083/users\n   curl http://localhost:8082/order/all\n   \`\`\`\n`;
+            } else if (testType === 'integration-services' || testType === 'e2e-tests') {
               body += `   \`\`\`bash\n   docker compose up -d\n   cd tests/e2e\n   npm test\n   \`\`\`\n`;
             }
             
