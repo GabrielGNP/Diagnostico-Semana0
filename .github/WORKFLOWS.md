@@ -51,31 +51,40 @@ Stage 3: Service Integration
 
 ## 🐛 Sistema de Issues Automáticos
 
-Cuando un test falla, se crea automáticamente un Issue con:
+Cuando un test falla en un workflow individual, se crea automáticamente un Issue con detalles del error.
 
-### Para el Pipeline Completo
-- **Título**: `CI Failed: X test group(s) failed`
-- **Contenido**:
-  - Resumen de qué tests fallaron (clasificados por categoría)
-  - Links a los logs del workflow
-  - Información del commit, branch y autor
-  - Tabla con el estado de todos los jobs
-  - Pasos sugeridos para resolver
-- **Labels**: `ci-failure`, `automated`
+### Workflows que Crean Issues
+Solo los **workflows individuales** crean Issues cuando fallan:
+- Tests unitarios (ci-unit-*.yml)
+- Tests de integración de componentes (ci-integration-component-*.yml)
+- Tests de integración de servicios (ci-integration-services.yml)
 
-### Para Workflows Individuales
+**Nota**: El workflow padre (`ci-full-pipeline.yml`) NO crea Issues para evitar duplicados. Solo los workflows específicos que fallan generan Issues.
+
+### Contenido de los Issues
 - **Título**: `[emoji] [Tipo de Test] Failed: [servicio]`
 - **Contenido**:
   - Información del servicio que falló
-  - Links a los logs
-  - Comandos específicos para ejecutar el test localmente
-  - Pasos sugeridos para resolver
-- **Labels**: `ci-failure`, `[tipo-test]`, `automated`
+  - Links a los logs completos del workflow
+  - Información del commit, branch y autor
+  - Comandos específicos para reproducir el test localmente
+  - Pasos sugeridos para resolver el problema
+- **Labels**: `bug`, `ci-failure`, `[tipo-test]`, `automated`
 
-Donde `[tipo-test]` puede ser:
+### Tipos de Tests
+Los Issues se etiquetan según el tipo de test:
 - `unit-tests` - 🧪 Tests unitarios
 - `integration-tests` - 🔧 Tests de integración de componentes
 - `e2e-tests` - 🌐 Tests de integración de servicios
+
+### Extracción Automática de Errores
+El sistema extrae automáticamente las líneas relevantes de los logs que contienen:
+- Errores de pruebas (FAILED, FAIL, ✖)
+- Excepciones (Exception:, Error:)
+- Aserciones fallidas (AssertionError)
+- Contexto (5 líneas antes y después del error)
+
+Esto permite identificar rápidamente el problema sin necesidad de revisar todos los logs.
 
 ## 📊 Ejemplo de Issue Creado
 
