@@ -1,20 +1,6 @@
 name: E2E Integration Tests - Service Level
 
 on:
-  push:
-    branches: [main, master, develop]
-    paths:
-      - 'Backend/**'
-      - 'Frontend/**'
-      - 'tests/e2e/**'
-      - '.github/workflows/ci-integration-services.yml'
-  pull_request:
-    branches: [main, master, develop]
-    paths:
-      - 'Backend/**'
-      - 'Frontend/**'
-      - 'tests/e2e/**'
-      - '.github/workflows/ci-integration-services.yml'
   workflow_call:
 
 jobs:

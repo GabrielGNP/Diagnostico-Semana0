@@ -1,16 +1,6 @@
 name: pedido-service - Unit Tests
 
 on:
-  push:
-    branches: [main, master, develop]
-    paths:
-      - 'Backend/pedido-service/**'
-      - '.github/workflows/ci-unit-pedido.yml'
-  pull_request:
-    branches: [main, master, develop]
-    paths:
-      - 'Backend/pedido-service/**'
-      - '.github/workflows/ci-unit-pedido.yml'
   workflow_call:
 
 jobs:

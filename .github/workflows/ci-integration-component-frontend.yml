@@ -1,16 +1,6 @@
 name: frontend - Component Integration Tests
 
 on:
-  push:
-    branches: [main, master, develop]
-    paths:
-      - 'Frontend/**'
-      - '.github/workflows/ci-integration-component-frontend.yml'
-  pull_request:
-    branches: [main, master, develop]
-    paths:
-      - 'Frontend/**'
-      - '.github/workflows/ci-integration-component-frontend.yml'
   workflow_call:
 
 jobs:

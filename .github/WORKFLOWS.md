@@ -15,7 +15,7 @@ Este proyecto utiliza GitHub Actions para ejecutar tests automáticos en tres ni
 - `ci-integration-component-frontend.yml` - Tests de integración del frontend
 
 ### Tests de Infraestructura Docker
-- `ci-docker-smoke.yml` - Smoke tests de infraestructura Docker (independiente)
+- `ci-docker-smoke.yml` - Smoke tests de infraestructura Docker
 
 ### Tests de Integración de Servicios (E2E)
 - `ci-integration-services.yml` - Tests end-to-end de lógica de negocio entre servicios
@@ -29,10 +29,8 @@ Este proyecto utiliza GitHub Actions para ejecutar tests automáticos en tres ni
 ## 🔄 Flujo de Ejecución
 
 ### Workflows Individuales
-Cada workflow individual se ejecuta cuando:
-- Haces push a `main`, `master` o `develop`
-- Creas un PR hacia esas ramas
-- Modificas archivos del servicio específico
+Los workflows individuales ya no tienen triggers de `push` o `pull_request` para evitar ejecuciones duplicadas.
+Se ejecutan solo cuando el pipeline completo los llama con `workflow_call`.
 
 ### Pipeline Completo
 El pipeline completo (`ci-full-pipeline.yml`) ejecuta en 4 stages:
@@ -55,12 +53,13 @@ Stage 4: E2E Service Integration
   └── e2e-integration (necesita docker-smoke)
 ```
 
-### Ejecución Independiente de Workflows
+### Ejecución de Workflows
 
-Cada workflow puede ejecutarse de forma independiente:
+La ejecución principal ocurre desde `ci-full-pipeline.yml`, que orquesta el orden y evita duplicados.
+Si necesitas ejecutar un workflow específico de forma manual, se puede agregar `workflow_dispatch`.
 - **Tests unitarios y de componentes**: No dependen de Docker
-- **Docker smoke tests**: Se ejecutan independientemente para validar cambios en Dockerfile o docker-compose.yml
-- **Tests E2E**: Se ejecutan cuando hay cambios en código de servicios o tests E2E
+- **Docker smoke tests**: Se ejecutan dentro del pipeline para validar la infraestructura
+- **Tests E2E**: Se ejecutan despues de Docker smoke para validar la logica de negocio
 
 ## 🐛 Sistema de Issues Automáticos
 
@@ -219,7 +218,7 @@ Si los Issues no se crean, verifica que tu repositorio tenga habilitados los per
 - Puertos mal configurados
 - Dependencias faltantes en imágenes
 
-**Se ejecuta independiente**: No depende de otros workflows, se puede correr solo cuando cambias configuración Docker
+**Se ejecuta en pipeline**: Se ejecuta desde `ci-full-pipeline.yml` para evitar duplicados. Si quieres correrlo manualmente, agrega `workflow_dispatch`.
 
 ### E2E Service Integration Tests (`ci-integration-services.yml`)
 **Objetivo**: Validar la lógica de negocio entre servicios
@@ -240,7 +239,7 @@ Si los Issues no se crean, verifica que tu repositorio tenga habilitados los per
 
 **En el pipeline completo**: Stage 3 (Docker) → Stage 4 (E2E) garantiza que primero validamos infraestructura antes de probar lógica de negocio.
 
-## �🔧 Personalización
+## ���🔧 Personalización
 
 ### Agregar Nuevo Servicio
 1. Crea `ci-unit-[nuevo-servicio].yml` siguiendo el patrón de los existentes

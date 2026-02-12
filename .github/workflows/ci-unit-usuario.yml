@@ -1,16 +1,6 @@
 name: usuario-service - Unit Tests
 
 on:
-  push:
-    branches: [main, master, develop]
-    paths:
-      - 'Backend/usuario-service/**'
-      - '.github/workflows/ci-unit-usuario.yml'
-  pull_request:
-    branches: [main, master, develop]
-    paths:
-      - 'Backend/usuario-service/**'
-      - '.github/workflows/ci-unit-usuario.yml'
   workflow_call:
 
 jobs:

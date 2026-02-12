@@ -1,16 +1,6 @@
 name: pedido-service - Component Integration Tests
 
 on:
-  push:
-    branches: [main, master, develop]
-    paths:
-      - 'Backend/pedido-service/**'
-      - '.github/workflows/ci-integration-component-pedido.yml'
-  pull_request:
-    branches: [main, master, develop]
-    paths:
-      - 'Backend/pedido-service/**'
-      - '.github/workflows/ci-integration-component-pedido.yml'
   workflow_call:
 
 jobs:

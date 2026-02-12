@@ -1,18 +1,6 @@
 name: Docker Smoke Tests
 
 on:
-  push:
-    branches: [main, master, develop]
-    paths:
-      - 'docker-compose.yml'
-      - '**/Dockerfile'
-      - '.github/workflows/ci-docker-smoke.yml'
-  pull_request:
-    branches: [main, master, develop]
-    paths:
-      - 'docker-compose.yml'
-      - '**/Dockerfile'
-      - '.github/workflows/ci-docker-smoke.yml'
   workflow_call:
 
 jobs:

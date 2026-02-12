@@ -1,16 +1,6 @@
 name: frontend - Unit Tests
 
 on:
-  push:
-    branches: [main, master, develop]
-    paths:
-      - 'Frontend/**'
-      - '.github/workflows/ci-unit-frontend.yml'
-  pull_request:
-    branches: [main, master, develop]
-    paths:
-      - 'Frontend/**'
-      - '.github/workflows/ci-unit-frontend.yml'
   workflow_call:
 
 jobs:
@@ -42,13 +32,3 @@ jobs:
         with:
           name: frontend-test-results
           path: Frontend/coverage/
-
-  create-issue-on-failure:
-    name: Create Issue on Failure
-    needs: [unit-tests]
-    if: failure()
-    uses: ./.github/workflows/create-issue-on-failure.yml
-    with:
-      test-type: 'unit'
-      service-name: 'frontend'
-      workflow-name: 'frontend - Unit Tests'
