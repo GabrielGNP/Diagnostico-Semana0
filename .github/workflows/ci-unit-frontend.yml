@@ -48,8 +48,6 @@ jobs:
     needs: [unit-tests]
     if: failure()
     uses: ./.github/workflows/create-issue-on-failure.yml
-    permissions:
-      issues: write
     with:
       test-type: 'unit'
       service-name: 'frontend'

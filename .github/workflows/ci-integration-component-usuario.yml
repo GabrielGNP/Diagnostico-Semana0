@@ -45,8 +45,6 @@ jobs:
     needs: [component-integration]
     if: failure()
     uses: ./.github/workflows/create-issue-on-failure.yml
-    permissions:
-      issues: write
     with:
       test-type: 'integration-component'
       service-name: 'usuario'

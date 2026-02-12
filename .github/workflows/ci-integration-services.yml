@@ -123,8 +123,6 @@ jobs:
     needs: [docker-compose-integration]
     if: failure()
     uses: ./.github/workflows/create-issue-on-failure.yml
-    permissions:
-      issues: write
     with:
       test-type: 'integration-services'
       service-name: 'all'

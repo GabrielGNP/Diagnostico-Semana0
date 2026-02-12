@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [main, master, develop]
 
+permissions:
+  issues: write
+
 jobs:
   # ============================================
   # STAGE 1: Unit Tests (en paralelo)
