@@ -1,0 +1,131 @@
+name: Integration Tests - Service Level
+
+on:
+  push:
+    branches: [main, master, develop]
+  pull_request:
+    branches: [main, master, develop]
+  workflow_call:
+
+jobs:
+  # -----------------------------------------
+  # Docker Compose: Smoke test de integración de servicios
+  # Levanta todos los servicios (RabbitMQ, usuario-service, pedido-service, frontend)
+  # y verifica que respondan correctamente
+  # -----------------------------------------
+  docker-compose-integration:
+    name: Docker Compose Smoke Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Docker images
+        run: docker compose build
+
+      - name: Start all services
+        run: docker compose up -d
+
+      - name: Wait for RabbitMQ
+        run: |
+          for i in {1..30}; do
+            if curl -fsS http://localhost:15672 > /dev/null 2>&1; then
+              echo "RabbitMQ management ready"
+              break
+            fi
+            sleep 2
+            if [ $i -eq 30 ]; then
+              echo "RabbitMQ not ready"
+              docker compose logs rabbitmq
+              exit 1
+            fi
+          done
+
+      - name: Wait for usuario-service
+        run: |
+          for i in {1..30}; do
+            if curl -fsS http://localhost:8083/users > /dev/null; then
+              echo "usuario-service ready"
+              break
+            fi
+            sleep 2
+            if [ $i -eq 30 ]; then
+              echo "usuario-service not ready"
+              docker compose logs usuario-service
+              exit 1
+            fi
+          done
+
+      - name: Wait for pedido-service
+        run: |
+          for i in {1..30}; do
+            if curl -fsS http://localhost:8082/order/all > /dev/null; then
+              echo "pedido-service ready"
+              break
+            fi
+            sleep 2
+            if [ $i -eq 30 ]; then
+              echo "pedido-service not ready"
+              docker compose logs pedido-service
+              exit 1
+            fi
+          done
+
+      - name: Wait for frontend
+        run: |
+          for i in {1..30}; do
+            if curl -fsS http://localhost:3000 > /dev/null; then
+              echo "frontend ready"
+              break
+            fi
+            sleep 2
+            if [ $i -eq 30 ]; then
+              echo "frontend not ready"
+              docker compose logs frontend
+              exit 1
+            fi
+          done
+
+      - name: Test basic service interaction
+        run: |
+          echo "Testing usuario-service endpoints"
+          curl -fsS http://localhost:8083/users || exit 1
+          
+          echo "Testing pedido-service endpoints"
+          curl -fsS http://localhost:8082/order/all || exit 1
+          
+          echo "All services responding correctly"
+
+      - name: Set up Node.js for E2E tests
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: tests/e2e/package.json
+
+      - name: Install E2E test dependencies
+        working-directory: tests/e2e
+        run: npm ci
+
+      - name: Run E2E integration tests
+        working-directory: tests/e2e
+        run: npm test
+
+      - name: Show logs on failure
+        if: failure()
+        run: docker compose logs
+
+      - name: Shutdown services
+        if: always()
+        run: docker compose down -v
+
+  create-issue-on-failure:
+    name: Create Issue on Failure
+    needs: [docker-compose-integration]
+    if: failure()
+    uses: ./.github/workflows/create-issue-on-failure.yml
+    permissions:
+      issues: write
+    with:
+      test-type: 'integration-services'
+      service-name: 'all'
+      workflow-name: 'Integration Tests - Service Level'

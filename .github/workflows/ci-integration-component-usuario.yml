@@ -1,0 +1,53 @@
+name: usuario-service - Component Integration Tests
+
+on:
+  push:
+    branches: [main, master, develop]
+    paths:
+      - 'Backend/usuario-service/**'
+      - '.github/workflows/ci-integration-component-usuario.yml'
+  pull_request:
+    branches: [main, master, develop]
+    paths:
+      - 'Backend/usuario-service/**'
+      - '.github/workflows/ci-integration-component-usuario.yml'
+  workflow_call:
+
+jobs:
+  component-integration:
+    name: Run Component Integration Tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Backend/usuario-service
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+          cache: 'maven'
+
+      - name: Run integration tests
+        run: mvn -B verify -DskipUnitTests
+
+      - name: Upload integration test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: usuario-component-integration-results
+          path: Backend/usuario-service/target/failsafe-reports/
+
+  create-issue-on-failure:
+    name: Create Issue on Failure
+    needs: [component-integration]
+    if: failure()
+    uses: ./.github/workflows/create-issue-on-failure.yml
+    permissions:
+      issues: write
+    with:
+      test-type: 'integration-component'
+      service-name: 'usuario'
+      workflow-name: 'usuario-service - Component Integration Tests'

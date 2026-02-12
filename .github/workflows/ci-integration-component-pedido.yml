@@ -1,0 +1,53 @@
+name: pedido-service - Component Integration Tests
+
+on:
+  push:
+    branches: [main, master, develop]
+    paths:
+      - 'Backend/pedido-service/**'
+      - '.github/workflows/ci-integration-component-pedido.yml'
+  pull_request:
+    branches: [main, master, develop]
+    paths:
+      - 'Backend/pedido-service/**'
+      - '.github/workflows/ci-integration-component-pedido.yml'
+  workflow_call:
+
+jobs:
+  component-integration:
+    name: Run Component Integration Tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Backend/pedido-service
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+          cache: 'maven'
+
+      - name: Run integration tests
+        run: mvn -B verify -DskipUnitTests
+
+      - name: Upload integration test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pedido-component-integration-results
+          path: Backend/pedido-service/target/failsafe-reports/
+
+  create-issue-on-failure:
+    name: Create Issue on Failure
+    needs: [component-integration]
+    if: failure()
+    uses: ./.github/workflows/create-issue-on-failure.yml
+    permissions:
+      issues: write
+    with:
+      test-type: 'integration-component'
+      service-name: 'pedido'
+      workflow-name: 'pedido-service - Component Integration Tests'
