@@ -5,6 +5,14 @@ export class ApiClient {
         this.baseUrl = baseUrl;
     }
 
+    private async buildError(response: Response, endpoint: string): Promise<Error> {
+        const text = await response.text().catch(() => "");
+        const detail = text ? ` - ${text}` : "";
+        return new Error(
+            `HTTP ${response.status} ${response.statusText} (${endpoint})${detail}`,
+        );
+    }
+
     async get<T>(endpoint: string): Promise<T> {
         const response = await fetch(`${this.baseUrl}${endpoint}`, {
             headers: {
@@ -13,7 +21,7 @@ export class ApiClient {
         });
 
         if (!response.ok) {
-            throw new Error(`Error en petición: ${response.statusText}`);
+            throw await this.buildError(response, endpoint);
         }
 
         return response.json();
@@ -29,7 +37,7 @@ export class ApiClient {
         });
 
         if (!response.ok) {
-            throw new Error(`Error en petición: ${response.statusText}`);
+            throw await this.buildError(response, endpoint);
         }
 
         return response.json();
