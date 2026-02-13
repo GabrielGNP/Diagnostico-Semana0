@@ -11,7 +11,6 @@ import com.example.pedidoservice.model.State;
 import com.example.pedidoservice.repository.OrderRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -25,6 +24,7 @@ public class OrderService {
     @Autowired
     private OrderMapper orderMapper;
 
+
     @Autowired
     private UserServiceProducer userServiceProducer;
 
@@ -32,6 +32,7 @@ public class OrderService {
     private UserServiceConsumer userServiceConsumer;
 
     private static final long USER_REQUEST_TIMEOUT = 3000; // 3 seconds timeout
+
 
     public OrderDto createOrder(OrderDto orderDto) {
         Order order = orderMapper.toEntity(orderDto);
@@ -67,6 +68,7 @@ public class OrderService {
                 .collect(Collectors.toList());
     }
 
+
     public OrderWithUserDto getOrderWithUserInfo(int orderId) {
         // Get the order first
         OrderDto orderDto = showOrderById(orderId);
@@ -98,6 +100,7 @@ public class OrderService {
         );
     }
 
+
     public List<OrderDto> listAllOrders() {
         return orderRepository.findAll().stream()
                 .map(orderMapper::toDto)
@@ -110,4 +113,3 @@ public class OrderService {
                 .orElse(null);
     }
 }
-
