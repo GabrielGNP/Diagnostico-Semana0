@@ -13,9 +13,9 @@ class UserRepositoryTest {
     private final String testFilePath = "test-users.json";
 
     @BeforeEach
-    void setUp() {
+    void setUp() throws Exception {
         // Usar un archivo temporal para pruebas
-        userRepository = new UserRepository(testFilePath);
+        userRepository = new UserRepository();
         // Limpiar archivo antes de cada test
         File file = new File(testFilePath);
         if (file.exists()) file.delete();
@@ -30,7 +30,7 @@ class UserRepositoryTest {
 
     @Test
     void testSaveUser() {
-        User user = new User(1, "Juan", "juan@mail.com");
+        User user = new User(1, "Juan", "password123", "juan@mail.com", true);
         userRepository.save(user);
         User found = userRepository.findById(1);
         assertNotNull(found);
@@ -39,7 +39,7 @@ class UserRepositoryTest {
 
     @Test
     void testFindById() {
-        User user = new User(2, "Ana", "ana@mail.com");
+        User user = new User(2, "Ana", "password123", "ana@mail.com", true);
         userRepository.save(user);
         User found = userRepository.findById(2);
         assertNotNull(found);
@@ -49,17 +49,18 @@ class UserRepositoryTest {
 
     @Test
     void testDeleteUser() {
-        User user = new User(3, "Luis", "luis@mail.com");
+        User user = new User(3, "Luis", "password123", "luis@mail.com", true);
         userRepository.save(user);
-        userRepository.delete(3);
+        userRepository.deleteById(3);
         assertNull(userRepository.findById(3));
     }
 
     @Test
     void testFindAllUsers() {
-        userRepository.save(new User(4, "Mario", "mario@mail.com"));
-        userRepository.save(new User(5, "Lucia", "lucia@mail.com"));
-        List<User> users = userRepository.findAll();
+        userRepository.save(new User(4, "Mario", "password123", "mario@mail.com", true));
+        userRepository.save(new User(5, "Lucia", "password123", "lucia@mail.com", true));
+        Collection<User> usersCol = userRepository.findAll();
+        List<User> users = new ArrayList<>(usersCol);
         assertEquals(2, users.size());
         Set<String> names = new HashSet<>();
         for (User u : users) names.add(u.getName());
