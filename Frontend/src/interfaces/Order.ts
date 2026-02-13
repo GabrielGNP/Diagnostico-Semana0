@@ -1,18 +1,7 @@
-export interface IOrder {
-  id: number;
-  name: string;
-  description: string;
-  userId: number;
-  state: state;
-  active: boolean;
-}
+// DEPRECATED: moved to `src/interfaces/index.ts` — use `Pedido` and `OrderState` from there as source of truth.
+// This file kept as a compatibility shim for a short transition period.
 
-export enum state {
-  PROCESSING = "PROCESANDO",
-  TRAVELINGTOWAREHOUSE = "VIAJANDO AL DEPOSITO",
-  IN_WAREHOUSE = "EN DEPOSITO",
-  TRAVELINGTOYOURHOUSE = "VIAJANDO A TU CASA",
-  ONTHESTREET = "EN CAMINO",
-  DELIVERED = "ENTREGADO",
-  CANCELED = "CANCELADO",
-}
+import { Pedido, OrderState } from "./index";
+
+export type IOrder = Pedido;
+export { OrderState as state };
