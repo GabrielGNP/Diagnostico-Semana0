@@ -46,4 +46,10 @@
   "password" : "12345678",
   "mail" : "no-existo@sofka.arg",
   "active" : true
+}, {
+  "id" : 9,
+  "name" : "Clara",
+  "password" : "12345678",
+  "mail" : "clara@example.com",
+  "active" : true
 } ]
