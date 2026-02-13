@@ -1,0 +1,67 @@
+name: E2E Integration Tests - Service Level
+
+on:
+  workflow_call:
+
+jobs:
+  # -----------------------------------------
+  # E2E Integration Tests
+  # Prueba flujos completos de negocio entre servicios
+  # Asume que Docker funciona (validado en ci-docker-smoke.yml)
+  # -----------------------------------------
+  e2e-tests:
+    name: E2E Service Integration Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build and start all services
+        run: |
+          docker compose build
+          docker compose up -d
+
+      - name: Wait for services to be ready
+        run: |
+          echo "Waiting for all services to be ready..."
+          sleep 30
+          
+          # Quick healthchecks
+          curl -fsS http://localhost:15672 > /dev/null 2>&1 || (echo "RabbitMQ not ready" && exit 1)
+          curl -fsS http://localhost:8083/users > /dev/null || (echo "usuario-service not ready" && exit 1)
+          curl -fsS http://localhost:8082/order/all > /dev/null || (echo "pedido-service not ready" && exit 1)
+          curl -fsS http://localhost:3000 > /dev/null || (echo "frontend not ready" && exit 1)
+          
+          echo "✓ All services ready"
+
+      - name: Set up Node.js for E2E tests
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: tests/e2e/package.json
+
+      - name: Install E2E test dependencies
+        working-directory: tests/e2e
+        run: npm ci
+
+      - name: Run E2E integration tests
+        working-directory: tests/e2e
+        run: npm test
+
+      - name: Show logs on failure
+        if: failure()
+        run: docker compose logs
+
+      - name: Shutdown services
+        if: always()
+        run: docker compose down -v
+
+  create-issue-on-failure:
+    name: Create Issue on Failure
+    needs: [e2e-tests]
+    if: failure()
+    uses: ./.github/workflows/create-issue-on-failure.yml
+    with:
+      test-type: 'e2e-tests'
+      service-name: 'all-services'
+      workflow-name: 'E2E Integration Tests - Service Level'

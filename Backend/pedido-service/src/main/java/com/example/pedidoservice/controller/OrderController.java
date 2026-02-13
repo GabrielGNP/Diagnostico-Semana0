@@ -39,6 +39,7 @@ public class OrderController {
         }
     }
 
+
     @GetMapping("/{id}/with-user-info")
     public ResponseEntity<OrderWithUserDto> getOrderWithUserInfo(@PathVariable("id") int id) {
         try{
@@ -53,6 +54,7 @@ public class OrderController {
             return ResponseEntity.status(500).build();
         }
     }
+
 
     @GetMapping("/user/{idUser}")
     public ResponseEntity<List<OrderDto>> listOrdersByIdUser(@PathVariable("idUser") int idUser) {

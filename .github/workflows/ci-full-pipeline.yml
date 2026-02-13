@@ -1,0 +1,60 @@
+name: Full CI Pipeline
+
+on:
+  push:
+    branches: [main, master, develop]
+  pull_request:
+    branches: [main, master, develop]
+
+permissions:
+  issues: write
+
+jobs:
+  # ============================================
+  # STAGE 1: Unit Tests (en paralelo)
+  # ============================================
+  unit-pedido:
+    name: Pedido Unit Tests
+    uses: ./.github/workflows/ci-unit-pedido.yml
+
+  unit-usuario:
+    name: Usuario Unit Tests
+    uses: ./.github/workflows/ci-unit-usuario.yml
+
+  unit-frontend:
+    name: Frontend Unit Tests
+    uses: ./.github/workflows/ci-unit-frontend.yml
+
+  # ============================================
+  # STAGE 2: Component Integration (en paralelo, necesita unitarios)
+  # ============================================
+  integration-pedido:
+    name: Pedido Component Integration
+    needs: [unit-pedido]
+    uses: ./.github/workflows/ci-integration-component-pedido.yml
+
+  integration-usuario:
+    name: Usuario Component Integration
+    needs: [unit-usuario]
+    uses: ./.github/workflows/ci-integration-component-usuario.yml
+
+  integration-frontend:
+    name: Frontend Component Integration
+    needs: [unit-frontend]
+    uses: ./.github/workflows/ci-integration-component-frontend.yml
+
+  # ============================================
+  # STAGE 3: Docker Infrastructure (necesita unitarios para validar que el código es estable antes de construir imágenes)
+  # ============================================
+  docker-smoke:
+    name: Docker Smoke Tests
+    needs: [unit-frontend, unit-pedido, unit-usuario]
+    uses: ./.github/workflows/ci-docker-smoke.yml
+
+  # ============================================
+  # STAGE 4: E2E Service Integration (necesita Docker funcionando)
+  # ============================================
+  e2e-integration:
+    name: E2E Service Integration
+    needs: [docker-smoke, integration-pedido, integration-usuario, integration-frontend]
+    uses: ./.github/workflows/ci-integration-services.yml

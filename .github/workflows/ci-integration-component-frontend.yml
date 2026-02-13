@@ -1,0 +1,44 @@
+name: frontend - Component Integration Tests
+
+on:
+  workflow_call:
+
+jobs:
+  component-integration:
+    name: Run Component Integration Tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: Frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run integration tests
+        run: npm run test:integration
+
+      - name: Upload integration test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-component-integration-results
+          path: Frontend/coverage/
+
+  create-issue-on-failure:
+    name: Create Issue on Failure
+    needs: [component-integration]
+    if: failure()
+    uses: ./.github/workflows/create-issue-on-failure.yml
+    with:
+      test-type: 'integration-component'
+      service-name: 'frontend'
+      workflow-name: 'frontend - Component Integration Tests'
