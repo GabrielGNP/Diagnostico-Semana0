@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Mail, Lock, Eye, EyeOff } from "lucide-react";
+import { addUser } from "../services/usuarioService";
 
 interface FormData {
   nombre: string;
@@ -27,22 +28,12 @@ const AddUser: React.FC = () => {
     setError(null);
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_APIUSER}/user/add`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name: formData.nombre,
-          mail: formData.email,
-          password: formData.password,
-          active: true,
-        }),
+      await addUser({
+        name: formData.nombre,
+        mail: formData.email,
+        password: formData.password,
+        active: true,
       });
-
-      if (!response.ok) {
-        throw new Error("Error al crear el usuario");
-      }
 
       console.log("Usuario creado exitosamente");
       navigate("/");

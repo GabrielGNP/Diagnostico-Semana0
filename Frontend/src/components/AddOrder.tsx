@@ -1,6 +1,9 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Mail, ArrowRight } from "lucide-react";
+import { OrderState } from "../interfaces";
+import { addOrder } from "../services/pedidoService";
+import { getUserByEmail } from "../services/usuarioService";
 
 interface FormData {
   email: string;
@@ -28,39 +31,16 @@ const AddOrder: React.FC = () => {
     setError(null);
 
     try {
-      const userResponse = await fetch(
-        `${import.meta.env.VITE_APIUSER}/user/${formData.email}`,
-      );
+      const userData = await getUserByEmail(formData.email);
 
-      let idUser: number;
-      if (userResponse.ok) {
-        const userData = await userResponse.json();
-        idUser = userData.id;
-      } else {
-        throw new Error("Usuario no encontrado. Verifica el email.");
-      }
-
-      const response = await fetch(
-        `${import.meta.env.VITE_APIORDER}/order/add`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            id: 0,
-            name: formData.producto,
-            description: formData.notas || formData.producto,
-            idUser: idUser,
-            state: "PROCESSING",
-            active: true,
-          }),
-        },
-      );
-
-      if (!response.ok) {
-        throw new Error("Error al crear el pedido");
-      }
+      await addOrder({
+        id: 0,
+        name: formData.producto,
+        description: formData.notas || formData.producto,
+        idUser: userData.id,
+        state: OrderState.PROCESSING,
+        active: true,
+      });
 
       console.log("Pedido creado exitosamente");
       navigate("/");

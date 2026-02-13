@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { getUsers } from "../usuarioService";
+import { addUser, getUserByEmail, getUsers } from "../usuarioService";
 
 const globalAny: any = global;
 
@@ -23,5 +23,21 @@ describe("usuarioService", () => {
   it("propaga error cuando fetch devuelve non-ok", async () => {
     globalAny.fetch.mockResolvedValue({ ok: false, status: 500, statusText: "err", text: () => Promise.resolve("boom") });
     await expect(getUsers()).rejects.toThrow();
+  });
+
+  it("getUserByEmail devuelve el usuario", async () => {
+    const mockUser = { id: 9, name: "Leo", mail: "leo@x.com", active: true };
+    globalAny.fetch.mockResolvedValue({ ok: true, json: () => Promise.resolve(mockUser) });
+
+    const res = await getUserByEmail("leo@x.com");
+    expect(res).toEqual(mockUser);
+  });
+
+  it("addUser crea usuario y retorna respuesta", async () => {
+    const mockUser = { id: 10, name: "Mia", mail: "mia@x.com", active: true };
+    globalAny.fetch.mockResolvedValue({ ok: true, json: () => Promise.resolve(mockUser) });
+
+    const res = await addUser({ name: "Mia", mail: "mia@x.com", password: "12345678", active: true });
+    expect(res).toEqual(mockUser);
   });
 });
