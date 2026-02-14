@@ -23,29 +23,29 @@ services:
   #   networks:
   #     - microservicios-network
 
-  pedido-service:
-    build: ./Backend/pedido-service
-    ports:
-      - "8082:8080"
-    environment:
-      - SPRING_RABBITMQ_HOST=rabbitmq
-      - ORDERS_FILE=/data/orders.json
-    volumes:
-      - ./Backend/data:/data
-    # depends_on:
-    #   - rabbitmq
-    networks:
-      - microservicios-network
-
-  # frontend:
-  #   build: ./Frontend
+  # pedido-service:
+  #   build: ./Backend/pedido-service
   #   ports:
-  #     - "3000:80"
+  #     - "8082:8080"
+  #   environment:
+  #     - SPRING_RABBITMQ_HOST=rabbitmq
+  #     - ORDERS_FILE=/data/orders.json
+  #   volumes:
+  #     - ./Backend/data:/data
   #   depends_on:
-  #     - usuario-service
-  #     - pedido-service
+  #     - rabbitmq
   #   networks:
   #     - microservicios-network
+
+  frontend:
+    build: ./Frontend
+    ports:
+      - "3000:80"
+    # depends_on:
+    #   - usuario-service
+    #   - pedido-service
+    networks:
+      - microservicios-network
 
 networks:
   microservicios-network:

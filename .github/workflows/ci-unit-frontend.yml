@@ -26,6 +26,7 @@ jobs:
         run: |
           rm -rf node_modules package-lock.json
           npm install
+          npm install --no-save @rollup/rollup-linux-x64-gnu@4.57.1
 
       - name: Run unit tests
         run: npm run test

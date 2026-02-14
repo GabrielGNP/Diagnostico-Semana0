@@ -7,7 +7,7 @@ COPY . .
 # Ejecutar tests primero - si fallan, la construcción se detiene
 RUN mvn -B test
 # Si los tests pasan, construir el proyecto
-# RUN mvn -B clean package -DskipTests
+RUN mvn -B clean package -DskipTests
 
 FROM eclipse-temurin:21-alpine
 WORKDIR /app

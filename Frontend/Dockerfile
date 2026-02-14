@@ -1,11 +1,12 @@
 # Dockerfile for Frontend
 
 # Stage 1: Build
-FROM node:18-alpine AS builder
+FROM node:20-slim AS builder
 WORKDIR /app
 COPY package.json package-lock.json ./
 # Instalación estándar de dependencias (npm install) para compatibilidad
 RUN npm install
+RUN npm install --no-save @rollup/rollup-linux-x64-gnu@4.57.1
 COPY . .
 # Ejecutar tests; si fallan, la construcción se detiene
 RUN npm run test

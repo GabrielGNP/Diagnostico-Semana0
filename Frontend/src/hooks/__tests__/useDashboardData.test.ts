@@ -3,6 +3,7 @@ import { renderHook, waitFor } from "@testing-library/react";
 import { useDashboardData } from "../useDashboardData";
 import { getUsers } from "../../services/usuarioService";
 import { getOrders } from "../../services/pedidoService";
+import { OrderState } from "../../interfaces";
 
 vi.mock("../../services/usuarioService", () => ({
   getUsers: vi.fn(),
@@ -27,7 +28,7 @@ describe("useDashboardData", () => {
         name: "P1",
         description: "x",
         idUser: 1,
-        state: "PROCESSING",
+        state: OrderState.PROCESSING,
         active: true,
       },
       {
@@ -35,7 +36,7 @@ describe("useDashboardData", () => {
         name: "P2",
         description: "y",
         idUser: 1,
-        state: "PROCESSING",
+        state: OrderState.PROCESSING,
         active: false,
       },
     ]);
