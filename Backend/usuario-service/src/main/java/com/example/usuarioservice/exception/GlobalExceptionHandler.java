@@ -1,5 +1,6 @@
 package com.example.usuarioservice.exception;
 
+import com.example.usuarioservice.validation.ValidationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -52,6 +53,23 @@ public class GlobalExceptionHandler {
             .build();
         
         return new ResponseEntity<>(error, HttpStatus.CONFLICT);
+    }
+    
+    @ExceptionHandler(ValidationException.class)
+    public ResponseEntity<ErrorResponse> handleValidationException(
+            ValidationException e, WebRequest request) {
+        
+        log.warn("Error de validación de negocio: {}", e.getMessage());
+        
+        ErrorResponse error = ErrorResponse.builder()
+            .timestamp(LocalDateTime.now())
+            .status(HttpStatus.BAD_REQUEST.value())
+            .error("Error de validación")
+            .message(e.getMessage())
+            .path(request.getDescription(false).replace("uri=", ""))
+            .build();
+        
+        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
     
     @ExceptionHandler(MethodArgumentNotValidException.class)

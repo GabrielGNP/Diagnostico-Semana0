@@ -438,6 +438,84 @@ public IUserPersistence userPersistence(JsonUserPersistence json) {
 
 ### 1. Strategy Pattern (Para Validación de Usuarios)
 
+#### ✅ IMPLEMENTACIÓN REALIZADA
+
+El patrón Strategy ha sido implementado exitosamente para manejar diferentes estrategias de validación de usuarios según el contexto.
+
+**Archivos Creados:**
+
+1. **`validation/IValidationStrategy.java`**
+   - Interfaz base del patrón Strategy
+   - Define métodos `validateForCreation()` y `validateForUpdate()`
+   - Permite agregar nuevas estrategias sin modificar código existente
+
+2. **`validation/StrictValidationStrategy.java`** (@Component("STRICT"))
+   - Estrategia de validación estricta para administradores
+   - Contraseña: mínimo 12 caracteres, caracteres especiales obligatorios
+   - Validación de dominios de email
+   - Verifica contraseñas comunes
+   - Nombre: mínimo 3 caracteres sin espacios al inicio/final
+
+3. **`validation/LenientValidationStrategy.java`** (@Component("LENIENT"))
+   - Estrategia de validación leniente para usuarios normales
+   - Contraseña: mínimo 8 caracteres
+   - Validación básica sin caracteres especiales obligatorios
+   - Nombre: mínimo 2 caracteres
+   - Más flexible para no frustrar al usuario
+
+4. **`validation/ValidationContext.java`**
+   - Contexto que orquesta las estrategias (patrón Context)
+   - Inyección automática de todas las estrategias mediante Map
+   - Enum `ValidationStrategyType` para type-safety
+   - Selección dinámica de estrategia en runtime
+   - Métodos: `validateForCreation()`, `validateForUpdate()`
+
+5. **`validation/ValidationException.java`**
+   - Excepción personalizada para errores de validación de negocio
+   - Se diferencia de las validaciones de anotaciones (@NotBlank, etc.)
+
+**Archivos Modificados:**
+
+6. **`service/UsuarioService.java`**
+   - Agregado `private final ValidationContext validationContext;`
+   - Método `crear()`: Llama a `validationContext.validateForCreation(request, LENIENT)`
+   - Método `actualizar()`: Llama a `validationContext.validateForUpdate(request, LENIENT)`
+   - Documentación actualizada para reflejar el uso del Strategy Pattern
+
+7. **`exception/GlobalExceptionHandler.java`**
+   - Agregado `@ExceptionHandler(ValidationException.class)`
+   - Retorna HTTP 400 BAD_REQUEST con mensaje descriptivo
+   - Logging de errores de validación de negocio
+
+**Características Implementadas:**
+
+- ✅ **Desacoplamiento:** UsuarioService no conoce las estrategias concretas
+- ✅ **Open/Closed:** Agregar nuevas estrategias sin modificar código existente
+- ✅ **Runtime flexibility:** Cambiar estrategia dinámicamente según contexto
+- ✅ **Single Responsibility:** Cada estrategia tiene una responsabilidad única
+- ✅ **Testabilidad:** Cada estrategia se puede testear independientemente
+- ✅ **Reutilización:** Las estrategias son reutilizables en otros contextos
+- ✅ **Type-safe:** Uso de enum en lugar de strings para evitar errores
+
+**Ejemplo de Uso:**
+
+```java
+// En UsuarioService - validación leniente para usuarios normales
+validationContext.validateForCreation(request, ValidationStrategyType.LENIENT);
+
+// Para admin se podría usar (ejemplo futuro):
+validationContext.validateForCreation(request, ValidationStrategyType.STRICT);
+```
+
+**Ventaja Clave:** Agregar una nueva estrategia (ej: "MODERATE") solo requiere:
+1. Crear clase que implemente `IValidationStrategy`
+2. Anotar con `@Component("MODERATE")`
+3. Agregar valor al enum `ValidationStrategyType`
+
+**NO requiere** modificar UsuarioService ni ValidationContext.
+
+---
+
 #### ¿Dónde se implementa?
 
 Diferentes estrategias de validación según el tipo de usuario
@@ -565,357 +643,7 @@ public User crear(CreateUsuarioRequest request, User.Type validationType) {
 
 ---
 
-### 2. Observer Pattern (Para Eventos de Usuario)
 
-#### ¿Dónde se implementa?
-
-Publicar eventos cuando ocurren cambios en usuarios
-
-```
-events/
-├── IUsuarioEvent.java (NUEVO)
-├── UsuarioCreatedEvent.java (NUEVO)
-├── UsuarioUpdatedEvent.java (NUEVO)
-├── UsuarioDeletedEvent.java (NUEVO)
-│
-├── IUsuarioEventListener.java (NUEVO)
-├── EmailNotificationListener.java (NUEVO)
-├── AuditListener.java (NUEVO)
-└── AnalyticsListener.java (NUEVO)
-
-service/
-└── UsuarioEventPublisher.java (NUEVO)
-```
-
-#### ANTES (Sin Observer - Acoplamiento):
-
-```java
-// En UsuarioService - acoplado a todas las dependencias
-@Service
-public class UsuarioService {
-    
-    @Autowired
-    private EmailService emailService;
-    @Autowired
-    private AuditService auditService;
-    @Autowired
-    private AnalyticsService analyticsService;
-    @Autowired
-    private SlackService slackService;
-    
-    public User crear(CreateUsuarioRequest request) {
-        User usuario = crearYGuardar(request);
-        
-        // ❌ UsuarioService acoplado a todos los servicios
-        emailService.sendWelcomeEmail(usuario);
-        auditService.logCreation(usuario);
-        analyticsService.recordCreation(usuario);
-        slackService.notifyNewUser(usuario);
-        
-        // ❌ Agregar notificación de SMS = cambiar aquí
-        // ❌ Agregar post a Twitter = cambiar aquí
-        // ❌ Cambio en Email = cambiar aquí
-    }
-}
-```
-
-**Problemas:**
-- ❌ UsuarioService acoplado a múltiples servicios
-- ❌ Agregar listener requiere cambiar UsuarioService
-- ❌ Si Email falla, toda la creación falla
-- ❌ Difícil testear (múltiples dependencias)
-
-#### DESPUÉS (Observer Pattern):
-
-```java
-// Evento (datos puros)
-public class UsuarioCreatedEvent {
-    public final User user;
-    public UsuarioCreatedEvent(User user) {
-        this.user = user;
-    }
-}
-
-// Listeners (observadores)
-public interface IUsuarioEventListener {
-    void onUsuarioCreated(UsuarioCreatedEvent event);
-}
-
-@Component
-public class EmailNotificationListener implements IUsuarioEventListener {
-    @Override
-    public void onUsuarioCreated(UsuarioCreatedEvent event) {
-        // Enviar email
-    }
-}
-
-@Component
-public class AuditListener implements IUsuarioEventListener {
-    @Override
-    public void onUsuarioCreated(UsuarioCreatedEvent event) {
-        // Log de auditoría
-    }
-}
-
-@Component
-public class AnalyticsListener implements IUsuarioEventListener {
-    @Override
-    public void onUsuarioCreated(UsuarioCreatedEvent event) {
-        // Enviar a analytics
-    }
-}
-
-// Publisher (sujeto observado)
-@Component
-public class UsuarioEventPublisher {
-    
-    @Autowired
-    private List<IUsuarioEventListener> listeners;
-    
-    public void publishUsuarioCreated(User user) {
-        UsuarioCreatedEvent event = new UsuarioCreatedEvent(user);
-        listeners.forEach(listener -> listener.onUsuarioCreated(event));
-        // ✅ Notifica a todos los observadores
-    }
-}
-
-// En UsuarioService - desacoplado
-@Service
-public class UsuarioService {
-    
-    @Autowired
-    private UsuarioEventPublisher eventPublisher;
-    
-    public User crear(CreateUsuarioRequest request) {
-        User usuario = crearYGuardar(request);
-        
-        eventPublisher.publishUsuarioCreated(usuario);
-        // ✅ Una línea, desacoplado
-        
-        return usuario;
-    }
-}
-```
-
-**Beneficios:**
-- ✅ Agregar listener no requiere cambiar UsuarioService
-- ✅ Listeners independientes (si Email falla, Auditoria funciona)
-- ✅ Fácil testear (inyectar listeners mock)
-- ✅ Escalable - agregar observadores dinámicamente
-
-#### Justificación Técnica:
-
-| Aspecto | Sin Observer | Con Observer |
-|--------|-----------|------------|
-| **Agregar notificación** | Cambiar UsuarioService | Crear Listener |
-| **UsuarioService** | 50+ líneas | 10 líneas |
-| **Acoplamiento** | Alto (N servicios) | Bajo (1 publisher) |
-| **Testeo** | Complejidad O(n) | O(1) |
-| **Independencia** | Fallo en cascada | Fallo aislado |
-
-**Por qué es mejor:**
-- 🎯 **Inversión de Control:** UsuarioService no controla qué listeners existen
-- 🎯 **Loose Coupling:** No conoce los listeners
-- 🎯 **Escalabilidad:** Agregar 100 listeners sin cambiar nada
-
----
-
-### 3. State Pattern (Para Ciclo de Vida de Usuario)
-
-#### ¿Dónde se implementa?
-
-Gestionar estados y transiciones de usuario
-
-```
-model/
-├── User.java (refactorizado con State)
-└── UserState.java (NUEVO - Interfaz)
-
-state/
-├── IUserState.java (NUEVO)
-├── InactiveUserState.java (NUEVO)
-├── ActiveUserState.java (NUEVO)
-├── VerifiedUserState.java (NUEVO)
-└── UserStateContext.java (NUEVO)
-```
-
-#### ANTES (Sin State - lógica condicional):
-
-```java
-public class User {
-    private Integer id;
-    private String name;
-    private String mail;
-    private String password;
-    private boolean active;
-    
-    // ❌ Lógica de estado esparcida
-    public void activate() {
-        if (!active) {
-            this.active = true;
-        }
-    }
-    
-    public void deactivate() {
-        if (active) {
-            this.active = false;
-        }
-    }
-    
-    // ❌ Más adelante: agregar verificación de email
-    // ❌ Y roles
-    // ❌ Y suspensión
-    // El Usuario se llena de métodos y lógica
-}
-
-// En UsuarioService
-public User crearYGuardar(CreateUsuarioRequest request) {
-    User user = new User();
-    // ... setear campos
-    
-    if (user.isActive()) {
-        // hacer algo
-    } else if (user.isPending()) {  // ❌ nuevo campo
-        // hacer otra cosa
-    } else if (user.isSuspended()) {  // ❌ otro nuevo campo
-        // hacer tercera cosa
-    }
-    // ❌ Lógica condicional complicada
-}
-```
-
-**Problemas:**
-- ❌ Lógica de estado esparcida en muchas clases
-- ❌ Difícil agregar nuevos estados
-- ❌ User se llena de métodos
-- ❌ Condicionales complejos
-
-#### DESPUÉS (State Pattern):
-
-```java
-// Interfaz de estado
-public interface IUserState {
-    void activate(UserStateContext context);
-    void deactivate(UserStateContext context);
-    void verify(UserStateContext context);
-    String getName();
-}
-
-// Estado: Usuario Inactivo
-public class InactiveUserState implements IUserState {
-    @Override
-    public void activate(UserStateContext context) {
-        context.setState(new ActiveUserState());
-        // ✅ Transición válida
-    }
-    
-    @Override
-    public void deactivate(UserStateContext context) {
-        throw new InvalidStateTransitionException("Ya está inactivo");
-    }
-    
-    @Override
-    public void verify(UserStateContext context) {
-        throw new InvalidStateTransitionException("No se puede verificar usuario inactivo");
-    }
-    
-    @Override
-    public String getName() {
-        return "INACTIVE";
-    }
-}
-
-// Estado: Usuario Activo
-public class ActiveUserState implements IUserState {
-    @Override
-    public void activate(UserStateContext context) {
-        throw new InvalidStateTransitionException("Ya está activo");
-    }
-    
-    @Override
-    public void deactivate(UserStateContext context) {
-        context.setState(new InactiveUserState());
-    }
-    
-    @Override
-    public void verify(UserStateContext context) {
-        context.setState(new VerifiedUserState());
-    }
-}
-
-// Estado: Usuario Verificado
-public class VerifiedUserState implements IUserState {
-    // ... implementación
-}
-
-// Contexto que maneja el estado
-public class UserStateContext {
-    private IUserState currentState;
-    
-    public UserStateContext() {
-        this.currentState = new InactiveUserState();
-    }
-    
-    public void activate() {
-        currentState.activate(this);  // ✅ Delega al estado actual
-    }
-    
-    public void deactivate() {
-        currentState.deactivate(this);
-    }
-    
-    public void verify() {
-        currentState.verify(this);
-    }
-    
-    public void setState(IUserState state) {
-        this.currentState = state;
-    }
-    
-    public String getStateName() {
-        return currentState.getName();
-    }
-}
-
-// En User
-public class User {
-    private UserStateContext stateContext;
-    
-    public User() {
-        this.stateContext = new UserStateContext();
-    }
-    
-    public void activate() {
-        stateContext.activate();  // ✅ Delega
-    }
-    
-    public void deactivate() {
-        stateContext.deactivate();
-    }
-}
-```
-
-**Beneficios:**
-- ✅ Lógica de estado centralizada en clases de estado
-- ✅ Agregar nuevo estado = crear clase (sin modificar existentes)
-- ✅ Transiciones validadas por el estado actual
-- ✅ User limpio, solo delega
-
-#### Justificación Técnica:
-
-| Aspecto | Sin State | Con State |
-|--------|---------|---------|
-| **Agregar estado** | Cambiar User + servicios | Crear clase de estado |
-| **Validar transición** | Condicionales | Estado valida |
-| **User** | Confuso, 100+ líneas | Limpio, 30 líneas |
-| **Reutilización** | Baja | Alta |
-
-**Por qué es mejor:**
-- 🎯 **Encapsulación:** Cada estado encapsula su lógica
-- 🎯 **Open/Closed:** Abierto a nuevos estados
-- 🎯 **Clarity:** Lógica clara y validada
-
----
 
 ## 🏆 ARQUITECTURA BIEN IMPLEMENTADA
 
@@ -1099,9 +827,7 @@ logging.level.com.example.usuarioservice=DEBUG
 | **Builder** | DTOs | Construcción fluida | Ya implementado | ✅ Implementado |
 | **Singleton** | Configs | Una instancia | Ya implementado | ✅ Implementado |
 | **Decorator** | CachedPersistence | Agregar funcionalidad | Caché sin modificar Repo | ✅ Implementado |
-| **Strategy** | ValidationStrategy | Múltiples validaciones | Cambiar validación en runtime | ⬜ Pendiente |
-| **Observer** | EventPublisher | Notificaciones | Listeners independientes | ⬜ Pendiente |
-| **State** | UserState | Ciclo de vida | Transiciones validadas | ⬜ Pendiente |
+| **Strategy** | ValidationStrategy | Múltiples validaciones | Cambiar validación en runtime | ✅ Implementado |
 
 ### Arquitectura Implementada Correctamente
 
@@ -1130,22 +856,15 @@ logging.level.com.example.usuarioservice=DEBUG
    - Configurable desde application.properties
    - Mejora de rendimiento: O(n) → O(1)
 
-### ⬜ Fase 2: Patrones de Comportamiento (Pendiente)
+### ✅ Fase 2: COMPLETADA - Patrones de Comportamiento
 
-1. Strategy Pattern
-   - ValidationStrategy interface
-   - Diferentes estrategias de validación (strict, lenient)
-   - Validación dinámica según tipo de usuario
-
-2. Observer Pattern
-   - UsuarioEventPublisher
-   - Event listeners desacoplados
-   - Notificaciones y auditoría mediante eventos
-
-3. State Pattern
-   - UserStateContext
-   - Estados del ciclo de vida de usuario (inactive, active, verified)
-   - Transiciones validadas entre estados
+1. ✅ Strategy Pattern
+   - IValidationStrategy interface implementada
+   - StrictValidationStrategy (contraseña 12+ chars, especiales obligatorios)
+   - LenientValidationStrategy (contraseña 8+ chars, básica)
+   - ValidationContext con selección dinámica de estrategia
+   - Integrado en UsuarioService para crear() y actualizar()
+   - ValidationException con manejo en GlobalExceptionHandler
 
 ---
 

@@ -6,6 +6,8 @@ import com.example.usuarioservice.exception.UsuarioNotFoundException;
 import com.example.usuarioservice.exception.UsuarioYaExisteException;
 import com.example.usuarioservice.model.User;
 import com.example.usuarioservice.persistence.IUserPersistence;
+import com.example.usuarioservice.validation.ValidationContext;
+import com.example.usuarioservice.validation.ValidationContext.ValidationStrategyType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -16,13 +18,21 @@ import java.util.Optional;
  * Implementación de la lógica de negocio para usuarios.
  * Orquesta entre el controlador y la persistencia.
  * 
- * Aplica el principio de Inversión de Dependencias (DIP):
- * - Depende de la abstracción IUserPersistence, no de la implementación concreta
- * - Esto permite cambiar la implementación de persistencia sin modificar esta clase
- * - Facilita el testing al poder inyectar mocks o implementaciones alternativas
+ * Aplica múltiples principios SOLID y patrones de diseño:
  * 
- * La instancia de IUserPersistence es creada por UserPersistenceFactory,
- * aplicando el Factory Pattern para desacoplar la creación del uso.
+ * 1. Inversión de Dependencias (DIP):
+ *    - Depende de abstracciones (IUserPersistence, IValidationStrategy)
+ *    - No depende de implementaciones concretas
+ *    - Facilita testing con mocks
+ * 
+ * 2. Strategy Pattern (para validación):
+ *    - Usa ValidationContext para aplicar diferentes estrategias de validación
+ *    - Permite cambiar estrategia sin modificar este código
+ *    - Valida con LENIENT por defecto (usuarios normales)
+ * 
+ * 3. Open/Closed Principle:
+ *    - Abierto a extensión (nuevas estrategias de validación)
+ *    - Cerrado a modificación (no cambia al agregar estrategias)
  */
 @Service
 @RequiredArgsConstructor
@@ -30,6 +40,7 @@ import java.util.Optional;
 public class UsuarioService implements IUsuarioService {
     
     private final IUserPersistence userRepository;
+    private final ValidationContext validationContext;
     
     @Override
     public Collection<User> obtenerTodos() {
@@ -91,6 +102,12 @@ public class UsuarioService implements IUsuarioService {
     public User crear(CreateUsuarioRequest request) {
         log.info("Creando nuevo usuario con email: {}", request.getEmail());
         
+        // Strategy Pattern: Aplicar validación de negocio según estrategia
+        // Por defecto usa LENIENT para usuarios normales
+        // Para admin se podría usar STRICT
+        validationContext.validateForCreation(request, ValidationStrategyType.LENIENT);
+        log.debug("Validación de negocio completada para: {}", request.getEmail());
+        
         // Validar que el email no exista
         if (userRepository.findByEmail(request.getEmail()) != null) {
             log.warn("Intento de crear usuario con email duplicado: {}", request.getEmail());
@@ -120,6 +137,10 @@ public class UsuarioService implements IUsuarioService {
             log.warn("Usuario no encontrado para actualizar: {}", id);
             return Optional.empty();
         }
+        
+        // Strategy Pattern: Validar campos de actualización según estrategia
+        validationContext.validateForUpdate(request, ValidationStrategyType.LENIENT);
+        log.debug("Validación de actualización completada para usuario ID: {}", id);
         
         // Validar email no duplicado si cambió
         if (request.getEmail() != null && 
