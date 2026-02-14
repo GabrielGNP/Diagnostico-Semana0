@@ -27,7 +27,7 @@ jobs:
           
           # Quick healthchecks
           curl -fsS http://localhost:15672 > /dev/null 2>&1 || (echo "RabbitMQ not ready" && exit 1)
-          curl -fsS http://localhost:8083/users > /dev/null || (echo "usuario-service not ready" && exit 1)
+          curl -fsS http://localhost:8083/api/v1/usuarios > /dev/null || (echo "usuario-service not ready" && exit 1)
           curl -fsS http://localhost:8082/order/all > /dev/null || (echo "pedido-service not ready" && exit 1)
           curl -fsS http://localhost:3000 > /dev/null || (echo "frontend not ready" && exit 1)
           
