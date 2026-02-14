@@ -23,7 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -546,11 +546,12 @@ class OrderServiceTest {
 			// Arrange
 			int orderId = 1;
 			int idUser = 5;
+			Order order = new Order(1, "Laptop", "Gaming Laptop", idUser, State.PROCESSING, true);
 			OrderDto orderDto = new OrderDto(1, "Laptop", "Gaming Laptop", idUser, State.PROCESSING, true);
 			UserResponse userResponse = new UserResponse(idUser, "Juan", "juan@email.com", true);
-			OrderWithUserDto expectedResult = new OrderWithUserDto(1, "Laptop", "Gaming Laptop", idUser, State.PROCESSING, true, userResponse);
 
-			when(orderService.showOrderById(orderId)).thenReturn(orderDto);
+			when(orderRepository.findById(orderId)).thenReturn(java.util.Optional.of(order));
+			when(orderMapper.toDto(order)).thenReturn(orderDto);
 			when(userServiceConsumer.getUserResponse(idUser, 3000)).thenReturn(userResponse);
 
 			// Act
@@ -573,15 +574,15 @@ class OrderServiceTest {
 			// Arrange
 			int orderId = 999;
 
-			when(orderService.showOrderById(orderId)).thenReturn(null);
+			when(orderRepository.findById(orderId)).thenReturn(java.util.Optional.empty());
 
 			// Act
 			OrderWithUserDto result = orderService.getOrderWithUserInfo(orderId);
 
 			// Assert
 			assertNull(result);
-			verify(userServiceProducer, never()).requestUserInfo(any());
-			verify(userServiceConsumer, never()).getUserResponse(any(), any());
+			verify(userServiceProducer, never()).requestUserInfo(anyInt());
+			verify(userServiceConsumer, never()).getUserResponse(anyInt(), anyLong());
 		}
 
 		// Test 3: Fallo en Comunicación RabbitMQ
@@ -590,9 +591,11 @@ class OrderServiceTest {
 			// Arrange
 			int orderId = 2;
 			int idUser = 3;
+			Order order = new Order(2, "Monitor", "4K Monitor", idUser, State.DELIVERED, true);
 			OrderDto orderDto = new OrderDto(2, "Monitor", "4K Monitor", idUser, State.DELIVERED, true);
 
-			when(orderService.showOrderById(orderId)).thenReturn(orderDto);
+			when(orderRepository.findById(orderId)).thenReturn(java.util.Optional.of(order));
+			when(orderMapper.toDto(order)).thenReturn(orderDto);
 			doThrow(new RuntimeException("RabbitMQ connection error"))
 					.when(userServiceProducer).requestUserInfo(idUser);
 
@@ -614,11 +617,14 @@ class OrderServiceTest {
 			// Arrange
 			int orderId = 3;
 			int idUser = 7;
+			Order order = new Order(3, "Keyboard", "Mechanical", idUser, State.IN_WAREHOUSE, true);
 			OrderDto orderDto = new OrderDto(3, "Keyboard", "Mechanical", idUser, State.IN_WAREHOUSE, true);
 
-			when(orderService.showOrderById(orderId)).thenReturn(orderDto);
+			when(orderRepository.findById(orderId)).thenReturn(java.util.Optional.of(order));
+			when(orderMapper.toDto(order)).thenReturn(orderDto);
 			doNothing().when(userServiceProducer).requestUserInfo(idUser);
-			when(userServiceConsumer.getUserResponse(idUser, 3000)).thenThrow(new InterruptedException("Timeout waiting for user response"));
+			// Simular timeout retornando null (comportamiento real tras timeout)
+			when(userServiceConsumer.getUserResponse(idUser, 3000)).thenReturn(null);
 
 			// Act
 			OrderWithUserDto result = orderService.getOrderWithUserInfo(orderId);
@@ -638,10 +644,12 @@ class OrderServiceTest {
 			// Arrange
 			int orderId = 4;
 			int idUser = 10;
+			Order order = new Order(4, "Mouse", "Wireless", idUser, State.ON_THE_STREET, false);
 			OrderDto orderDto = new OrderDto(4, "Mouse", "Wireless", idUser, State.ON_THE_STREET, false);
 			UserResponse userResponse = new UserResponse(idUser, "Maria", "maria@email.com", true);
 
-			when(orderService.showOrderById(orderId)).thenReturn(orderDto);
+			when(orderRepository.findById(orderId)).thenReturn(java.util.Optional.of(order));
+			when(orderMapper.toDto(order)).thenReturn(orderDto);
 			when(userServiceConsumer.getUserResponse(idUser, 3000)).thenReturn(userResponse);
 
 			// Act
@@ -667,9 +675,11 @@ class OrderServiceTest {
 			// Arrange
 			int orderId = 5;
 			int idUser = 8;
+			Order order = new Order(5, "Tablet", "iPad Pro", idUser, State.TRAVELING_TO_WAREHOUSE, true);
 			OrderDto orderDto = new OrderDto(5, "Tablet", "iPad Pro", idUser, State.TRAVELING_TO_WAREHOUSE, true);
 
-			when(orderService.showOrderById(orderId)).thenReturn(orderDto);
+			when(orderRepository.findById(orderId)).thenReturn(java.util.Optional.of(order));
+			when(orderMapper.toDto(order)).thenReturn(orderDto);
 			doNothing().when(userServiceProducer).requestUserInfo(idUser);
 			when(userServiceConsumer.getUserResponse(idUser, 3000)).thenThrow(new IllegalStateException("Invalid user state"));
 
