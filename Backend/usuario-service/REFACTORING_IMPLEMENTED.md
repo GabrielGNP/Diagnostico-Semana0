@@ -279,125 +279,68 @@ config/
 
 ## 📐 PATRONES ESTRUCTURALES
 
-### 1. Facade Pattern (Para UsuarioService)
+### 1. Decorator Pattern (Para UserRepository con Caché)
 
-#### ¿Dónde se implementa?
+#### ✅ IMPLEMENTACIÓN REALIZADA
 
-Simplificar operaciones complejas entre UserRepository y notificaciones
+El patrón Decorator ha sido implementado exitosamente para agregar funcionalidad de caché a la persistencia de usuarios sin modificar la implementación base.
 
-```
-service/
-├── IUsuarioService.java (EXISTENTE - es una Facade)
-└── UsuarioService.java (EXISTENTE - implementación de Facade)
+**Archivos Creados:**
 
-events/ (NUEVO)
-├── IUsuarioEventPublisher.java
-└── UsuarioEventPublisher.java
-```
+1. **`persistence/CachedUserPersistenceDecorator.java`** (210 líneas)
+   - Implementa `IUserPersistence`
+   - Envuelve cualquier implementación de persistencia con caché
+   - Usa `ConcurrentHashMap` para thread-safety
+   - Mantiene dos cachés: por email (lowercase) y por ID
+   - Invalida caché automáticamente en operaciones de escritura
+   - Métodos de utilidad: `clearCache()`, `getCacheStats()`
 
-#### ANTES (Sin Facade - Lógica dispersa):
+**Archivos Modificados:**
 
-```java
-// En UsuarioController - mucha responsabilidad
-@PostMapping
-public ResponseEntity<UsuarioResponse> crear(
-        @Valid @RequestBody CreateUsuarioRequest request) {
-    
-    // Validar email
-    if (usuarioRepository.findByEmail(request.getEmail()) != null) {
-        throw new UsuarioYaExisteException(...);
-    }
-    
-    // Crear usuario
-    User user = mapper.toUser(request);
-    user.setPassword(passwordEncoder.encode(request.getContrasena()));
-    User guardado = usuarioRepository.save(user);
-    
-    // Publicar evento
-    eventPublisher.publishUserCreated(guardado);
-    
-    // Notificar por email (si se agrega)
-    emailService.sendWelcomeEmail(guardado);
-    
-    // Index en Elasticsearch (si se agrega)
-    elasticsearchService.indexUser(guardado);
-    
-    // ❌ Demasiada complejidad en el controller
-    // ❌ Difícil de testear
-    // ❌ Cambios en lógica requieren cambiar controller
-}
-```
+2. **`config/PersistenceConfig.java`**
+   - Agregado `@Value("${app.persistence.cache.enabled:true}")`
+   - Modificado `@Bean userPersistence()` para decorar condicionalmente
+   - Si `app.persistence.cache.enabled=true`, envuelve con `CachedUserPersistenceDecorator`
+   - Logging extensivo para debugging
 
-#### DESPUÉS (Facade Pattern):
+3. **`src/main/resources/application.properties`**
+   - Agregado `app.persistence.cache.enabled=true`
+   - Documentación de configuración del caché
+   - Por defecto activado para producción
+
+**Características Implementadas:**
+
+- ✅ **Caché transparente:** La persistencia base (UserRepository) NO sabe que está siendo decorada
+- ✅ **Thread-safe:** Usa `ConcurrentHashMap` para acceso concurrente seguro
+- ✅ **Dual-cache:** Cachea por email (normalizado a lowercase) y por ID simultáneamente
+- ✅ **Invalidación automática:** save(), update(), delete() limpian el caché
+- ✅ **Configurable:** Se activa/desactiva desde `application.properties` sin cambiar código
+- ✅ **Composición limpia:** Sigue el principio Open/Closed
+- ✅ **Mejora de rendimiento:** findByEmail pasa de O(n) a O(1)
+- ✅ **Observabilidad:** Logging de cache hits/misses para métricas
+
+**Ejemplo de Uso:**
 
 ```java
-// Facade simplifica la operación compleja
-@Service
-public class UsuarioService implements IUsuarioService {
+// En PersistenceConfig.java
+@Bean
+public IUserPersistence userPersistence() throws IOException {
+    // 1. Factory crea la persistencia base
+    IUserPersistence persistence = UserPersistenceFactory.createPersistence(persistenceType);
+    persistence.initialize();
     
-    private final UserRepository repository;
-    private final IUsuarioEventPublisher eventPublisher;
-    private final EmailService emailService;
-    private final ElasticsearchService elasticsearchService;
-    
-    @Override
-    public User crear(CreateUsuarioRequest request) {
-        // La Facade orquesta todo
-        validarEmail(request.getEmail());
-        User usuario = crearYGuardar(request);
-        notificar(usuario);
-        publicarEventos(usuario);
-        indexar(usuario);
-        
-        return usuario;
+    // 2. Decorator agrega caché si está habilitado
+    if (cacheEnabled) {
+        persistence = new CachedUserPersistenceDecorator(persistence);
     }
     
-    private void validarEmail(String email) { ... }
-    private User crearYGuardar(CreateUsuarioRequest request) { ... }
-    private void notificar(User usuario) { ... }
-    private void publicarEventos(User usuario) { ... }
-    private void indexar(User usuario) { ... }
-}
-
-// En UsuarioController - simple y claro
-@PostMapping
-public ResponseEntity<UsuarioResponse> crear(
-        @Valid @RequestBody CreateUsuarioRequest request) {
-    
-    User usuario = usuarioService.crear(request);  // ✅ Una línea
-    
-    return ResponseEntity
-        .status(HttpStatus.CREATED)
-        .body(UsuarioResponse.from(usuario));
+    return persistence;  // Retorna decorada o sin decorar según config
 }
 ```
 
-**Ya implementado correctamente en:**
-- ✅ UsuarioService (es una Facade de UserRepository + eventos)
-
-**Beneficios:**
-- ✅ Controller simple y coherente
-- ✅ Lógica centralizada en Service
-- ✅ Fácil de testear
-- ✅ Cambios en orquestación no afectan controller
-
-#### Justificación Técnica:
-
-| Aspecto | Sin Facade | Con Facade |
-|--------|----------|-----------|
-| **Controller** | 30+ líneas | 5 líneas |
-| **Testing Logic** | Difícil (mucho en controller) | Fácil (testear Service) |
-| **Agregar Email** | Cambiar Controller | Cambiar solo Service |
-| **Complejidad** | Dispersa | Centralizada |
-
-**Por qué es mejor:**
-- 🎯 **Single Responsability:** Controller solo maneja HTTP
-- 🎯 **Simplicidad:** Interfaz simple para operaciones complejas
-- 🎯 **Mantenibilidad:** Cambios centralizados
+**Ventaja Clave:** El código cliente (UsuarioService) es **completamente agnóstico** al caché. No necesita cambiar nada.
 
 ---
-
-### 2. Decorator Pattern (Para UserRepository con Caché)
 
 #### ¿Dónde se implementa?
 
@@ -1150,16 +1093,15 @@ logging.level.com.example.usuarioservice=DEBUG
 
 ### Patrones a Implementar
 
-| Patrón | Dónde | Por qué | Benefit |
-|--------|-------|--------|---------|
-| **Factory** | UserPersistenceFactory | Crear persistencia | Cambiar BD sin código |
-| **Builder** | DTOs | Construcción fluida | Ya implementado ✅ |
-| **Singleton** | Configs | Una instancia | Ya implementado ✅ |
-| **Facade** | UsuarioService | Simplificar operaciones | Ya implementado ✅ |
-| **Decorator** | CachedPersistence | Agregar funcionalidad | Caché sin modificar Repo |
-| **Strategy** | ValidationStrategy | Múltiples validaciones | Cambiar validación en runtime |
-| **Observer** | EventPublisher | Notificaciones | Listeners independientes |
-| **State** | UserState | Ciclo de vida | Transiciones validadas |
+| Patrón | Dónde | Por qué | Benefit | Estado |
+|--------|-------|--------|---------|--------|
+| **Factory** | UserPersistenceFactory | Crear persistencia | Cambiar BD sin código | ✅ Implementado |
+| **Builder** | DTOs | Construcción fluida | Ya implementado | ✅ Implementado |
+| **Singleton** | Configs | Una instancia | Ya implementado | ✅ Implementado |
+| **Decorator** | CachedPersistence | Agregar funcionalidad | Caché sin modificar Repo | ✅ Implementado |
+| **Strategy** | ValidationStrategy | Múltiples validaciones | Cambiar validación en runtime | ⬜ Pendiente |
+| **Observer** | EventPublisher | Notificaciones | Listeners independientes | ⬜ Pendiente |
+| **State** | UserState | Ciclo de vida | Transiciones validadas | ⬜ Pendiente |
 
 ### Arquitectura Implementada Correctamente
 
@@ -1175,27 +1117,35 @@ logging.level.com.example.usuarioservice=DEBUG
 
 ## 📝 PRÓXIMAS FASES
 
-### Fase 2: Implementar Patrones (Cuando lo indiques)
+### ✅ Fase 1: COMPLETADA - Patrones de Creación y Estructurales Básicos
 
-1. Factory Pattern
-   - UserPersistenceFactory
-   - Soporte múltiples persistencias
+1. ✅ Factory Pattern
+   - UserPersistenceFactory implementado
+   - PersistenceConfig usando Factory
+   - Soporte para múltiples persistencias (actualmente json)
 
-2. Strategy Pattern
-   - ValidationStrategy
-   - Diferentes validaciones
+2. ✅ Decorator Pattern
+   - CachedUserPersistenceDecorator implementado
+   - Caché transparente con ConcurrentHashMap
+   - Configurable desde application.properties
+   - Mejora de rendimiento: O(n) → O(1)
 
-3. Observer Pattern
+### ⬜ Fase 2: Patrones de Comportamiento (Pendiente)
+
+1. Strategy Pattern
+   - ValidationStrategy interface
+   - Diferentes estrategias de validación (strict, lenient)
+   - Validación dinámica según tipo de usuario
+
+2. Observer Pattern
    - UsuarioEventPublisher
-   - Listeners desacoplados
+   - Event listeners desacoplados
+   - Notificaciones y auditoría mediante eventos
 
-4. Decorator Pattern
-   - CachedPersistenceDecorator
-   - Caché transparente
-
-5. State Pattern
+3. State Pattern
    - UserStateContext
-   - Ciclo de vida de usuario
+   - Estados del ciclo de vida de usuario (inactive, active, verified)
+   - Transiciones validadas entre estados
 
 ---
 
