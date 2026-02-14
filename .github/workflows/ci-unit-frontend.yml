@@ -1,5 +1,4 @@
 name: frontend - Unit Tests
-
 on:
   workflow_call:
 
@@ -12,27 +11,32 @@ jobs:
         working-directory: Frontend
     steps:
       - uses: actions/checkout@v4
-
+      
       - name: Set up Node.js 20
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: Frontend/package-lock.json
-
-      - name: Install dependencies
-        run: npm ci
-
+          # cache: 'npm'  # Deshabilitado temporalmente por bug de Rollup
+          # cache-dependency-path: Frontend/package-lock.json
+      
+      - name: Clean npm cache
+        run: npm cache clean --force
+      
+      - name: Clean and install dependencies
+        run: |
+          rm -rf node_modules package-lock.json
+          npm install
+      
       - name: Run unit tests
         run: npm run test
-
+      
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: frontend-test-results
           path: Frontend/coverage/
-
+          
   create-issue-on-failure:
     name: Create Issue on Failure
     needs: [unit-tests]
