@@ -42,7 +42,7 @@ jobs:
 
       - name: Install E2E test dependencies
         working-directory: tests/e2e
-        run: npm ci
+        run: npm install --prefer-offline --no-audit
 
       - name: Run E2E integration tests
         working-directory: tests/e2e
