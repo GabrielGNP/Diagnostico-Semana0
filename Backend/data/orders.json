@@ -3,7 +3,7 @@
   "name" : "Pedido Laptop Gamer",
   "description" : "Laptop de alto rendimiento",
   "idUser" : 2,
-  "state" : "TRAVELINGTOWAREHOUSE",
+  "state" : "TRAVELING_TO_WAREHOUSE",
   "active" : true
 }, {
   "id" : 3,
@@ -17,14 +17,14 @@
   "name" : "Pedido Monitor 4K",
   "description" : "Monitor para diseño gráfico",
   "idUser" : 3,
-  "state" : "TRAVELINGTOYOURHOUSE",
+  "state" : "TRAVELING_TO_YOUR_HOUSE",
   "active" : true
 }, {
   "id" : 5,
   "name" : "Pedido Teclado Mecánico",
   "description" : "Teclado switch blue",
   "idUser" : 2,
-  "state" : "ONTHESTREET",
+  "state" : "ON_THE_STREET",
   "active" : true
 }, {
   "id" : 6,
@@ -45,7 +45,7 @@
   "name" : "Pedido 1",
   "description" : "Pedido 1",
   "idUser" : 1,
-  "state" : "TRAVELINGTOWAREHOUSE",
+  "state" : "TRAVELING_TO_WAREHOUSE",
   "active" : true
 }, {
   "id" : 8,

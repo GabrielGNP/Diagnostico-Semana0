@@ -3,6 +3,10 @@
 # Stage 1: Build
 FROM node:20-slim AS builder
 WORKDIR /app
+ARG VITE_APIUSER=http://localhost:8083
+ARG VITE_APIORDER=http://localhost:8082
+ENV VITE_APIUSER=$VITE_APIUSER
+ENV VITE_APIORDER=$VITE_APIORDER
 COPY package.json package-lock.json ./
 # Instalación estándar de dependencias (npm install) para compatibilidad
 RUN npm install

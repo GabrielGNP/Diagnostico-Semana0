@@ -20,11 +20,13 @@ import java.util.stream.Collectors;
  * Responsabilidad única: Mapear requests HTTP a casos de uso del servicio.
  */
 @RestController
-@RequestMapping("/api/v1/usuarios")
+@RequestMapping("/v1/usuarios")
 @RequiredArgsConstructor
 @Slf4j
 @CrossOrigin(origins = "${app.cors.allowed-origins:http://localhost:3001,http://localhost:3000}")
 public class UsuarioController {
+
+    private static final String API_PATH = "/api/v1/usuarios";
     
     private final IUsuarioService usuarioService;
     
@@ -34,7 +36,7 @@ public class UsuarioController {
      */
     @GetMapping
     public ResponseEntity<Collection<UsuarioResponse>> obtenerTodos() {
-        log.info("GET /api/v1/usuarios - Obteniendo todos los usuarios");
+        log.info("GET {} - Obteniendo todos los usuarios", API_PATH);
         
         Collection<UsuarioResponse> usuarios = usuarioService.obtenerTodos()
             .stream()
@@ -51,7 +53,7 @@ public class UsuarioController {
     @GetMapping("/{identificador}")
     public ResponseEntity<UsuarioResponse> obtenerPorIdentificador(
             @PathVariable String identificador) {
-        log.info("GET /api/v1/usuarios/{} - Obteniendo usuario", identificador);
+        log.info("GET {}/{} - Obteniendo usuario", API_PATH, identificador);
         
         return usuarioService.obtenerPorIdentificador(identificador)
             .map(u -> ResponseEntity.ok(UsuarioResponse.from(u)))
@@ -67,7 +69,7 @@ public class UsuarioController {
     @PostMapping
     public ResponseEntity<UsuarioResponse> crear(
             @Valid @RequestBody CreateUsuarioRequest request) {
-        log.info("POST /api/v1/usuarios - Creando nuevo usuario: {}", request.getEmail());
+        log.info("POST {} - Creando nuevo usuario: {}", API_PATH, request.getEmail());
         
         User usuario = usuarioService.crear(request);
         
@@ -84,7 +86,7 @@ public class UsuarioController {
     public ResponseEntity<UsuarioResponse> actualizar(
             @PathVariable int id,
             @Valid @RequestBody UpdateUsuarioRequest request) {
-        log.info("PUT /api/v1/usuarios/{} - Actualizando usuario", id);
+        log.info("PUT {}/{} - Actualizando usuario", API_PATH, id);
         
         return usuarioService.actualizar(id, request)
             .map(u -> ResponseEntity.ok(UsuarioResponse.from(u)))
@@ -99,7 +101,7 @@ public class UsuarioController {
     public ResponseEntity<UsuarioResponse> actualizarParcial(
             @PathVariable int id,
             @RequestBody UpdateUsuarioRequest request) {
-        log.info("PATCH /api/v1/usuarios/{} - Actualizando parcialmente usuario", id);
+        log.info("PATCH {}/{} - Actualizando parcialmente usuario", API_PATH, id);
         
         return usuarioService.actualizarParcial(id, request)
             .map(u -> ResponseEntity.ok(UsuarioResponse.from(u)))
@@ -112,7 +114,7 @@ public class UsuarioController {
      */
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminar(@PathVariable int id) {
-        log.info("DELETE /api/v1/usuarios/{} - Eliminando usuario", id);
+        log.info("DELETE {}/{} - Eliminando usuario", API_PATH, id);
         
         if (!usuarioService.eliminar(id)) {
             throw new UsuarioNotFoundException("Usuario no encontrado: " + id);
