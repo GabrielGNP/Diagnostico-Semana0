@@ -19,7 +19,7 @@
 
 ## stack tecnológico y versiones
 
-java: 25
+java: 21
 maven: 3.9.12
 Spring 4.0.2
 React 16.13.1
@@ -30,8 +30,8 @@ node 18
 ## Imágenes utilizadsa en docker
 
 - node:18-alpine
-- maven:3.9.12-eclipse-temurin-25-alpine
-- eclipse-temurin:25-alpine
+- maven:3.9.12-eclipse-temurin-21-alpine
+- eclipse-temurin:21-alpine
 - nginx:alpine
 - rabbitmq:3-management
 
