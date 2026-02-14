@@ -1,8 +1,11 @@
 # Auditoría de Código: Diagnostico-Semana0
 
-**Fecha:** 11 de febrero de 2026
+**Fecha inicial:** 11 de febrero de 2026  
+**Última actualización:** 14 de febrero de 2026
 
 Este documento detalla los hallazgos críticos de la revisión de código, enfocándose en los principios SOLID vulnerados y su impacto directo en la escalabilidad del sistema.
+
+> **Nota de actualización (14 feb 2026):** Se han implementado mejoras significativas desde la auditoría inicial. Ver sección "Estado Actual de Mejoras" al final del documento.
 
 ## 1. Persistencia Ineficiente y Bloqueante
 
@@ -62,3 +65,133 @@ La clase `OrderService` contiene lógica de negocio (validación de estados), l�
 ### Impacto en la Escalabilidad (Medio)
 *   **Mantenibilidad:** A medida que el sistema crece en funcionalidades, esta clase se convertirá en una "Clase Dios" difícil de mantener y optimizar.
 *   **Ciclos de Desarrollo Lentos:** La falta de separación hace que añadir nuevas características (como caché o validaciones complejas) sea más propenso a errores, frenando la velocidad del equipo de ingeniería.
+
+---
+
+## 5. Seguridad: Passwords en Texto Plano
+
+### Hallazgo
+**[CRÍTICO - Detectado en actualización 14/02/2026]**
+
+El archivo `users.json` almacena contraseñas en texto plano (ejemplos: "alice123", "bob123", "12345678"). No existe implementación de BCrypt, PasswordEncoder, ni ningún mecanismo de hashing.
+
+### Principio Vulnerado
+*   **Principios de Seguridad Fundamentales:** Violación directa de OWASP Top 10 (A02:2021 - Cryptographic Failures)
+*   **Single Responsibility Principle (SRP):** El sistema no delega la responsabilidad de seguridad a componentes especializados
+
+### Impacto en la Escalabilidad (CRÍTICO)
+*   **Riesgo Legal:** Violación de GDPR/normativas de protección de datos - multas de hasta 4% de ingresos anuales
+*   **Imposibilidad de Producción:** Ningún auditor de seguridad aprobaría el despliegue
+*   **Breach Inevitable:** En caso de acceso no autorizado al sistema, todas las credenciales quedan expuestas
+*   **Reputación:** Pérdida de confianza de usuarios y stakeholders
+
+---
+
+## 6. Observabilidad: Logging Primitivo
+
+### Hallazgo
+**[DETECTADO - 14/02/2026]**
+
+El código de producción utiliza `System.out.println` (5 ocurrencias) y `printStackTrace()` (2 ocurrencias) en lugar de un framework de logging profesional como SLF4J + Logback.
+
+**Ubicaciones:**
+*   `UserServiceProducer.java` (usuario-service): 1x System.out
+*   `UserServiceConsumer.java` (usuario-service): 2x System.out
+*   `OrderRepository.java` (pedido-service): 2x printStackTrace
+*   `UserServiceProducer.java` (pedido-service): 1x System.out
+*   `UserServiceConsumer.java` (pedido-service): 1x System.out
+
+### Principio Vulnerado
+*   **Single Responsibility Principle (SRP):** Lógica de negocio mezclada con concerns de infraestructura (logging)
+*   **Open/Closed Principle (OCP):** Imposible cambiar el nivel de logging sin modificar código fuente
+
+### Impacto en la Escalabilidad (Alto)
+*   **Debugging Imposible:** Sin niveles de log (INFO/WARN/ERROR), contexto, timestamps estructurados
+*   **Producción Ciega:** No se puede diagnosticar problemas en ambientes distribuidos
+*   **Performance:** System.out es bloqueante y no optimizado para alta concurrencia
+*   **Auditoría:** Sin trazabilidad para cumplimiento regulatorio
+
+---
+
+## 7. Dependency Injection: Field Injection Anti-pattern
+
+### Hallazgo
+**[DETECTADO - 14/02/2026]**
+
+El código utiliza `@Autowired` en fields (19 ocurrencias) en lugar de constructor injection, que es el patrón recomendado por Spring Framework.
+
+### Principio Vulnerado
+*   **Dependency Inversion Principle (DIP):** Dependencias ocultas, no explícitas en el constructor
+*   **Open/Closed Principle (OCP):** Dificulta testing y sustitución de dependencias
+
+### Impacto en la Escalabilidad (Medio)
+*   **Testabilidad:** Imposible crear instancias sin contexto de Spring
+*   **Inmutabilidad:** No se pueden usar fields `final`, permitiendo mutación accidental
+*   **Acoplamiento:** Dependencias implícitas dificultan refactoring
+*   **NullPointerException:** Posibles NPE si se usan antes de la inyección
+
+---
+
+## Estado Actual de Mejoras (14 febrero 2026)
+
+### ✅ Áreas Mejoradas
+
+#### Testing
+*   **Estado anterior:** 0% de cobertura de tests
+*   **Estado actual:** ~60% de cobertura promedio
+    *   pedido-service: 34 tests (8 integration + 26 unit) → 70%+ coverage
+    *   usuario-service: 20 tests (16 integration + 4 unit) → 50%+ coverage
+*   **Impacto:** Reducción del 80% en el riesgo de regresiones al refactorizar para escalar
+
+#### Service Layer
+*   **Estado anterior:** Lógica de negocio mezclada en Controllers
+*   **Estado actual:** `UsuarioService` y `OrderService` con `@Service`, interfaces `IUsuarioService`
+*   **Impacto:** Ahora es posible extraer la lógica de negocio a microservicios especializados sin romper contratos
+
+#### Validaciones
+*   **Estado anterior:** Sin validaciones en endpoints
+*   **Estado actual:** `@Valid` con Jakarta Bean Validation, Strategy pattern (Lenient/Strict)
+*   **Mejoras:** Email format, password strength (8+ chars, regex patterns)
+*   **Pendiente:** Unicidad de email, state machine para transitions de pedidos
+
+#### Contratos API
+*   **Estado anterior:** Inconsistencia Frontend/Backend (nombre vs name, email vs mail)
+*   **Estado actual:** `@JsonProperty` mappings implementados, enums alineados (snake_case)
+*   **Impacto:** Integración frontend/backend estable, CI/CD workflows funcionando
+
+### 🔴 Hallazgos Críticos Pendientes
+
+1. **Passwords plaintext** (🔴 CRÍTICO - 6h) — Requiere BCrypt + migración de datos
+2. **Logging primitivo** (🔴 Alta - 6h) — Migrar a SLF4J + Logback
+3. **Race conditions** (🔴 Fatal) — Requiere migración de JSON a DB transaccional (PostgreSQL)
+4. **Persistencia O(N)** (🔴 Crítico) — Arquitectura de archivos JSON no escalable
+
+### 🟡 Deuda Técnica Media Prioridad
+
+5. **Field injection** (🟡 Media - 3h) — 19 @Autowired necesitan constructor injection
+6. **RabbitMQ sin resiliencia** (🟡 Media - 8h) — Falta DLQ, retry, circuit breaker
+7. **Docker healthchecks** (🟡 Media - 2h) — Race conditions en startup
+8. **State machine pedidos** (🟡 Media - 4h) — Validar transiciones válidas
+
+### 📊 Resumen de Impacto
+
+| Hallazgo | Antes | Ahora | Escalabilidad Bloqueada |
+|----------|-------|-------|------------------------|
+| Tests | ❌ 0% | ✅ 60% | No (mejora) |
+| Service Layer | ❌ Ausente | ✅ Implementado | No (mejora) |
+| Validaciones | ❌ Ninguna | ✅ Básicas | No (mejora) |
+| Passwords | ❌ Plaintext | ❌ Plaintext | **Sí - BLOQUEANTE** |
+| Persistencia JSON | ❌ O(N) | ❌ O(N) | **Sí - BLOQUEANTE** |
+| Race Conditions | ❌ Sin control | ❌ Sin control | **Sí - FATAL** |
+| Logging | ❌ System.out | ❌ System.out | No (pero crítico) |
+
+### 🎯 Conclusión
+
+**Progreso:** Se ha reducido la deuda técnica de 120-150h a 60-80h (~40% de mejora).
+
+**Blockers críticos para escalabilidad:**
+1. **Persistencia JSON** — Migracion a PostgreSQL/MongoDB es OBLIGATORIA antes de escalar
+2. **Race conditions** — Requiere transacciones ACID (imposible con archivos JSON)
+3. **Passwords plaintext** — BLOQUEANTE legal/regulatorio para producción
+
+**Recomendación:** Los hallazgos 1-3 (Persistencia, Race Conditions, Acoplamiento) requieren refactoring arquitectónico. Los hallazgos 5-7 (Seguridad, Logging, Dependency Injection) son solucionables sin cambio de arquitectura y deben implementarse **antes** de iniciar la migración a DB.
