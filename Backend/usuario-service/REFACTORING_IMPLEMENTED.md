@@ -23,7 +23,7 @@ Documentar dónde implementar patrones de diseño en la refactorización del usu
 
 #### ¿Dónde se implementaría?
 
-**Lokacija:** En la creación de instancias de `IUserPersistence`
+En la creación de instancias de `IUserPersistence`
 
 ```
 app/config/
@@ -100,8 +100,8 @@ public IUserPersistence userPersistence(
 
 | Aspecto | Sin Factory | Con Factory |
 |--------|-------------|------------|
-| **Agregar BD nueva** | Cambiar UsuarioService | Solo crear JsonUserPersistence |
-| **Cambiar de JSON a BD** | Cambiar @Autowired en 10 clases | Solo `application.properties` |
+| **Agregar BD nueva** | Cambiar UsuarioService | Solo crear DatabaseUserPersistence |
+| **Cambiar de JSON a BD** | Cambiar @Autowired en múltiples clases | Solo `application.properties` |
 | **Testing** | Difícil mockear | Inyectar InMemory |
 | **Escalabilidad** | Baja | Alta |
 | **Mantenibilidad** | Baja | Alta |
@@ -113,51 +113,130 @@ public IUserPersistence userPersistence(
 
 ---
 
+#### ✅ IMPLEMENTACIÓN REALIZADA
+
+
+**Objetivo de la implementación:**
+Aplicar el Factory Pattern a la arquitectura existente **sin crear nuevas implementaciones de persistencia**.
+Solo estructurar el código con el patrón, manteniendo UserRepository como única implementación.
+
+**Archivos creados:**
+
+1. **`config/UserPersistenceFactory.java`**
+2. **`config/PersistenceConfig.java`**
+
+**Archivos modificados:**
+
+1. **`service/UserRepository.java`**
+   - Agregado método `initialize()` que delega a `init()`
+   - Mantiene compatibilidad con IUserPersistence
+2. **`service/UsuarioService.java`**
+   - ANTES: `private final UserRepository userRepository;`
+   - DESPUÉS: `private final IUserPersistence userRepository;`
+   - Ahora depende de la abstracción, no de la implementación concreta
+   - Documentación actualizada explicando DIP + Factory Pattern
+3. **`application.properties`**
+   ```properties
+   # Persistence - Factory Pattern
+   # Define qué implementación de IUserPersistence usar
+   # Actualmente soportado: json
+   # Futuro: database, in-memory, etc.
+   app.persistence.type=json
+   ```
+
+**Estructura resultante:**
+
+```
+config/
+├── UserPersistenceFactory.java  ✅ NUEVO - Patrón Factory
+├── PersistenceConfig.java       ✅ NUEVO - Usa el Factory
+├── CorsConfig.java
+└── UsuariosInitializationConfig.java
+
+service/
+├── UsuarioService.java           🔄 MODIFICADO - Usa IUserPersistence
+├── IUsuarioService.java
+└── UserRepository.java           🔄 MODIFICADO - Agregado initialize()
+
+```
+
+El objetivo es aplicar el **patrón estructuralmente** sin agregar nuevas
+implementaciones de persistencia. El Factory actualmente retorna `new UserRepository()`, pero
+la arquitectura está preparada para soportar múltiples implementaciones en el futuro.
+
+---
+
+#### 📊 BENEFICIOS LOGRADOS
+
+**ANTES del Factory Pattern:**
+```java
+@Service
+public class UsuarioService {
+    private final UserRepository userRepository;  // ❌ Acoplado a implementación
+}
+```
+
+**DESPUÉS del Factory Pattern:**
+```java
+@Service
+public class UsuarioService {
+    private final IUserPersistence userRepository;  // ✅ Depende de abstracción
+}
+
+// La instancia es creada por:
+PersistenceConfig → UserPersistenceFactory → UserRepository
+```
+
+**Mejoras concretas:**
+
+| Aspecto | Antes | Después |
+|---------|-------|---------|
+| **Acoplamiento** | Alto (clase concreta) | Bajo (interfaz) |
+| **Testabilidad** | Difícil (mock de UserRepository) | Fácil (implementar IUserPersistence) |
+| **Flexibilidad futura** | Ninguna | Alta (solo agregar al Factory) |
+| **Principio DIP** | Violado | Cumplido ✅ |
+| **Principio OCP** | Violado | Cumplido ✅ |
+| **Single Responsibility** | Violado (crear + usar) | Cumplido ✅ (Factory crea, Service usa) |
+
+**Escalabilidad demostrada:**
+
+Si mañana queremos agregar persistencia en MongoDB:
+```java
+// 1. Crear nueva implementación
+public class MongoUserPersistence implements IUserPersistence { ... }
+
+// 2. Actualizar Factory
+case "mongodb":
+    return new MongoUserPersistence();
+
+// 3. Cambiar properties
+app.persistence.type=mongodb
+
+// ✅ UsuarioService NO necesita cambios
+// ✅ Resto del código intacto
+```
+
+---
+
+**Por qué es mejor:**
+- 🎯 **Single Responsibility:** Factory solo crea, no usa
+- 🎯 **Open/Closed:** Abierto a nuevas implementaciones, cerrado a modificaciones
+- 🎯 **Dependency Inversion:** Depende de interfaz, no de implementación
+
+---
+
 ### 2. Builder Pattern (Para DTOs y Configuraciones)
 
-#### ¿Dónde se implementaría?
-
-**Lokacija:** En DTOs y objetos de configuración complejos
+#### ¿Dónde se implementa?
+En DTOs 
 
 ```
 dto/
 ├── CreateUsuarioRequest.java (YA TIENE @Builder ✅)
 ├── UpdateUsuarioRequest.java (YA TIENE @Builder ✅)
 └── UsuarioResponse.java (YA TIENE @Builder ✅)
-
-config/
-└── UserConfigBuilder.java (NUEVO - para configs complejas)
 ```
 
-#### ANTES (Sin Builder):
-
-```java
-// Crear usuario con muchos parámetros
-User user = new User();
-user.setId(1);
-user.setName("Juan");
-user.setMail("juan@example.com");
-user.setPassword("hash123");
-user.setActive(true);
-// ❌ Propenso a errores
-// ❌ Difícil cambiar el orden
-// ❌ Hard de leer
-```
-
-#### DESPUÉS (Con Builder - Ya Implementado):
-
-```java
-// Gracias a @Builder de Lombok
-CreateUsuarioRequest request = CreateUsuarioRequest.builder()
-    .nombre("Juan")
-    .email("juan@example.com")
-    .contrasena("Pass123")
-    .build();
-
-// ✅ Fluido y legible
-// ✅ Validación en build()
-// ✅ Orden flexible
-```
 
 **Ya implementado correctamente en:**
 - ✅ CreateUsuarioRequest (Lombok @Builder)
@@ -175,51 +254,14 @@ CreateUsuarioRequest request = CreateUsuarioRequest.builder()
 
 ### 3. Singleton Pattern (Para Configuraciones Globales)
 
-#### ¿Dónde se implementaría?
+#### ¿Dónde se implementa?
 
-**Lokacija:** En objetos que deben existir una sola vez en la aplicación
+En objetos que deben existir una sola vez en la aplicación
 
 ```
 config/
 ├── CorsConfig.java (YA IMPLEMENTA SINGLETON - via @Configuration ✅)
-├── RabbitMQConfig.java (YA IMPLEMENTA SINGLETON - via @Configuration ✅)
-└── LoggingConfig.java (NUEVO - para configuración de logging)
-```
-
-#### ANTES (Múltiples instancias):
-
-```java
-// Sin Singleton - cada llamada crea nueva instancia
-ObjectMapper mapper1 = new ObjectMapper();
-ObjectMapper mapper2 = new ObjectMapper();
-ObjectMapper mapper3 = new ObjectMapper();
-// ❌ Desperdicio de memoria
-// ❌ Inconsistencia en configuración
-// ❌ Performance impactada
-```
-
-#### DESPUÉS (Singleton via Spring):
-
-```java
-@Configuration  // ← Singleton automático
-public class CorsConfig {
-    
-    @Bean
-    public CorsFilter corsFilter() {
-        // ✅ Una sola instancia durante toda la aplicación
-        // ✅ Inyectada donde sea necesaria
-        // ✅ Gestión centralizada
-        return new CorsFilter(source);
-    }
-}
-
-@Bean
-public ObjectMapper objectMapper() {
-    // ✅ ObjectMapper compartido
-    // ✅ Una configuración global
-    // ✅ No duplicación
-    return new ObjectMapper();
-}
+└── RabbitMQConfig.java (YA IMPLEMENTA SINGLETON - via @Configuration ✅)
 ```
 
 **Ya implementado correctamente en:**
@@ -237,119 +279,11 @@ public ObjectMapper objectMapper() {
 
 ## 📐 PATRONES ESTRUCTURALES
 
-### 1. Adapter Pattern (Para UserServiceConsumer)
+### 1. Facade Pattern (Para UsuarioService)
 
-#### ¿Dónde se implementaría?
+#### ¿Dónde se implementa?
 
-**Lokacija:** Entre el sistema de mensajería RabbitMQ y la lógica de usuario
-
-```
-messaging/
-├── IUsuarioProducer.java (NUEVO - Interfaz)
-├── UsuarioServiceProducer.java (NUEVO - Implementación)
-├── UserServiceProducerRabbitAdapter.java (NUEVO - Adapter)
-│
-├── IUsuarioConsumer.java (NUEVO - Interfaz)
-├── UserServiceConsumerRabbitAdapter.java (NUEVO - Adapter para RabbitMQ)
-└── UserServiceConsumer.java (Refactorizar)
-```
-
-#### ANTES (Acoplamiento Directo a RabbitMQ):
-
-```java
-@Component
-public class UserServiceConsumer {
-    
-    @Autowired
-    private RabbitTemplate rabbitTemplate;  // ❌ Acoplado a RabbitMQ
-    
-    @RabbitListener(queues = RabbitMQConfig.USER_REQUEST_QUEUE)
-    public void receiveUserRequest(UserRequest request) {
-        // ❌ Si cambio a Kafka, tengo que cambiar toda esta clase
-        // ❌ RabbitMQ está mezclado con lógica de negocio
-        // ❌ Difícil de testear sin RabbitMQ
-    }
-}
-```
-
-**Problemas:**
-- ❌ Fuertemente acoplado a RabbitMQ
-- ❌ No se puede cambiar a Kafka, AWS SQS, etc. sin reescribir
-- ❌ Testing requiere RabbitMQ corriendo
-- ❌ Lógica de negocio mezclada con infraestructura
-
-#### DESPUÉS (Adapter Pattern):
-
-```java
-// Interfaz agnóstica de mensajería
-public interface IUsuarioProducer {
-    void enviarRespuestaUsuario(UsuarioResponse respuesta);
-    void publicarUsuarioCreado(Usuario usuario);
-}
-
-// Adapter para RabbitMQ
-@Component
-public class UserServiceProducerRabbitAdapter implements IUsuarioProducer {
-    
-    @Autowired
-    private RabbitTemplate rabbitTemplate;
-    
-    @Override
-    public void enviarRespuestaUsuario(UsuarioResponse respuesta) {
-        rabbitTemplate.convertAndSend(...);
-    }
-}
-
-// Si mañana usamos Kafka, creamos nuevo adapter
-@Component
-public class UserServiceProducerKafkaAdapter implements IUsuarioProducer {
-    
-    @Autowired
-    private KafkaTemplate<String, UsuarioResponse> kafkaTemplate;
-    
-    @Override
-    public void enviarRespuestaUsuario(UsuarioResponse respuesta) {
-        kafkaTemplate.send(...);
-    }
-}
-
-// La aplicación solo usa la interfaz
-@Service
-public class UsuarioService {
-    
-    private final IUsuarioProducer producer;  // ✅ Agnóstico del protocolo
-    
-    // El cambio a Kafka es solo cambiar la inyección en Spring
-}
-```
-
-**Beneficios:**
-- ✅ Cambiar de RabbitMQ a Kafka sin tocar UsuarioService
-- ✅ Testing: Inyectar MockProducer
-- ✅ Lógica de negocio separada de infraestructura
-- ✅ Reutilizable en múltiples contextos
-
-#### Justificación Técnica:
-
-| Aspecto | Sin Adapter | Con Adapter |
-|--------|----------|-----------|
-| **Cambiar a Kafka** | Reescribir Consumer | Crear KafkaAdapter |
-| **Testing** | Requiere RabbitMQ | Colocar MockAdapter |
-| **Acoplamiento** | Alto (RabbitMQ) | Bajo (Interfaz) |
-| **Reutilización** | Difícil | Fácil |
-
-**Por qué es mejor:**
-- 🎯 **Inversión de Dependencias:** Depende de IUsuarioProducer, no de RabbitTemplate
-- 🎯 **Flexibilidad:** Cambiar infraestructura sin tocar lógica
-- 🎯 **Testabilidad:** Inyectar mocks fácilmente
-
----
-
-### 2. Facade Pattern (Para UsuarioService)
-
-#### ¿Dónde se implementaría?
-
-**Lokacija:** Simplificar operaciones complejas entre UserRepository y notificaciones
+Simplificar operaciones complejas entre UserRepository y notificaciones
 
 ```
 service/
@@ -463,11 +397,11 @@ public ResponseEntity<UsuarioResponse> crear(
 
 ---
 
-### 3. Decorator Pattern (Para UserRepository con Caché)
+### 2. Decorator Pattern (Para UserRepository con Caché)
 
-#### ¿Dónde se implementaría?
+#### ¿Dónde se implementa?
 
-**Lokacija:** Agregar caché a UserRepository sin modificarlo
+Agregar caché a UserRepository sin modificarlo
 
 ```
 persistence/
@@ -561,9 +495,9 @@ public IUserPersistence userPersistence(JsonUserPersistence json) {
 
 ### 1. Strategy Pattern (Para Validación de Usuarios)
 
-#### ¿Dónde se implementaría?
+#### ¿Dónde se implementa?
 
-**Lokacija:** Diferentes estrategias de validación según el tipo de usuario
+Diferentes estrategias de validación según el tipo de usuario
 
 ```
 validation/
@@ -690,9 +624,9 @@ public User crear(CreateUsuarioRequest request, User.Type validationType) {
 
 ### 2. Observer Pattern (Para Eventos de Usuario)
 
-#### ¿Dónde se implementaría?
+#### ¿Dónde se implementa?
 
-**Lokacija:** Publicar eventos cuando ocurren cambios en usuarios
+Publicar eventos cuando ocurren cambios en usuarios
 
 ```
 events/
@@ -845,9 +779,9 @@ public class UsuarioService {
 
 ### 3. State Pattern (Para Ciclo de Vida de Usuario)
 
-#### ¿Dónde se implementaría?
+#### ¿Dónde se implementa?
 
-**Lokacija:** Gestionar estados y transiciones de usuario
+Gestionar estados y transiciones de usuario
 
 ```
 model/
@@ -1042,36 +976,8 @@ public class User {
 
 ## 🏆 ARQUITECTURA BIEN IMPLEMENTADA
 
-### 1. Separación de Capas ✅
 
-**Implementado Correctamente:**
 
-```
-presentation/
-└── UsuarioController.java
-    ├─ @RestController (maneja HTTP)
-    ├─ InputValidation (@Valid)
-    └─ ResponseMapping (DTO)
-    
-business/
-└── UsuarioService.java
-    ├─ Lógica de negocio
-    ├─ Orquestación
-    └─ Validaciones
-
-data/
-└── UserRepository.java
-    ├─ Persistencia
-    └─ Implementa IUserPersistence
-```
-
-**Por qué está bien:**
-- ✅ Controller solo maneja HTTP
-- ✅ Service contiene lógica de negocio
-- ✅ Repository maneja datos
-- ✅ Cambios en BD no afectan controller
-
----
 
 ### 2. Inversión de Dependencias (DIP) ✅
 
@@ -1164,7 +1070,7 @@ public class GlobalExceptionHandler {
 
 ---
 
-### 5. Logging Estructurado ✅
+### 5. Creación de usuario Estructurado ✅
 
 **Implementado Correctamente:**
 
@@ -1249,7 +1155,6 @@ logging.level.com.example.usuarioservice=DEBUG
 | **Factory** | UserPersistenceFactory | Crear persistencia | Cambiar BD sin código |
 | **Builder** | DTOs | Construcción fluida | Ya implementado ✅ |
 | **Singleton** | Configs | Una instancia | Ya implementado ✅ |
-| **Adapter** | UserServiceProducer | Agnóstico mensajería | Cambiar RabbitMQ a Kafka |
 | **Facade** | UsuarioService | Simplificar operaciones | Ya implementado ✅ |
 | **Decorator** | CachedPersistence | Agregar funcionalidad | Caché sin modificar Repo |
 | **Strategy** | ValidationStrategy | Múltiples validaciones | Cambiar validación en runtime |
@@ -1276,23 +1181,19 @@ logging.level.com.example.usuarioservice=DEBUG
    - UserPersistenceFactory
    - Soporte múltiples persistencias
 
-2. Adapter Pattern  
-   - UserServiceProducerAdapter
-   - Support RabbitMQ, Kafka, etc.
-
-3. Strategy Pattern
+2. Strategy Pattern
    - ValidationStrategy
    - Diferentes validaciones
 
-4. Observer Pattern
+3. Observer Pattern
    - UsuarioEventPublisher
    - Listeners desacoplados
 
-5. Decorator Pattern
+4. Decorator Pattern
    - CachedPersistenceDecorator
    - Caché transparente
 
-6. State Pattern
+5. State Pattern
    - UserStateContext
    - Ciclo de vida de usuario
 

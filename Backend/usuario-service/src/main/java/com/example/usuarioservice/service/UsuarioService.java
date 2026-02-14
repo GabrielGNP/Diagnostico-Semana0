@@ -5,6 +5,7 @@ import com.example.usuarioservice.dto.UpdateUsuarioRequest;
 import com.example.usuarioservice.exception.UsuarioNotFoundException;
 import com.example.usuarioservice.exception.UsuarioYaExisteException;
 import com.example.usuarioservice.model.User;
+import com.example.usuarioservice.persistence.IUserPersistence;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -14,13 +15,21 @@ import java.util.Optional;
 /**
  * Implementación de la lógica de negocio para usuarios.
  * Orquesta entre el controlador y la persistencia.
+ * 
+ * Aplica el principio de Inversión de Dependencias (DIP):
+ * - Depende de la abstracción IUserPersistence, no de la implementación concreta
+ * - Esto permite cambiar la implementación de persistencia sin modificar esta clase
+ * - Facilita el testing al poder inyectar mocks o implementaciones alternativas
+ * 
+ * La instancia de IUserPersistence es creada por UserPersistenceFactory,
+ * aplicando el Factory Pattern para desacoplar la creación del uso.
  */
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class UsuarioService implements IUsuarioService {
     
-    private final UserRepository userRepository;
+    private final IUserPersistence userRepository;
     
     @Override
     public Collection<User> obtenerTodos() {

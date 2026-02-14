@@ -28,7 +28,19 @@ public class UserRepository implements IUserPersistence {
     private final AtomicInteger nextId = new AtomicInteger(1);
     private File jsonFile;
 
+    /**
+     * Implementa el método de la interfaz IUserPersistence.
+     * Delega al método init() para mantener compatibilidad.
+     */
     @Override
+    public void initialize() throws IOException {
+        init();
+    }
+
+    /**
+     * Inicializa el repositorio cargando usuarios desde JSON.
+     * @deprecated Usar initialize() para cumplir con IUserPersistence
+     */
     public void init() throws IOException {
         log.info("Inicializando persistencia de usuarios desde JSON");
         String usersFileEnv = System.getenv("USERS_FILE");
