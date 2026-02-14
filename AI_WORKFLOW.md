@@ -96,10 +96,12 @@ ENDPOINTS SERVICIO PEDIDOS
 
 ENDPOINTS SERVICIO USUARIOS
 
-- POST /users/add
-- DELETE /users/{id}
-- GET /users/{id}
-- PATCH /users/{id}
+- GET    /api/v1/usuarios
+- GET    /api/v1/usuarios/{id}
+- POST   /api/v1/usuarios
+- PUT    /api/v1/usuarios/{id}
+- PATCH  /api/v1/usuarios/{id}
+- DELETE /api/v1/usuarios/{id}
 
 # Dinámicas de interacción
 
