@@ -1,5 +1,6 @@
 package com.example.usuarioservice.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.example.usuarioservice.model.User;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -12,8 +13,14 @@ import lombok.NoArgsConstructor;
 @Builder
 public class UsuarioResponse {
     private Integer id;
+    
+    @JsonProperty("name")
     private String nombre;
+    
+    @JsonProperty("mail")
     private String email;
+    
+    @JsonProperty("active")
     private boolean activo;
     
     /**

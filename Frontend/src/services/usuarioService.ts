@@ -2,11 +2,11 @@ import { userApi } from './api';
 import { Usuario } from '../interfaces';
 
 export const getUsers = async (): Promise<Usuario[]> => {
-    return await userApi.get<Usuario[]>('/users');
+    return await userApi.get<Usuario[]>('/api/v1/usuarios');
 };
 
 export const getUserByEmail = async (email: string): Promise<Usuario> => {
-    return await userApi.get<Usuario>(`/user/${encodeURIComponent(email)}`);
+    return await userApi.get<Usuario>(`/api/v1/usuarios/${encodeURIComponent(email)}`);
 };
 
 export const addUser = async (payload: {
@@ -15,5 +15,5 @@ export const addUser = async (payload: {
     password: string;
     active: boolean;
 }): Promise<Usuario> => {
-    return await userApi.post<Usuario>('/user/add', payload);
+    return await userApi.post<Usuario>('/api/v1/usuarios', payload);
 };
