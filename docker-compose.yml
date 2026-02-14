@@ -1,49 +1,49 @@
 version: '3.8'
 
 services:
-  # rabbitmq:
-  #   image: rabbitmq:3-management
-  #   ports:
-  #     - "5672:5672"
-  #     - "15672:15672"
-  #   networks:
-  #     - microservicios-network
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - microservicios-network
 
-  # usuario-service:
-  #   build: ./Backend/usuario-service
-  #   ports:
-  #     - "8083:8080"
-  #   environment:
-  #     - SPRING_RABBITMQ_HOST=rabbitmq
-  #     - USERS_FILE=/data/users.json
-  #   volumes:
-  #     - ./Backend/usuario-service/data:/data
-  #   depends_on:
-  #     - rabbitmq
-  #   networks:
-  #     - microservicios-network
+  usuario-service:
+    build: ./Backend/usuario-service
+    ports:
+      - "8083:8080"
+    environment:
+      - SPRING_RABBITMQ_HOST=rabbitmq
+      - USERS_FILE=/data/users.json
+    volumes:
+      - ./Backend/usuario-service/data:/data
+    depends_on:
+      - rabbitmq
+    networks:
+      - microservicios-network
 
-  # pedido-service:
-  #   build: ./Backend/pedido-service
-  #   ports:
-  #     - "8082:8080"
-  #   environment:
-  #     - SPRING_RABBITMQ_HOST=rabbitmq
-  #     - ORDERS_FILE=/data/orders.json
-  #   volumes:
-  #     - ./Backend/data:/data
-  #   depends_on:
-  #     - rabbitmq
-  #   networks:
-  #     - microservicios-network
+  pedido-service:
+    build: ./Backend/pedido-service
+    ports:
+      - "8082:8080"
+    environment:
+      - SPRING_RABBITMQ_HOST=rabbitmq
+      - ORDERS_FILE=/data/orders.json
+    volumes:
+      - ./Backend/data:/data
+    depends_on:
+      - rabbitmq
+    networks:
+      - microservicios-network
 
   frontend:
     build: ./Frontend
     ports:
       - "3000:80"
-    # depends_on:
-    #   - usuario-service
-    #   - pedido-service
+    depends_on:
+      - usuario-service
+      - pedido-service
     networks:
       - microservicios-network
 
