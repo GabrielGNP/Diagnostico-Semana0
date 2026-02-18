@@ -12,6 +12,14 @@ interface FormData {
   notas: string;
 }
 
+/**
+ * Componente de formulario para crear un nuevo pedido.
+ *
+ * Comportamiento:
+ * - Solicita el usuario por email usando `getUserByEmail` para obtener el `idUser`.
+ * - Crea el pedido con `addOrder` y redirige a la lista principal al completar.
+ * - Maneja estados locales de carga y errores para la UI.
+ */
 const AddOrder: React.FC = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);

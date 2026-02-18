@@ -9,6 +9,13 @@ interface FormData {
   password: string;
 }
 
+/**
+ * Formulario para registrar un nuevo usuario/administrador.
+ *
+ * Comportamiento:
+ * - Envía los datos a `addUser` y redirige a la pantalla principal al terminar.
+ * - Permite mostrar/ocultar la contraseña y valida longitud mínima.
+ */
 const AddUser: React.FC = () => {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);

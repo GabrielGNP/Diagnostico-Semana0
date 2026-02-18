@@ -8,6 +8,14 @@ interface UserFilterProps {
     onUserChange: (id: number | "") => void;
 }
 
+/**
+ * Componente selector para filtrar pedidos por usuario.
+ *
+ * Props:
+ * - `usuarios`: lista de usuarios activos
+ * - `selectedUser`: id del usuario seleccionado o cadena vacía para todos
+ * - `onUserChange`: callback cuando cambia la selección
+ */
 export const UserFilter: React.FC<UserFilterProps> = ({
     usuarios,
     selectedUser,

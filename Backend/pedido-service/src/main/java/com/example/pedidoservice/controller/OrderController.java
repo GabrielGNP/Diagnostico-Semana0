@@ -14,6 +14,22 @@ import java.util.List;
 @RequestMapping("/order")
 public class OrderController {
 
+    /**
+     * REST controller that exposes order-related operations.
+     *
+     * Endpoints:
+     * - POST /order/add : create an order
+     * - DELETE /order/{id} : delete an order
+     * - GET /order/{id} : get order by id
+     * - GET /order/{id}/with-user-info : get order with enriched user info
+     * - GET /order/user/{idUser} : list orders by user id
+     * - GET /order/all : list all orders
+     * - PATCH /order/{id} : change order state
+     *
+     * The controller delegates business logic to `OrderService` and converts
+     * results into appropriate HTTP responses.
+     */
+
     @Autowired
     private OrderService orderService;
 

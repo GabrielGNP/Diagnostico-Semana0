@@ -19,8 +19,14 @@ public class UserServiceConsumer {
 
     @RabbitListener(queues = RabbitMQConfig.USER_REQUEST_QUEUE)
     public void receiveUserRequest(UserRequest request) {
+        /**
+         * Handle incoming `UserRequest` messages from other services.
+         * The consumer looks up the requested user by id and, if found,
+         * sends a `UserResponse` back to the response exchange using the
+         * `UserServiceProducer`.
+         */
         System.out.println("User request received: " + request);
-        
+
         if (producer == null) {
             System.err.println("Producer not available");
             return;
@@ -28,7 +34,7 @@ public class UserServiceConsumer {
 
         int userId = request.getUserId();
         User user = userRepository.findById(userId);
-        
+
         if (user != null) {
             UserResponse response = new UserResponse(
                 user.getId(),

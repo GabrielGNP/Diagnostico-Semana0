@@ -8,6 +8,15 @@ interface PedidoListProps {
     loading: boolean;
 }
 
+/**
+ * Lista de pedidos que muestra un estado de carga, mensaje vacío o las
+ * tarjetas individuales (`PedidoCard`).
+ *
+ * Props:
+ * - `pedidos`: arreglo de `Pedido` a mostrar
+ * - `usuarios`: arreglo de `Usuario` usado para encontrar el propietario
+ * - `loading`: bandera para mostrar estado de carga
+ */
 export const PedidoList: React.FC<PedidoListProps> = ({
     pedidos,
     usuarios,

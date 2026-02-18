@@ -3,6 +3,14 @@ import { Usuario, Pedido } from "../interfaces";
 import { getUsers } from "../services/usuarioService";
 import { getOrders } from "../services/pedidoService";
 
+/**
+ * Hook custom que obtiene y expone los datos principales del dashboard.
+ *
+ * - Carga usuarios activos y pedidos activos en paralelo.
+ * - Maneja estado de carga y errores.
+ *
+ * @returns {{ usuarios: Usuario[]; pedidos: Pedido[]; loading: boolean; error: string | null; refreshData: () => Promise<void> }}
+ */
 export const useDashboardData = () => {
     const [usuarios, setUsuarios] = useState<Usuario[]>([]);
     const [pedidos, setPedidos] = useState<Pedido[]>([]);
