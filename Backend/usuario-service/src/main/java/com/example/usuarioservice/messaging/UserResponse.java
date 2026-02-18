@@ -25,6 +25,12 @@ public class UserResponse {
         this.active = active;
     }
 
+    /**
+     * Messaging DTO returned by the user service when responding to
+     * `UserRequest` messages. Contains basic user attributes that
+     * consumer services (e.g. order service) can use to enrich responses.
+     */
+
     public Integer getId() {
         return id;
     }

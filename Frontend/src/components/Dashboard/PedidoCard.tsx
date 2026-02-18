@@ -7,6 +7,13 @@ interface PedidoCardProps {
     usuario?: Usuario;
 }
 
+/**
+ * Tarjeta que renderiza información resumida de un pedido.
+ *
+ * Props:
+ * - `pedido`: objeto `Pedido` con los datos del pedido
+ * - `usuario`: (opcional) objeto `Usuario` para mostrar el email/name
+ */
 export const PedidoCard: React.FC<PedidoCardProps> = ({ pedido, usuario }) => {
     return (
         <div className="bg-white p-4 rounded-3xl flex items-center justify-between border border-slate-50 shadow-sm animate-in fade-in zoom-in duration-300">

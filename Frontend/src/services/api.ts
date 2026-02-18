@@ -5,6 +5,11 @@ export class ApiClient {
         this.baseUrl = baseUrl;
     }
 
+    /**
+     * Generic HTTP client helper.
+     *
+     * @param baseUrl base URL used for all requests (injected via env)
+     */
     private async buildError(response: Response, endpoint: string): Promise<Error> {
         const text = await response.text().catch(() => "");
         const detail = text ? ` - ${text}` : "";
@@ -14,6 +19,10 @@ export class ApiClient {
     }
 
     async get<T>(endpoint: string): Promise<T> {
+        /**
+         * Perform a GET request and parse JSON response.
+         * Throws an Error with details if the response is not ok.
+         */
         const response = await fetch(`${this.baseUrl}${endpoint}`, {
             headers: {
                 'Content-Type': 'application/json',
@@ -28,6 +37,10 @@ export class ApiClient {
     }
 
     async post<T>(endpoint: string, payload: unknown): Promise<T> {
+        /**
+         * Perform a POST request with JSON payload and parse JSON response.
+         * Throws an Error with details if the response is not ok.
+         */
         const response = await fetch(`${this.baseUrl}${endpoint}`, {
             method: 'POST',
             headers: {

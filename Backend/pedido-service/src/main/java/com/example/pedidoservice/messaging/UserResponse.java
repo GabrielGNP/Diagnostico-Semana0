@@ -18,6 +18,12 @@ public class UserResponse {
     public UserResponse() {
     }
 
+    /**
+     * DTO used as a reply from the user service containing basic user fields.
+     * This object is serialized over RabbitMQ and consumed by the order service
+     * to enrich order payloads with user information.
+     */
+
     public UserResponse(Integer id, String name, String mail, boolean active) {
         this.id = id;
         this.name = name;

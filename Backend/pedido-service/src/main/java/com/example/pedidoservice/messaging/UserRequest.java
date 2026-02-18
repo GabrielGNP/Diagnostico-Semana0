@@ -6,6 +6,11 @@ public class UserRequest {
     @JsonProperty("userId")
     private int userId;
 
+    /**
+     * Simple DTO used to request user information across services.
+     * The payload contains only the `userId` to look up.
+     */
+
     public UserRequest() {
     }
 

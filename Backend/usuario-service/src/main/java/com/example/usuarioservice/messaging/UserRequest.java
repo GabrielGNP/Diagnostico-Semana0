@@ -9,6 +9,11 @@ public class UserRequest {
     public UserRequest() {
     }
 
+    /**
+     * Messaging DTO used by other services to request a user lookup.
+     * Carries only the numeric `userId`.
+     */
+
     public UserRequest(int userId) {
         this.userId = userId;
     }

@@ -18,6 +18,18 @@ import java.util.stream.Collectors;
 @Service
 public class OrderService {
 
+    /**
+     * Service that manages orders.
+     *
+     * Responsibilities:
+     * - CRUD operations on orders using the JSON-backed repository
+     * - Coordinate with the user service via RabbitMQ to enrich orders with user info
+     *
+     * Threading / timeouts:
+     * - Requests for user information are synchronous from the caller perspective
+     *   and use a short timeout to avoid blocking the request thread for too long.
+     */
+
     @Autowired
     private OrderRepository orderRepository;
 
@@ -35,6 +47,14 @@ public class OrderService {
 
 
     public OrderDto createOrder(OrderDto orderDto) {
+        /**
+         * Create a new order from DTO.
+         * - Maps DTO to entity, assigns a new ID, sets default state and persists.
+         * - Returns the saved DTO representation.
+         *
+         * Note: ID assignment is a simple max+1 strategy used by the file-based
+         * repository implementation and may not be suitable for concurrent producers.
+         */
         Order order = orderMapper.toEntity(orderDto);
         order.setState(State.PROCESSING); // Default state? Prompt didn't specify, but PROCESSING is first.
         order.setActive(true);
@@ -70,6 +90,16 @@ public class OrderService {
 
 
     public OrderWithUserDto getOrderWithUserInfo(int orderId) {
+        /**
+         * Retrieve an order and attempt to append user information obtained
+         * via the asynchronous user service. The method sends a user info
+         * request over RabbitMQ and blocks up to `USER_REQUEST_TIMEOUT` ms
+         * waiting for the response.
+         *
+         * If the user service cannot be reached or a response isn't received
+         * within the timeout the returned `OrderWithUserDto` will include a
+         * null user payload and the order data is still returned.
+         */
         // Get the order first
         OrderDto orderDto = showOrderById(orderId);
         if (orderDto == null) {

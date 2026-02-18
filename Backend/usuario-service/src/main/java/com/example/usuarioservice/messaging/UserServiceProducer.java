@@ -12,10 +12,16 @@ public class UserServiceProducer {
     private RabbitTemplate rabbitTemplate;
 
     public void sendUserResponse(UserResponse response) {
+        /**
+         * Send a `UserResponse` message to the configured response exchange.
+         * This is invoked by the user service when responding to lookup requests.
+         *
+         * @param response the payload containing basic user attributes
+         */
         rabbitTemplate.convertAndSend(
-                RabbitMQConfig.USER_EXCHANGE,
-                RabbitMQConfig.USER_RESPONSE_ROUTING_KEY,
-                response
+            RabbitMQConfig.USER_EXCHANGE,
+            RabbitMQConfig.USER_RESPONSE_ROUTING_KEY,
+            response
         );
         System.out.println("User response sent: " + response);
     }

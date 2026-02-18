@@ -5,6 +5,13 @@ import { useDashboardData } from "../hooks/useDashboardData";
 import { UserFilter } from "./Dashboard/UserFilter";
 import { PedidoList } from "./Dashboard/PedidoList";
 
+/**
+ * Vista principal del Dashboard que muestra filtros de usuarios y la lista
+ * de pedidos.
+ *
+ * - Usa `useDashboardData` para la carga inicial y estados de error/carga.
+ * - Permite filtrar pedidos por usuario seleccionado.
+ */
 const Dashboard = () => {
   const navigate = useNavigate();
   const { usuarios, pedidos, loading, error } = useDashboardData();
