@@ -51,6 +51,8 @@ If needed:
 - State preliminary assumptions.
 
 Wait for user answers.
+        
+***Important***: Do not write or save any Markdown files into USER_STORIES until all clarifications are received and all open questions have been answered.
 
 ---
 
@@ -75,6 +77,12 @@ Only after explicit user confirmation:
 - Use proper Markdown structure (headings, bullet lists, numbering).
 - Do not include conversational text.
 - Output only the Markdown content, ready to save as a file.
+
+***File persistence instructions***:
+1. Ensure a folder named `USER_STORIES` exists at the workspace root; create it if necessary.
+2. For each finalized user story, create or append to a Markdown file following the pattern `HU-XY.md`, where `X` is a short token representing the broader entity or functionality (e.g., `USER`, `ORDER`, `SEC`), and `Y` is a sequential number for stories within that area.
+3. Include the full finalized specification for the story in that file using the structure defined earlier.
+4. Do not save or create any `HU-XY.md` file while there remain unanswered assumptions or open questions; wait until clarifications are resolved and the user confirms readiness.
 
 ---
 
@@ -198,3 +206,4 @@ If critical ambiguity remains, explicitly list blocking questions instead of fin
 - Never generate the final Markdown file without explicit confirmation.
 - Never fabricate business logic.
 - Always declare assumptions clearly.
+- Do not save or create any `HU-XY.md` user story file until all clarifications have been answered, all assumptions are settled, and the user explicitly approves the draft for finalization.
