@@ -9,8 +9,8 @@ Este plan de pruebas cubre la **Migración de Persistencia de JSON a PostgreSQL*
 | ID | Historia de Usuario | Alcance |
 |----|---------------------|---------|
 | HU-DB-01 | Configuración de Infraestructura PostgreSQL en Docker | Infraestructura |
-| HU-DB-02 | Entidad JPA Usuario con UUID | Backend - usuario-service |
-| HU-DB-03 | Entidad JPA Order con UUID | Backend - pedido-service |
+| HU-DB-02 | Entidad JPA Usuario con Integer | Backend - usuario-service |
+| HU-DB-03 | Entidad JPA Order con Integer | Backend - pedido-service |
 | HU-DB-04 | Repositorio JPA UsuarioRepository con Soft-Delete | Backend - usuario-service |
 | HU-DB-05 | Repositorio JPA OrderRepository con Soft-Delete | Backend - pedido-service |
 | HU-DB-06 | Configuración de Conexión JPA para usuario-service | Configuración |
@@ -22,12 +22,12 @@ Este plan de pruebas cubre la **Migración de Persistencia de JSON a PostgreSQL*
 
 | Riesgo | Descripción | Impacto | Mitigación |
 |--------|-------------|---------|------------|
-| **R1: Cambio de tipo ID** | IDs cambian de `Integer`/`int` a `UUID`. Afecta contratos API, DTOs, mappers y mensajes RabbitMQ. | Alto | Tests de regresión en endpoints y integración con RabbitMQ |
+| **R1: Migración a JPA** | Sistema cambia de persistencia JSON a PostgreSQL con JPA. Requiere refactorizar repositorios y servicios. | Alto | Tests de regresión en endpoints y persistencia |
 | **R2: Eliminación de JSON fallback** | Sistema actual carga datos desde `users.json`/`orders.json`. Migración elimina este fallback. | Alto | Tests de arranque sin archivos JSON |
 | **R3: Dependencias de persistencia ocultas** | `UserPersistenceFactory`, `IUserPersistence` y configuraciones de inicialización pueden tener dependencias al sistema JSON. | Medio | Tests de inyección de dependencias |
 | **R4: Comportamiento de soft-delete** | `deleteById` actual hace hard-delete físico. Código cliente puede asumir borrado real. | Alto | Tests de queries sobre registros soft-deleted |
-| **R5: Mensajes RabbitMQ** | DTOs `UserRequest`/`UserResponse` usan IDs numéricos. Deben migrar a UUID. | Alto | Tests de integración de mensajería |
-| **R6: Frontend API clients** | `Frontend/src/services/` puede usar IDs numéricos. | Medio | Tests E2E tras migración |
+| **R5: Mensajes RabbitMQ** | DTOs `UserRequest`/`UserResponse` usan IDs numéricos. Mantener consistencia. | Medio | Tests de integración de mensajería |
+| **R6: Frontend API clients** | `Frontend/src/services/` usa IDs numéricos. Mantener compatibilidad. | Bajo | Tests E2E tras migración |
 | **R7: Constraints de BD no existentes** | Validación actual es a nivel de servicio, no de BD. Unicidad de mail puede fallar en escenarios de concurrencia. | Medio | Tests de constraint violation |
 | **R8: Variables de entorno** | Credenciales deben externalizarse. Ausencia de variables debe fallar de forma clara. | Medio | Tests de configuración errónea |
 
@@ -37,14 +37,14 @@ Este plan de pruebas cubre la **Migración de Persistencia de JSON a PostgreSQL*
 
 ### 2.1 Principle Identified
 
-**Principio #2: Las pruebas exhaustivas son imposibles** — Dado el espacio de entrada complejo (UUIDs, strings con longitudes variables, enums de 7 valores, booleanos) y las múltiples rutas de ejecución (CRUD × soft-delete × constraints), se deben aplicar técnicas de diseño de prueba formales para maximizar cobertura con un conjunto manejable de casos.
+**Principio #2: Las pruebas exhaustivas son imposibles** — Dado el espacio de entrada complejo (integers, strings con longitudes variables, enums de 7 valores, booleanos) y las múltiples rutas de ejecución (CRUD × soft-delete × constraints), se deben aplicar técnicas de diseño de prueba formales para maximizar cobertura con un conjunto manejable de casos.
 
 **Principio #7: La falacia de la ausencia de errores** — Verificar solo casos positivos no garantiza calidad. El sistema debe rechazar correctamente entradas inválidas (emails duplicados, usuarios inexistentes, credenciales faltantes).
 
 ### 2.2 Justification
 
 La migración de persistencia es de alto riesgo porque:
-1. Cambia el modelo de datos fundamental (Integer → UUID)
+1. Cambia el sistema de persistencia (JSON → PostgreSQL con JPA)
 2. Altera el comportamiento de eliminación (hard → soft delete)
 3. Introduce dependencias externas (PostgreSQL, variables de entorno)
 4. Afecta contratos de integración (RabbitMQ, API REST)
@@ -75,7 +75,7 @@ Por tanto, se requiere aplicación rigurosa de **Equivalence Partitioning**, **B
 | JPA ↔ PostgreSQL | Entity + Repository + PostgreSQL | Testcontainers PostgreSQL |
 | Service ↔ Repository | Service + JPA Repository + PostgreSQL | Testcontainers PostgreSQL |
 | Configuración externalizada | Application + Environment Variables | Spring Test con `@TestPropertySource` |
-| RabbitMQ con UUIDs | UserServiceProducer/Consumer + DTOs UUID | Testcontainers RabbitMQ |
+| RabbitMQ con IDs | UserServiceProducer/Consumer + DTOs Integer | Testcontainers RabbitMQ |
 | Docker Compose startup | PostgreSQL containers + Services | Docker Compose test |
 
 **Cobertura esperada**: Flujos completos CRUD para ambas entidades, incluyendo soft-delete y constraints.
@@ -84,8 +84,8 @@ Por tanto, se requiere aplicación rigurosa de **Equivalence Partitioning**, **B
 
 | Escenario End-to-End | Validación |
 |---------------------|------------|
-| Crear usuario vía API → Persistencia en PostgreSQL | UUID generado, respuesta HTTP 201 |
-| Crear orden vía API → Persistencia en PostgreSQL | UUID generado, idUser como UUID |
+| Crear usuario vía API → Persistencia en PostgreSQL | ID generado, respuesta HTTP 201 |
+| Crear orden vía API → Persistencia en PostgreSQL | ID generado, idUser como Integer |
 | Soft-delete usuario → Query retorna 404 | Registro existe con active=false |
 | Email duplicado → HTTP 409 | Constraint violation manejada |
 | Restart contenedores → Datos persisten | Volumen PostgreSQL funcional |
@@ -135,8 +135,8 @@ Por tanto, se requiere aplicación rigurosa de **Equivalence Partitioning**, **B
 
 | Partición | Descripción | Valores Representativos | Resultado Esperado |
 |-----------|-------------|------------------------|-------------------|
-| **VP6** | UUID válido de usuario existente | UUID activo | Válido |
-| **VP7** | UUID válido de usuario inexistente | UUID formato correcto pero no existe | Válido (no FK física) |
+| **VP6** | ID válido de usuario existente | ID activo (ej: 1, 5, 100) | Válido |
+| **VP7** | ID válido de usuario inexistente | ID numérico pero no existe | Válido (no FK física) |
 | **IP10** | idUser nulo | null | Rechazo (NOT NULL) |
 
 ### 4.2 Boundary Value Analysis
@@ -180,7 +180,7 @@ Por tanto, se requiere aplicación rigurosa de **Equivalence Partitioning**, **B
 | Mail único (entre activos) | Y | Y | N | Y | Y | Y | Y | N |
 | BD conectada | Y | N | Y | Y | Y | Y | Y | Y |
 | **Acciones** | | | | | | | | |
-| Usuario creado con UUID | ✓ | | | | | | | |
+| Usuario creado con ID | ✓ | | | | | | | |
 | HTTP 201 | ✓ | | | | | | | |
 | HTTP 500 (BD error) | | ✓ | | | | | | |
 | HTTP 409 (Conflict) | | | ✓ | | | | | ✓ |
@@ -249,7 +249,7 @@ Feature: Persistencia de Usuarios con PostgreSQL y JPA
       | name     | password     | mail               |
       | Juan     | password123  | validname@test.com |
     Then se retorna HTTP 201 Created
-    And el response contiene un campo "id" de tipo UUID
+    And el response contiene un campo "id" de tipo Integer
     And el usuario se persiste en la tabla "usuarios" con active=true
 
   @EquivalencePartitioning @IP1 @HU-DB-02
@@ -336,11 +336,11 @@ Feature: Persistencia de Usuarios con PostgreSQL y JPA
 
   @EquivalencePartitioning @VP5 @HU-DB-03
   Scenario: Crear orden con estado válido del enum
-    Given existe un usuario activo con UUID "550e8400-e29b-41d4-a716-446655440000"
+    Given existe un usuario activo con ID 1
     When se crea una orden con:
-      | name        | description    | idUser                               | state      |
-      | Orden Test  | Descripción    | 550e8400-e29b-41d4-a716-446655440000 | PROCESSING |
-    Then la orden se persiste con UUID generado
+      | name        | description    | idUser | state      |
+      | Orden Test  | Descripción    | 1      | PROCESSING |
+    Then la orden se persiste con ID generado
     And el campo "state" se almacena como "PROCESSING" (STRING en BD)
 
   @EquivalencePartitioning @VP5 @HU-DB-03
@@ -454,7 +454,7 @@ Feature: Persistencia de Usuarios con PostgreSQL y JPA
       | name       | password    | mail            |
       | ValidUser  | password123 | dtvalid@test.com|
     Then se retorna HTTP 201 Created
-    And el response contiene UUID en campo "id"
+    And el response contiene ID (Integer) en campo "id"
     And el usuario existe en tabla "usuarios" con active=true
 
   @DecisionTable @R2 @HU-DB-06
@@ -499,8 +499,8 @@ Feature: Persistencia de Usuarios con PostgreSQL y JPA
 
   @DecisionTable @SoftDelete @R1 @HU-DB-09 @AC-03
   Scenario: DT-Delete-R1: Soft-delete exitoso de usuario activo
-    Given existe un usuario activo con UUID "550e8400-e29b-41d4-a716-446655440001"
-    When se envía DELETE /api/v1/usuarios/550e8400-e29b-41d4-a716-446655440001
+    Given existe un usuario activo con ID 1
+    When se envía DELETE /api/v1/usuarios/1
     Then se retorna HTTP 200 OK o 204 No Content
     And el campo "active" del usuario cambia a false
     And el registro físico permanece en la tabla "usuarios"
@@ -508,14 +508,14 @@ Feature: Persistencia de Usuarios con PostgreSQL y JPA
 
   @DecisionTable @SoftDelete @R2 @HU-DB-09 @AC-08
   Scenario: DT-Delete-R2: Error al intentar eliminar usuario ya inactivo
-    Given existe un usuario con UUID "550e8400-e29b-41d4-a716-446655440002" y active=false
-    When se envía DELETE /api/v1/usuarios/550e8400-e29b-41d4-a716-446655440002
+    Given existe un usuario con ID 2 y active=false
+    When se envía DELETE /api/v1/usuarios/2
     Then se retorna HTTP 404 Not Found
 
   @DecisionTable @SoftDelete @R3 @HU-DB-09
   Scenario: DT-Delete-R3: Error al intentar eliminar usuario inexistente
-    Given no existe usuario con UUID "550e8400-e29b-41d4-a716-446655440099"
-    When se envía DELETE /api/v1/usuarios/550e8400-e29b-41d4-a716-446655440099
+    Given no existe usuario con ID 9999
+    When se envía DELETE /api/v1/usuarios/9999
     Then se retorna HTTP 404 Not Found
 
   # ============================================================
@@ -525,10 +525,10 @@ Feature: Persistencia de Usuarios con PostgreSQL y JPA
   @DecisionTable @Query @R1 @HU-DB-04 @AC-02
   Scenario: DT-Query-R1: Listar retorna solo usuarios activos
     Given existen usuarios:
-      | id                                   | name    | active |
-      | 550e8400-e29b-41d4-a716-446655440010 | Active1 | true   |
-      | 550e8400-e29b-41d4-a716-446655440011 | Active2 | true   |
-      | 550e8400-e29b-41d4-a716-446655440012 | Deleted | false  |
+      | id | name    | active |
+      | 10 | Active1 | true   |
+      | 11 | Active2 | true   |
+      | 12 | Deleted | false  |
     When se envía GET /api/v1/usuarios
     Then se retorna HTTP 200 OK
     And el response contiene 2 usuarios
@@ -550,8 +550,8 @@ Feature: Persistencia de Usuarios con PostgreSQL y JPA
 
   @DecisionTable @Query @HU-DB-04 @AC-08
   Scenario: Consulta por ID de usuario soft-deleted retorna 404
-    Given existe usuario con UUID "550e8400-e29b-41d4-a716-446655440020" y active=false
-    When se envía GET /api/v1/usuarios/550e8400-e29b-41d4-a716-446655440020
+    Given existe usuario con ID 20 y active=false
+    When se envía GET /api/v1/usuarios/20
     Then se retorna HTTP 404 Not Found
     And el registro existe en BD pero no es visible via API
 
@@ -609,20 +609,20 @@ Feature: Persistencia de Usuarios con PostgreSQL y JPA
   # ============================================================
 
   @EquivalencePartitioning @HU-DB-03 @AC-04
-  Scenario: Crear orden con UUID generado automáticamente
+  Scenario: Crear orden con ID generado automáticamente
     Given el servicio pedido-service está corriendo con PostgreSQL
     And existe un usuario activo
     When se crea una orden con:
       | name         | description      | state      |
       | Orden Nueva  | Desc de prueba   | PROCESSING |
-    Then la orden se persiste con UUID generado automáticamente
-    And idUser se almacena como UUID
+    Then la orden se persiste con ID generado automáticamente
+    And idUser se almacena como Integer
     And active=true por defecto
 
   @SoftDelete @HU-DB-05
   Scenario: Soft-delete de orden activa
-    Given existe una orden activa con UUID "660e8400-e29b-41d4-a716-446655440001"
-    When se elimina la orden "660e8400-e29b-41d4-a716-446655440001"
+    Given existe una orden activa con ID 1
+    When se elimina la orden con ID 1
     Then el campo active de la orden cambia a false
     And el registro físico permanece en tabla "orders"
 
@@ -644,13 +644,13 @@ Feature: Persistencia de Usuarios con PostgreSQL y JPA
 
   @Query @HU-DB-05
   Scenario: Filtrar órdenes por usuario retorna solo activas del usuario
-    Given existe usuario con UUID "770e8400-e29b-41d4-a716-446655440001"
+    Given existe usuario con ID 1
     And existen órdenes para ese usuario:
       | active |
       | true   |
       | true   |
       | false  |
-    When se consulta órdenes por idUser="770e8400-e29b-41d4-a716-446655440001"
+    When se consulta órdenes por idUser=1
     Then se retornan 2 órdenes (solo las activas)
 
   # ============================================================
@@ -671,7 +671,7 @@ Feature: Persistencia de Usuarios con PostgreSQL y JPA
     When se reinician los contenedores con "docker-compose restart"
     Then los datos de usuarios persisten
     And los datos de órdenes persisten
-    And los UUIDs permanecen iguales
+    And los IDs permanecen iguales
 
   @Infrastructure @HU-DB-01
   Scenario: Bases de datos aisladas por servicio
@@ -715,7 +715,7 @@ Feature: Persistencia de Usuarios con PostgreSQL y JPA
     And spring.jpa.hibernate.ddl-auto=update
     When el servicio usuario-service inicia
     Then la tabla "usuarios" se crea automáticamente
-    And tiene columnas: id (UUID), name, password, mail, active
+    And tiene columnas: id (SERIAL/Integer), name, password, mail, active
 
   @Schema @HU-DB-03 @FR-01
   Scenario: DDL auto crea tabla orders al iniciar
@@ -723,7 +723,7 @@ Feature: Persistencia de Usuarios con PostgreSQL y JPA
     And spring.jpa.hibernate.ddl-auto=update
     When el servicio pedido-service inicia
     Then la tabla "orders" se crea automáticamente
-    And tiene columnas: id (UUID), name, description, id_user (UUID), state, active
+    And tiene columnas: id (SERIAL/Integer), name, description, id_user (Integer), state, active
 
   @Schema @HU-DB-02 @FR-05
   Scenario: Constraint UNIQUE en mail se aplica a nivel de BD
@@ -745,8 +745,8 @@ Feature: Persistencia de Usuarios con PostgreSQL y JPA
 
   @Performance @NFR-01
   Scenario: Query por ID responde en menos de 100ms
-    Given existe un usuario con UUID conocido
-    When se envía GET /api/v1/usuarios/{uuid}
+    Given existe un usuario con ID conocido
+    When se envía GET /api/v1/usuarios/{id}
     Then el tiempo de respuesta es menor o igual a 100ms
 
   @Performance @NFR-01
@@ -845,7 +845,7 @@ class UsuarioServiceTest {
     
     @Test
     void delete_shouldCallSaveWithActiveFalse() {
-        UUID id = UUID.randomUUID();
+        Integer id = 1;
         Usuario usuario = new Usuario(id, "Test", "password", "test@mail.com", true);
         
         when(usuarioRepository.findByIdAndActiveTrue(id))
@@ -894,9 +894,9 @@ class UsuarioRepositoryPostgresIT {
 
 | Área de Riesgo | Tipo de Regresión | Tests de Cobertura |
 |----------------|-------------------|-------------------|
-| **Cambio Integer → UUID** | Incompatibilidad de API, errores de parsing | Tests E2E con clientes reales |
+| **Migración JSON → PostgreSQL** | Fallo en persistencia, pérdida de datos | Tests de integración con Testcontainers |
 | **RabbitMQ DTOs** | Mensajes con formato incorrecto | Tests de integración de mensajería |
-| **Frontend API clients** | Llamadas fallidas por cambio de IDs | Tests de contrato (Pact) |
+| **Frontend API clients** | Llamadas fallidas por cambio de persistencia | Tests de contrato (Pact) |
 | **Eliminación de JSON fallback** | Fallo en inicialización | Tests de arranque sin archivos JSON |
 | **Queries sin filtro soft-delete** | Exposición de datos eliminados | Tests de seguridad/privacidad |
 | **Constraint violations no manejadas** | HTTP 500 en lugar de 409 | Tests de manejo de excepciones |
@@ -904,15 +904,15 @@ class UsuarioRepositoryPostgresIT {
 **Tests de Regresión Críticos:**
 
 ```java
-// Verificar que no hay referencias a Integer IDs
+// Verificar que IDs son Integer
 @Test
-void apiContract_shouldUseUUIDsNotIntegers() {
+void apiContract_shouldUseIntegerIds() {
     ResponseEntity<UsuarioResponse> response = restTemplate.getForEntity(
         "/api/v1/usuarios/{id}",
         UsuarioResponse.class,
-        UUID.randomUUID()
+        1
     );
-    // Verify UUID format in response
+    // Verify Integer format in response
 }
 
 // Verificar que JSON files no se usan
@@ -941,7 +941,7 @@ void findAll_shouldNeverReturnInactiveRecords() {
 | AC-01 | DT-Usuario-R1, VP1, VP2, VP3 |
 | AC-02 | DT-Query-R1, DT-Query-R2, DT-Query-R3 |
 | AC-03 | DT-Delete-R1 |
-| AC-04 | Crear orden con UUID generado |
+| AC-04 | Crear orden con ID generado |
 | AC-05 | DT-Config-R1 |
 | AC-06 | Datos persisten tras restart |
 | AC-07 | IP7, DT-Usuario-R3 |

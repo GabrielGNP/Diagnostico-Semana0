@@ -56,21 +56,21 @@ POSTGRES_PEDIDOS_DB=pedidos_db
 
 ---
 
-## HU-DB-02: Entidad JPA Usuario con UUID
+## HU-DB-02: Entidad JPA Usuario con Integer
 
 ### Role
 Como **Desarrollador Backend**
 
 ### Objective
-Quiero definir la entidad JPA `Usuario` con UUID como clave primaria
+Quiero definir la entidad JPA `Usuario` con Integer como clave primaria
 
 ### Benefit
-Para persistir y recuperar usuarios desde PostgreSQL con identificadores únicos universales.
+Para persistir y recuperar usuarios desde PostgreSQL con identificadores numéricos auto-incrementales.
 
 ### Detailed Description
 Transformar la clase `User` actual en una entidad JPA con:
 - `@Entity`, `@Table(name = "usuarios")`
-- `@Id` de tipo `UUID` con `@GeneratedValue(strategy = GenerationType.UUID)`
+- `@Id` de tipo `Integer` con `@GeneratedValue(strategy = GenerationType.IDENTITY)`
 - Columnas mapeadas: `id`, `name`, `password`, `mail`, `active`
 - Restricciones: `mail` único, `name` y `password` no nulos.
 - Campo `active` para soft-delete (DEFAULT true).
@@ -78,7 +78,7 @@ Transformar la clase `User` actual en una entidad JPA con:
 **Esquema de campos:**
 | Campo    | Tipo    | Restricción              |
 |----------|---------|--------------------------|
-| id       | UUID    | PK, auto-generado        |
+| id       | Integer | PK, auto-generado (SERIAL)|
 | name     | String  | NOT NULL, 2-50 chars     |
 | password | String  | NOT NULL, min 8          |
 | mail     | String  | NOT NULL, UNIQUE         |
@@ -86,34 +86,34 @@ Transformar la clase `User` actual en una entidad JPA con:
 
 ---
 
-## HU-DB-03: Entidad JPA Order con UUID
+## HU-DB-03: Entidad JPA Order con Integer
 
 ### Role
 Como **Desarrollador Backend**
 
 ### Objective
-Quiero definir la entidad JPA `Order` con UUID como clave primaria y soporte soft-delete
+Quiero definir la entidad JPA `Order` con Integer como clave primaria y soporte soft-delete
 
 ### Benefit
-Para persistir pedidos con identificadores únicos y eliminación lógica.
+Para persistir pedidos con identificadores numéricos y eliminación lógica.
 
 ### Detailed Description
 Transformar la clase `Order` actual en una entidad JPA con:
 - `@Entity`, `@Table(name = "orders")`
-- `@Id` de tipo `UUID` con `@GeneratedValue(strategy = GenerationType.UUID)`
+- `@Id` de tipo `Integer` con `@GeneratedValue(strategy = GenerationType.IDENTITY)`
 - `@Enumerated(EnumType.STRING)` para el campo `state`
-- Columnas: `id`, `name`, `description`, `id_user` (UUID), `state`, `active`
+- Columnas: `id`, `name`, `description`, `id_user` (Integer), `state`, `active`
 - Campo `active` para soft-delete.
 
 **Esquema de campos:**
-| Campo       | Tipo   | Restricción              |
-|-------------|--------|--------------------------|
-| id          | UUID   | PK, auto-generado        |
-| name        | String | NOT NULL                 |
-| description | String | nullable                 |
-| idUser      | UUID   | NOT NULL                 |
-| state       | State  | NOT NULL, ENUM (STRING)  |
-| active      | boolean| NOT NULL, DEFAULT true   |
+| Campo       | Tipo    | Restricción              |
+|-------------|---------|--------------------------|
+| id          | Integer | PK, auto-generado (SERIAL)|
+| name        | String  | NOT NULL                 |
+| description | String  | nullable                 |
+| idUser      | Integer | NOT NULL                 |
+| state       | State   | NOT NULL, ENUM (STRING)  |
+| active      | boolean | NOT NULL, DEFAULT true   |
 
 **Enum State:**
 `PROCESSING`, `TRAVELING_TO_WAREHOUSE`, `IN_WAREHOUSE`, `TRAVELING_TO_YOUR_HOUSE`, `ON_THE_STREET`, `DELIVERED`, `CANCELED`
@@ -134,14 +134,14 @@ Para disponer de métodos que filtren automáticamente registros inactivos.
 ### Detailed Description
 Crear interfaz en `usuario-service`:
 ```java
-public interface UsuarioRepository extends JpaRepository<Usuario, UUID>
+public interface UsuarioRepository extends JpaRepository<Usuario, Integer>
 ```
 
 **Métodos requeridos:**
 - CRUD heredados: `save`, `findById`, `findAll`, `existsById`
 - **Soft-delete queries:**
   - `List<Usuario> findByActiveTrue()` — usuarios activos
-  - `Optional<Usuario> findByIdAndActiveTrue(UUID id)` — usuario activo por ID
+  - `Optional<Usuario> findByIdAndActiveTrue(Integer id)` — usuario activo por ID
   - `Optional<Usuario> findByMailAndActiveTrue(String mail)` — usuario activo por email
   - `boolean existsByMailAndActiveTrue(String mail)` — verificar email único entre activos
 
@@ -163,15 +163,15 @@ Para disponer de métodos CRUD que respeten la eliminación lógica.
 ### Detailed Description
 Crear interfaz en `pedido-service`:
 ```java
-public interface OrderRepository extends JpaRepository<Order, UUID>
+public interface OrderRepository extends JpaRepository<Order, Integer>
 ```
 
 **Métodos requeridos:**
 - CRUD heredados: `save`, `findById`, `findAll`
 - **Soft-delete queries:**
   - `List<Order> findByActiveTrue()` — órdenes activas
-  - `Optional<Order> findByIdAndActiveTrue(UUID id)` — orden activa por ID
-  - `List<Order> findByIdUserAndActiveTrue(UUID idUser)` — órdenes activas por usuario
+  - `Optional<Order> findByIdAndActiveTrue(Integer id)` — orden activa por ID
+  - `List<Order> findByIdUserAndActiveTrue(Integer idUser)` — órdenes activas por usuario
   - `List<Order> findByStateAndActiveTrue(State state)` — órdenes activas por estado
 
 ---
@@ -269,7 +269,7 @@ En las clases `Service` de ambos microservicios:
 
 **Operación DELETE → Soft-Delete:**
 ```java
-public void delete(UUID id) {
+public void delete(Integer id) {
     Entity entity = repository.findByIdAndActiveTrue(id)
         .orElseThrow(() -> new EntityNotFoundException("Not found"));
     entity.setActive(false);
@@ -290,7 +290,7 @@ public void delete(UUID id) {
 2. **Infraestructura**: Actualizar `docker-compose.yml` con contenedores PostgreSQL.
 3. **Dependencias**: Agregar dependencias JPA/PostgreSQL en `pom.xml`.
 4. **Configuración**: Configurar `application.properties` con variables externalizadas.
-5. **Entidades**: Crear entidades JPA con UUID y campo `active` para soft-delete.
+5. **Entidades**: Crear entidades JPA con Integer (auto-increment) y campo `active` para soft-delete.
 6. **Repositorios**: Crear interfaces `JpaRepository` con queries soft-delete.
 7. **Refactor Services**: Actualizar servicios para usar repositorios JPA y soft-delete.
 8. **Validación**: Ejecutar tests de integración contra PostgreSQL.
@@ -300,9 +300,9 @@ public void delete(UUID id) {
 # FUNCTIONAL REQUIREMENTS
 
 - **FR-01**: El sistema debe crear automáticamente las tablas en PostgreSQL al iniciar (DDL auto).
-- **FR-02**: El sistema debe usar UUID como clave primaria para todas las entidades.
-- **FR-03**: El sistema debe persistir usuarios con campos: id (UUID), name, password, mail, active.
-- **FR-04**: El sistema debe persistir órdenes con campos: id (UUID), name, description, idUser (UUID), state, active.
+- **FR-02**: El sistema debe usar Integer (auto-increment) como clave primaria para todas las entidades.
+- **FR-03**: El sistema debe persistir usuarios con campos: id (Integer), name, password, mail, active.
+- **FR-04**: El sistema debe persistir órdenes con campos: id (Integer), name, description, idUser (Integer), state, active.
 - **FR-05**: El campo `mail` debe ser único a nivel de base de datos (para registros activos).
 - **FR-06**: El campo `state` debe almacenarse como STRING en la columna.
 - **FR-07**: Los repositorios deben implementar soft-delete (nunca DELETE físico).
@@ -329,12 +329,12 @@ public void delete(UUID id) {
 
 ## Positive Scenarios (Acceptance)
 
-**AC-01: Creación de usuario con UUID**
+**AC-01: Creación de usuario con ID auto-generado**
 ```
 GIVEN el servicio usuario-service está corriendo con PostgreSQL
 WHEN se envía POST /api/v1/usuarios con datos válidos
-THEN el usuario se persiste con un UUID generado automáticamente
-AND se retorna HTTP 201 con el usuario incluyendo el UUID
+THEN el usuario se persiste con un ID (Integer) generado automáticamente
+AND se retorna HTTP 201 con el usuario incluyendo el ID
 ```
 
 **AC-02: Consulta de usuarios activos**
@@ -346,19 +346,19 @@ THEN se retornan SOLO los usuarios con active=true
 
 **AC-03: Soft-delete de usuario**
 ```
-GIVEN existe un usuario activo con UUID "abc-123"
-WHEN se envía DELETE /api/v1/usuarios/abc-123
+GIVEN existe un usuario activo con ID 123
+WHEN se envía DELETE /api/v1/usuarios/123
 THEN el campo active se actualiza a false
 AND el registro NO se elimina físicamente de la tabla
 AND posteriores GET no retornan este usuario
 ```
 
-**AC-04: Creación de orden con UUID**
+**AC-04: Creación de orden con ID auto-generado**
 ```
 GIVEN el servicio pedido-service está corriendo con PostgreSQL
 WHEN se crea una orden
-THEN la orden se persiste con UUID generado
-AND idUser se almacena como UUID
+THEN la orden se persiste con ID (Integer) generado automáticamente
+AND idUser se almacena como Integer
 ```
 
 **AC-05: Credenciales externalizadas**
@@ -408,7 +408,7 @@ THEN falla con error claro de configuración
 1. Se usará `spring.jpa.hibernate.ddl-auto=update` para crear/actualizar esquemas.
 2. No se requiere migración de datos existentes en JSON (inicio con BD vacía).
 3. Las credenciales se manejan via archivo `.env` referenciado en `docker-compose.yml`.
-4. El tipo UUID nativo de PostgreSQL será usado para las claves primarias.
+4. El tipo Integer (SERIAL en PostgreSQL) será usado para las claves primarias.
 5. El enum `State` se mantiene sin cambios.
 6. No hay FK física entre servicios (idUser es referencia lógica, no FK de BD).
 7. El soft-delete se implementa via campo `active` booleano.
@@ -420,7 +420,7 @@ THEN falla con error claro de configuración
 - **C-01**: Cada microservicio DEBE tener su propia base de datos (no BD compartida).
 - **C-02**: PostgreSQL DEBE correr en Docker.
 - **C-03**: Se DEBE usar Spring Data JPA.
-- **C-04**: Se DEBE usar UUID como tipo de clave primaria.
+- **C-04**: Se DEBE usar Integer (auto-increment) como tipo de clave primaria.
 - **C-05**: Se DEBE implementar soft-delete (nunca hard-delete).
 - **C-06**: Las credenciales NO deben estar hardcodeadas en el código fuente.
 - **C-07**: Los archivos JSON existentes NO deben usarse como fallback.
@@ -434,6 +434,6 @@ THEN falla con error claro de configuración
 | `spring-boot-starter-data-jpa` | ORM y repositorios JPA |
 | `postgresql` (driver) | Conexión a PostgreSQL |
 | Docker / Docker Compose | Orquestación de contenedores |
-| PostgreSQL 15+ | Motor de base de datos (soporte UUID nativo) |
-| Hibernate 6+ | Implementación JPA con soporte UUID |
+| PostgreSQL 15+ | Motor de base de datos |
+| Hibernate 6+ | Implementación JPA |
 | Archivo `.env` | Externalización de credenciales |
