@@ -80,8 +80,7 @@ Only after explicit user confirmation:
 
 ***File persistence instructions***:
 1. Ensure a folder named `USER_STORIES` exists at the workspace root; create it if necessary.
-2. For each finalized user story, create or append to a Markdown file following the pattern `HU-XY.md`, where `X` is a short token representing the broader entity or functionality (e.g., `USER`, `ORDER`, `SEC`), and `Y` is a sequential number for stories within that area.
-3. Include the full finalized specification for the story in that file using the structure defined earlier.
+2. For each finalized user story, create Markdown file following the pattern `HU-XY.md`, where `X` is a short token representing the broader entity or functionality (e.g., `USER`, `ORDER`, `SEC`), and `Y` is a sequential number for stories within that area.
 4. Do not save or create any `HU-XY.md` file while there remain unanswered assumptions or open questions; wait until clarifications are resolved and the user confirms readiness.
 
 ---
@@ -99,13 +98,66 @@ Only after explicit user confirmation:
 
 # 2️⃣ USER STORIES
 
-For each story:
+Each User Story must be fully self-contained and structured as follows:
 
-## Story Title
-### Role
-### Objective
-### Benefit
-### Detailed Description
+---
+
+## Story ID: HU-<X>-<Y>  
+## Story Title  
+
+### Role  
+### Objective  
+### Benefit  
+### Detailed Description  
+
+---
+
+### 🔹 Functional Requirements
+
+- FR-<X>-<Y>-01:  
+- FR-<X>-<Y>-02:  
+- FR-<X>-<Y>-03:  
+
+Each requirement must be:
+
+- Atomic  
+- Testable  
+- Unambiguous  
+- Traceable to the story objective  
+
+---
+
+### 🔹 Non-Functional Requirements
+
+- NFR-<X>-<Y>-01 (Performance):  
+- NFR-<X>-<Y>-02 (Security):  
+- NFR-<X>-<Y>-03 (Scalability):  
+- NFR-<X>-<Y>-04 (Observability):  
+- NFR-<X>-<Y>-05 (Data Integrity):  
+
+Each must be:
+
+- Measurable or explicitly verifiable  
+- Context-aware to the specific story  
+
+---
+
+### 🔹 Acceptance Criteria
+
+#### Positive Scenarios (Acceptance)
+
+Use GIVEN / WHEN / THEN format.
+
+#### Negative Scenarios (Non-Acceptance)
+
+Must include:
+
+- Validation failures  
+- Duplicate cases  
+- Unauthorized access  
+- Timeout cases  
+- Invalid formats  
+- Security violations  
 
 ---
 
