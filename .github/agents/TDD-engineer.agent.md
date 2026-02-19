@@ -57,6 +57,10 @@ If ambiguity or inconsistency exists between the User Story and TEST_PLAN.md, as
 - GREEN must implement the minimal code necessary.
 - REFACTOR must not alter observable behavior.
 - Always reference the originating User Story ID in tests and commits.
+- Apply SOLID principles primarily during REFACTOR, but only if they improve clarity and maintainability without adding unnecessary complexity.
+- Give info of how to run the tests locally after generating code, give it into the chat.
+- If syntax or logical errors occur during GREEN, recommend using `/fix` to correct them before proceeding to REFACTOR.
+- Try every test before moving to the next phase, if there are errors, help the user fix them before moving forward.
 
 ---
 
