@@ -2,12 +2,15 @@ package com.example.usuarioservice.config;
 
 import com.example.usuarioservice.persistence.CachedUserPersistenceDecorator;
 import com.example.usuarioservice.persistence.IUserPersistence;
+import com.example.usuarioservice.persistence.UserJpaPersistence;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import java.io.IOException;
+import java.util.Optional;
 
 /**
  * Configuración de persistencia usando el Factory Pattern y Decorator Pattern.
@@ -16,7 +19,7 @@ import java.io.IOException;
  * Decorator Pattern: Envuelve la persistencia con caché si está habilitado
  * 
  * Esta clase demuestra el uso de ambos patrones:
- * 1. Factory crea la implementación base (JSON, Database, etc.)
+ * 1. Factory crea la implementación base (JSON, JPA/Database, etc.)
  * 2. Decorator agrega caché de forma transparente si está activado
  * 
  * Ventajas de este enfoque:
@@ -26,11 +29,11 @@ import java.io.IOException;
  * 4. Testing: Facilita la inyección de diferentes implementaciones en tests
  * 
  * Configuración:
- * - app.persistence.type: Tipo de persistencia (actualmente solo "json")
+ * - app.persistence.type: Tipo de persistencia ("json" o "jpa")
  * - app.persistence.cache.enabled: Activar/desactivar caché (true/false)
  * 
  * Ejemplo en application.properties:
- *   app.persistence.type=json
+ *   app.persistence.type=jpa
  *   app.persistence.cache.enabled=true
  */
 @Configuration
@@ -43,6 +46,9 @@ public class PersistenceConfig {
     @Value("${app.persistence.cache.enabled:true}")
     private boolean cacheEnabled;
 
+    @Autowired(required = false)
+    private UserJpaPersistence jpaPersistence;
+
     /**
      * Crea y configura el bean de IUserPersistence usando Factory y Decorator Pattern.
      * 
@@ -50,11 +56,9 @@ public class PersistenceConfig {
      * Decorator Pattern: Envuelve con caché de forma opcional y transparente
      * 
      * El Factory Pattern permite que esta configuración sea agnóstica de la
-     * implementación concreta. Si en el futuro agregamos una implementación
-     * de base de datos, solo necesitamos:
-     * 1. Crear la nueva clase que implemente IUserPersistence
-     * 2. Actualizar UserPersistenceFactory para soportar el nuevo tipo
-     * 3. Cambiar app.persistence.type en application.properties
+     * implementación concreta. Soporta:
+     * - "json": Persistencia en archivos JSON (UserRepository)
+     * - "jpa": Persistencia en PostgreSQL/H2 (UserJpaPersistence)
      * 
      * El Decorator Pattern permite agregar funcionalidad (caché) sin modificar
      * la implementación base:
@@ -72,7 +76,10 @@ public class PersistenceConfig {
         log.info("Caché habilitado: {}", cacheEnabled);
         
         // Usamos el Factory Pattern para crear la instancia base
-        IUserPersistence persistence = UserPersistenceFactory.createPersistence(persistenceType);
+        IUserPersistence persistence = UserPersistenceFactory.createPersistence(
+                persistenceType, 
+                Optional.ofNullable(jpaPersistence)
+        );
         
         // Inicializamos la persistencia (cargar datos, establecer conexiones, etc.)
         try {

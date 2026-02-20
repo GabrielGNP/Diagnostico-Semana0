@@ -1,8 +1,11 @@
 package com.example.usuarioservice.config;
 
 import com.example.usuarioservice.persistence.IUserPersistence;
+import com.example.usuarioservice.persistence.UserJpaPersistence;
 import com.example.usuarioservice.service.UserRepository;
 import lombok.extern.slf4j.Slf4j;
+
+import java.util.Optional;
 
 /**
  * Factory Pattern para crear instancias de IUserPersistence.
@@ -18,9 +21,9 @@ import lombok.extern.slf4j.Slf4j;
  * 
  * Actualmente soporta:
  * - "json": Persistencia en archivos JSON (UserRepository)
+ * - "jpa": Persistencia en base de datos PostgreSQL/H2 (UserJpaPersistence)
  * 
  * Futuras extensiones podrían incluir:
- * - "database": Persistencia en base de datos relacional
  * - "in-memory": Persistencia en memoria para tests
  * - "mongodb": Persistencia en MongoDB
  */
@@ -30,11 +33,12 @@ public class UserPersistenceFactory {
     /**
      * Crea una instancia de IUserPersistence según el tipo especificado.
      * 
-     * @param type El tipo de persistencia a crear (actualmente solo "json")
+     * @param type El tipo de persistencia a crear ("json" o "jpa")
+     * @param jpaPersistence Instancia opcional de UserJpaPersistence para cuando type="jpa"
      * @return Una nueva instancia de IUserPersistence
      * @throws IllegalArgumentException Si el tipo no es soportado
      */
-    public static IUserPersistence createPersistence(String type) {
+    public static IUserPersistence createPersistence(String type, Optional<UserJpaPersistence> jpaPersistence) {
         log.info("Creando persistencia de tipo: {}", type);
         
         if (type == null || type.isBlank()) {
@@ -46,14 +50,30 @@ public class UserPersistenceFactory {
             case "json":
                 log.info("Instanciando UserRepository (persistencia JSON)");
                 return new UserRepository();
+            
+            case "jpa":
+                log.info("Instanciando UserJpaPersistence (persistencia PostgreSQL/H2)");
+                return jpaPersistence.orElseThrow(() -> 
+                    new IllegalStateException("UserJpaPersistence bean no disponible para tipo 'jpa'"));
                 
             default:
                 log.error("Tipo de persistencia no soportado: {}", type);
                 throw new IllegalArgumentException(
                     String.format("Tipo de persistencia no soportado: '%s'. " +
-                    "Actualmente solo se soporta: 'json'", type)
+                    "Actualmente solo se soporta: 'json', 'jpa'", type)
                 );
         }
+    }
+
+    /**
+     * Crea una instancia de IUserPersistence para persistencia JSON (método de conveniencia).
+     * 
+     * @param type El tipo de persistencia a crear
+     * @return Una nueva instancia de IUserPersistence
+     * @throws IllegalArgumentException Si el tipo no es soportado o requiere dependencias
+     */
+    public static IUserPersistence createPersistence(String type) {
+        return createPersistence(type, Optional.empty());
     }
 
     /**
@@ -68,6 +88,6 @@ public class UserPersistenceFactory {
         }
         
         String normalized = type.toLowerCase().trim();
-        return normalized.equals("json");
+        return normalized.equals("json") || normalized.equals("jpa");
     }
 }
