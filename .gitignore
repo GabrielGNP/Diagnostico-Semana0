@@ -30,10 +30,6 @@ Thumbs.db
 # Vite
 *.local
 
-<<<<<<< HEAD
-**/target/
-=======
 #java
 
 target/
->>>>>>> b1fc39fa25f123be2f54ce863014b33c6b083681
