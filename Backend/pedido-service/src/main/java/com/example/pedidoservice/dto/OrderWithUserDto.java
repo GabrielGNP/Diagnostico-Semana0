@@ -6,7 +6,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class OrderWithUserDto {
     @JsonProperty("id")
-    private int id;
+    private Integer id;
 
     @JsonProperty("name")
     private String name;
@@ -15,13 +15,13 @@ public class OrderWithUserDto {
     private String description;
 
     @JsonProperty("idUser")
-    private int idUser;
+    private Integer idUser;
 
     @JsonProperty("state")
     private State state;
 
     @JsonProperty("active")
-    private boolean active;
+    private Boolean active;
 
     @JsonProperty("user")
     private UserResponse user;
@@ -29,7 +29,7 @@ public class OrderWithUserDto {
     public OrderWithUserDto() {
     }
 
-    public OrderWithUserDto(int id, String name, String description, int idUser, State state, boolean active, UserResponse user) {
+    public OrderWithUserDto(Integer id, String name, String description, Integer idUser, State state, Boolean active, UserResponse user) {
         this.id = id;
         this.name = name;
         this.description = description;
@@ -39,11 +39,11 @@ public class OrderWithUserDto {
         this.user = user;
     }
 
-    public int getId() {
+    public Integer getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(Integer id) {
         this.id = id;
     }
 
@@ -63,11 +63,11 @@ public class OrderWithUserDto {
         this.description = description;
     }
 
-    public int getIdUser() {
+    public Integer getIdUser() {
         return idUser;
     }
 
-    public void setIdUser(int idUser) {
+    public void setIdUser(Integer idUser) {
         this.idUser = idUser;
     }
 
@@ -79,11 +79,11 @@ public class OrderWithUserDto {
         this.state = state;
     }
 
-    public boolean isActive() {
+    public Boolean isActive() {
         return active;
     }
 
-    public void setActive(boolean active) {
+    public void setActive(Boolean active) {
         this.active = active;
     }
 

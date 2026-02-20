@@ -1,6 +1,27 @@
 version: '3.8'
 
 services:
+  # PostgreSQL Database for pedido-service
+  postgres:
+    image: postgres:15-alpine
+    container_name: orders_db
+    environment:
+      POSTGRES_DB: orders_db
+      POSTGRES_USER: pedido_user
+      POSTGRES_PASSWORD: pedido_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./Backend/pedido-service/init-db:/docker-entrypoint-initdb.d
+    networks:
+      - microservicios-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pedido_user -d orders_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   rabbitmq:
     image: rabbitmq:3-management
     ports:
@@ -29,11 +50,17 @@ services:
       - "8082:8080"
     environment:
       - SPRING_RABBITMQ_HOST=rabbitmq
-      - ORDERS_FILE=/data/orders.json
-    volumes:
-      - ./Backend/data:/data
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=orders_db
+      - DB_USER=pedido_user
+      - DB_PASSWORD=pedido_pass
+      - MIGRATION_ENABLED=false
     depends_on:
-      - rabbitmq
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_started
     networks:
       - microservicios-network
 
@@ -50,3 +77,8 @@ services:
 networks:
   microservicios-network:
     driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local
+

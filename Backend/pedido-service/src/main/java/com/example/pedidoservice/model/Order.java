@@ -16,7 +16,7 @@ public class Order {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
-    private int id;
+    private Integer id;
 
     @Column(name = "name", nullable = false, length = 255)
     private String name;
@@ -25,19 +25,19 @@ public class Order {
     private String description;
 
     @Column(name = "id_user", nullable = false)
-    private int idUser;
+    private Integer idUser;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "state", nullable = false, length = 50)
     private State state;
 
     @Column(name = "active", nullable = false)
-    private boolean active;
+    private Boolean active;
 
     public Order() {
     }
 
-    public Order(int id, String name, String description, int idUser, State state, boolean active) {
+    public Order(Integer id, String name, String description, Integer idUser, State state, Boolean active) {
         this.id = id;
         this.name = name;
         this.description = description;
@@ -46,11 +46,11 @@ public class Order {
         this.active = active;
     }
 
-    public int getId() {
+    public Integer getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(Integer id) {
         this.id = id;
     }
 
@@ -70,11 +70,11 @@ public class Order {
         this.description = description;
     }
 
-    public int getIdUser() {
+    public Integer getIdUser() {
         return idUser;
     }
 
-    public void setIdUser(int idUser) {
+    public void setIdUser(Integer idUser) {
         this.idUser = idUser;
     }
 
@@ -86,11 +86,11 @@ public class Order {
         this.state = state;
     }
 
-    public boolean isActive() {
+    public Boolean isActive() {
         return active;
     }
 
-    public void setActive(boolean active) {
+    public void setActive(Boolean active) {
         this.active = active;
     }
 }
