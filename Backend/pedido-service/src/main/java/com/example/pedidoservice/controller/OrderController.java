@@ -33,20 +33,40 @@ public class OrderController {
     @Autowired
     private OrderService orderService;
 
+    /**
+     * Create a new order (HU-ORD-05).
+     *
+     * @param orderDto Order data (name, description, idUser required)
+     * @return Created order with ID or 400 Bad Request if validation fails
+     */
     @PostMapping("/add")
-    public ResponseEntity<OrderDto> createOrder(@RequestBody OrderDto orderDto) {
-        OrderDto createdOrder = orderService.createOrder(orderDto);
-        return ResponseEntity.ok(createdOrder);
+    public ResponseEntity<?> createOrder(@RequestBody OrderDto orderDto) {
+        try {
+            OrderDto createdOrder = orderService.createOrder(orderDto);
+            return ResponseEntity.ok(createdOrder);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 
+    /**
+     * Soft-delete an order by ID.
+     *
+     * @param id Order ID
+     * @return 200 OK or 404 Not Found
+     */
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteOrder(@PathVariable("id") int id) {
-        orderService.deleteOrder(id);
-        return ResponseEntity.ok().build();
+    public ResponseEntity<?> deleteOrder(@PathVariable("id") Integer id) {
+        try {
+            orderService.deleteOrder(id);
+            return ResponseEntity.ok().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<OrderDto> showOrderById(@PathVariable("id") int id) {
+    public ResponseEntity<OrderDto> showOrderById(@PathVariable("id") Integer id) {
         OrderDto orderDto = orderService.showOrderById(id);
         if (orderDto != null) {
             return ResponseEntity.ok(orderDto);
@@ -57,7 +77,7 @@ public class OrderController {
 
 
     @GetMapping("/{id}/with-user-info")
-    public ResponseEntity<OrderWithUserDto> getOrderWithUserInfo(@PathVariable("id") int id) {
+    public ResponseEntity<OrderWithUserDto> getOrderWithUserInfo(@PathVariable("id") Integer id) {
         try{
             OrderWithUserDto order = orderService.getOrderWithUserInfo(id);
             if (order != null) {
@@ -73,7 +93,7 @@ public class OrderController {
 
 
     @GetMapping("/user/{idUser}")
-    public ResponseEntity<List<OrderDto>> listOrdersByIdUser(@PathVariable("idUser") int idUser) {
+    public ResponseEntity<List<OrderDto>> listOrdersByIdUser(@PathVariable("idUser") Integer idUser) {
         List<OrderDto> orders = orderService.listOrdersByIdUser(idUser);
         return ResponseEntity.ok(orders);
     }
@@ -100,16 +120,23 @@ public class OrderController {
         return ResponseEntity.ok(orders);
     }
 
+    /**
+     * Change order state.
+     *
+     * @param id Order ID
+     * @param orderDto DTO containing new state
+     * @return Updated order or 404/400
+     */
     @PatchMapping("/{id}")
-    public ResponseEntity<OrderDto> changeStateOrder(@PathVariable("id") int id, @RequestBody OrderDto orderDto) {
+    public ResponseEntity<?> changeStateOrder(@PathVariable("id") Integer id, @RequestBody OrderDto orderDto) {
         State newState = orderDto.getState();
         if (newState == null) {
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest().body("El campo 'state' es requerido");
         }
-        OrderDto updatedOrder = orderService.changeStateOrder(id, newState);
-        if (updatedOrder != null) {
+        try {
+            OrderDto updatedOrder = orderService.changeStateOrder(id, newState);
             return ResponseEntity.ok(updatedOrder);
-        } else {
+        } catch (IllegalArgumentException e) {
             return ResponseEntity.notFound().build();
         }
     }

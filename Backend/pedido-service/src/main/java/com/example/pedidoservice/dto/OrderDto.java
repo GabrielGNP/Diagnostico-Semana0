@@ -1,19 +1,23 @@
 package com.example.pedidoservice.dto;
 
 import com.example.pedidoservice.model.State;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class OrderDto {
-    private int id;
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    private Integer id;
     private String name;
     private String description;
-    private int idUser;
+    private Integer idUser;
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private State state;
-    private boolean active;
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    private Boolean active;
 
     public OrderDto() {
     }
 
-    public OrderDto(int id, String name, String description, int idUser, State state, boolean active) {
+    public OrderDto(Integer id, String name, String description, Integer idUser, State state, Boolean active) {
         this.id = id;
         this.name = name;
         this.description = description;
@@ -22,11 +26,11 @@ public class OrderDto {
         this.active = active;
     }
 
-    public int getId() {
+    public Integer getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(Integer id) {
         this.id = id;
     }
 
@@ -46,11 +50,11 @@ public class OrderDto {
         this.description = description;
     }
 
-    public int getIdUser() {
+    public Integer getIdUser() {
         return idUser;
     }
 
-    public void setIdUser(int idUser) {
+    public void setIdUser(Integer idUser) {
         this.idUser = idUser;
     }
 
@@ -62,11 +66,11 @@ public class OrderDto {
         this.state = state;
     }
 
-    public boolean isActive() {
+    public Boolean isActive() {
         return active;
     }
 
-    public void setActive(boolean active) {
+    public void setActive(Boolean active) {
         this.active = active;
     }
 }
