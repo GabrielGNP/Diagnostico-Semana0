@@ -1,11 +1,37 @@
 package com.example.pedidoservice.model;
 
+import jakarta.persistence.*;
+
+/**
+ * Order Entity - Mapped to 'orders' table in PostgreSQL
+ *
+ * User Story: HU-ORD-01
+ * Database: PostgreSQL
+ * Table: orders
+ */
+@Entity
+@Table(name = "orders")
 public class Order {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
     private int id;
+
+    @Column(name = "name", nullable = false, length = 255)
     private String name;
+
+    @Column(name = "description", columnDefinition = "TEXT")
     private String description;
+
+    @Column(name = "id_user", nullable = false)
     private int idUser;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "state", nullable = false, length = 50)
     private State state;
+
+    @Column(name = "active", nullable = false)
     private boolean active;
 
     public Order() {
