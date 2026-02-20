@@ -9,33 +9,28 @@ import com.example.pedidoservice.messaging.UserServiceProducer;
 import com.example.pedidoservice.model.Order;
 import com.example.pedidoservice.model.State;
 import com.example.pedidoservice.repository.OrderJpaRepository;
-import com.example.pedidoservice.repository.OrderRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
+/**
+ * Order Service - Manages order operations with PostgreSQL persistence.
+ *
+ * Refactored to use ONLY OrderJpaRepository (PostgreSQL) instead of file-based OrderRepository.
+ * All operations are now transactional and backed by PostgreSQL database.
+ *
+ * @author TDD Engineering Team
+ * @since HU-ORD-05 REFACTOR Phase
+ */
 @Service
+@Transactional
 public class OrderService {
-
-    /**
-     * Service that manages orders.
-     *
-     * Responsibilities:
-     * - CRUD operations on orders using PostgreSQL via JPA
-     * - Coordinate with the user service via RabbitMQ to enrich orders with user info
-     *
-     * Threading / timeouts:
-     * - Requests for user information are synchronous from the caller perspective
-     *   and use a short timeout to avoid blocking the request thread for too long.
-     */
 
     @Autowired
     private OrderJpaRepository orderJpaRepository;
-
-    @Autowired
-    private OrderRepository orderRepository;
 
     @Autowired
     private OrderMapper orderMapper;
@@ -110,35 +105,55 @@ public class OrderService {
             throw new IllegalArgumentException("El campo 'description' es requerido");
         }
 
-        // Validar 'idUser': debe ser > 0
-        if (orderDto.getIdUser() <= 0) {
+        // Validar 'idUser': debe ser > 0 (también verifica null)
+        if (orderDto.getIdUser() == null || orderDto.getIdUser() <= 0) {
             throw new IllegalArgumentException("El campo 'idUser' debe ser un valor positivo válido (mayor que cero)");
         }
     }
 
-    public void deleteOrder(int id) {
-        orderRepository.deleteById(id);
+    /**
+     * Soft-delete an order by ID (sets active=false).
+     *
+     * @param id Order ID to delete
+     * @throws IllegalArgumentException if order not found
+     */
+    public void deleteOrder(Integer id) {
+        Order order = orderJpaRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Pedido con ID " + id + " no encontrado"));
+        order.setActive(false);
+        orderJpaRepository.save(order);
     }
 
-    public OrderDto changeStateOrder(int id, State newState) {
-        Optional<Order> orderOpt = orderRepository.findById(id);
-        if (orderOpt.isPresent()) {
-            Order order = orderOpt.get();
-            order.setState(newState);
-            Order savedOrder = orderRepository.save(order);
-            return orderMapper.toDto(savedOrder);
-        }
-        return null;
+    /**
+     * Change the state of an order.
+     *
+     * @param id Order ID
+     * @param newState New state to set
+     * @return Updated order DTO
+     * @throws IllegalArgumentException if order not found
+     */
+    public OrderDto changeStateOrder(Integer id, State newState) {
+        Order order = orderJpaRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Pedido con ID " + id + " no encontrado"));
+        order.setState(newState);
+        Order savedOrder = orderJpaRepository.save(order);
+        return orderMapper.toDto(savedOrder);
     }
 
-    public List<OrderDto> listOrdersByIdUser(int idUser) {
-        return orderRepository.findByUserId(idUser).stream()
+    /**
+     * List all orders for a specific user.
+     *
+     * @param idUser User ID
+     * @return List of orders for the user
+     */
+    public List<OrderDto> listOrdersByIdUser(Integer idUser) {
+        return orderJpaRepository.findByIdUser(idUser).stream()
                 .map(orderMapper::toDto)
                 .collect(Collectors.toList());
     }
 
 
-    public OrderWithUserDto getOrderWithUserInfo(int orderId) {
+    public OrderWithUserDto getOrderWithUserInfo(Integer orderId) {
         /**
          * Retrieve an order and attempt to append user information obtained
          * via the asynchronous user service. The method sends a user info
@@ -154,9 +169,9 @@ public class OrderService {
         if (orderDto == null) {
             return null;
         }
-        
+
         // Request user information via RabbitMQ using the orderId's userId
-        int idUser = orderDto.getIdUser();
+        Integer idUser = orderDto.getIdUser();
         UserResponse userResponse = null;
         try {
             userServiceProducer.requestUserInfo(idUser);
@@ -166,7 +181,7 @@ public class OrderService {
             // Log and continue — return order with null user if messaging fails
             System.err.println("Error requesting/receiving user info for userId=" + idUser + ": " + ex.getMessage());
         }
-        
+
         // Map to OrderWithUserDto including user information
         return new OrderWithUserDto(
                 orderDto.getId(),
@@ -181,7 +196,7 @@ public class OrderService {
 
 
     /**
-     * Lists all orders from the database.
+     * Lists all orders from the database (including inactive).
      *
      * @deprecated Use {@link #findAllActiveOrders()} instead for production use.
      * This method includes inactive (soft-deleted) orders and should only be used
@@ -191,18 +206,13 @@ public class OrderService {
      */
     @Deprecated
     public List<OrderDto> listAllOrders() {
-        return orderRepository.findAll().stream()
+        return orderJpaRepository.findAll().stream()
                 .map(orderMapper::toDto)
                 .collect(Collectors.toList());
     }
 
     /**
      * Retrieves all active orders from PostgreSQL database.
-     *
-     * Implementation details:
-     * - Queries only active orders directly from database (optimized query)
-     * - Uses JPA @Query for better performance
-     * - Maps entities to DTOs
      *
      * Business Rules (HU-ORD-01):
      * - Only returns orders where active=true
@@ -211,20 +221,25 @@ public class OrderService {
      *
      * Performance:
      * - Should respond in < 200ms for up to 1000 records (NFR-ORD-01-01)
-     * - Uses database-level filtering (more efficient than stream filtering)
+     * - Uses database-level filtering (optimized query via @Query)
      * - Connection pooling via HikariCP
      *
      * @return List of active orders as DTOs, empty list if none exist
      */
     public List<OrderDto> findAllActiveOrders() {
-        return orderRepository.findAllActive().stream()
+        return orderJpaRepository.findAllActive().stream()
                 .map(orderMapper::toDto)
                 .collect(Collectors.toList());
     }
 
-
-    public OrderDto showOrderById(int id) {
-        return orderRepository.findById(id)
+    /**
+     * Retrieve an order by ID.
+     *
+     * @param id Order ID
+     * @return Order DTO or null if not found
+     */
+    public OrderDto showOrderById(Integer id) {
+        return orderJpaRepository.findById(id)
                 .map(orderMapper::toDto)
                 .orElse(null);
     }
