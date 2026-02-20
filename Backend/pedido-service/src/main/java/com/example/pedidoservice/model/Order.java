@@ -1,17 +1,43 @@
 package com.example.pedidoservice.model;
 
+import jakarta.persistence.*;
+
+/**
+ * Order Entity - Mapped to 'orders' table in PostgreSQL
+ *
+ * User Story: HU-ORD-01
+ * Database: PostgreSQL
+ * Table: orders
+ */
+@Entity
+@Table(name = "orders")
 public class Order {
-    private int id;
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
+    private Integer id;
+
+    @Column(name = "name", nullable = false, length = 255)
     private String name;
+
+    @Column(name = "description", columnDefinition = "TEXT")
     private String description;
-    private int idUser;
+
+    @Column(name = "id_user", nullable = false)
+    private Integer idUser;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "state", nullable = false, length = 50)
     private State state;
-    private boolean active;
+
+    @Column(name = "active", nullable = false)
+    private Boolean active;
 
     public Order() {
     }
 
-    public Order(int id, String name, String description, int idUser, State state, boolean active) {
+    public Order(Integer id, String name, String description, Integer idUser, State state, Boolean active) {
         this.id = id;
         this.name = name;
         this.description = description;
@@ -20,11 +46,11 @@ public class Order {
         this.active = active;
     }
 
-    public int getId() {
+    public Integer getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(Integer id) {
         this.id = id;
     }
 
@@ -44,11 +70,11 @@ public class Order {
         this.description = description;
     }
 
-    public int getIdUser() {
+    public Integer getIdUser() {
         return idUser;
     }
 
-    public void setIdUser(int idUser) {
+    public void setIdUser(Integer idUser) {
         this.idUser = idUser;
     }
 
@@ -60,11 +86,11 @@ public class Order {
         this.state = state;
     }
 
-    public boolean isActive() {
+    public Boolean isActive() {
         return active;
     }
 
-    public void setActive(boolean active) {
+    public void setActive(Boolean active) {
         this.active = active;
     }
 }
