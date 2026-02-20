@@ -137,6 +137,14 @@ public class OrderService {
                 .collect(Collectors.toList());
     }
 
+    public List<OrderDto> findAllActiveOrders() {
+        return orderRepository.findAll().stream()
+                .filter(Order::isActive)
+                .map(orderMapper::toDto)
+                .collect(Collectors.toList());
+    }
+
+
     public OrderDto showOrderById(int id) {
         return orderRepository.findById(id)
                 .map(orderMapper::toDto)

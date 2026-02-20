@@ -21,14 +21,13 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 /**
- * 🔴 RED PHASE - Tests para HU-ORD-01: Listado de pedidos desde PostgreSQL
+ * ✅ GREEN PHASE - Tests para HU-ORD-01: Listado de pedidos desde PostgreSQL
  * 
  * User Story: HU-ORD-01
  * Título: Listado completo de pedidos almacenados en PostgreSQL
  * 
  * IMPORTANTE TDD:
  * - Este test debe COMPILAR ✅ (sintaxis correcta)
- * - Este test debe FALLAR ❌ al ejecutarse (método findAllActiveOrders() NO EXISTE)
  * 
  * Criterios de Aceptación cubiertos:
  * - CA-01: Listado exitoso con pedidos existentes
@@ -59,21 +58,20 @@ class OrderServiceHuOrd01Test {
      * CA-01: Listado exitoso con pedidos activos
      * 
      * GIVEN: Existen 2 pedidos activos y 1 inactivo en PostgreSQL
-     * WHEN: Se invoca findAllActiveOrders()
+     * WHEN: Se invoca listAllOrders()
      * THEN: Se retornan SOLO los 2 pedidos activos (active=true)
      * 
-     * ❌ DEBE FALLAR porque el método findAllActiveOrders() NO EXISTE en OrderService
      */
     @Test
-    @DisplayName("RED: findAllActiveOrders debe retornar solo pedidos activos (active=true)")
-    void findAllActiveOrders_shouldReturnOnlyActiveOrders() {
+    @DisplayName("RED: listAllOrders debe retornar solo pedidos activos (active=true)")
+    void listAllOrders_shouldReturnOnlyActiveOrders() {
         // GIVEN - Setup: 2 pedidos activos, 1 inactivo
         Order activeOrder1 = new Order(1, "Pedido Activo 1", "Descripción 1", 5, State.PROCESSING, true);
         Order activeOrder2 = new Order(2, "Pedido Activo 2", "Descripción 2", 10, State.DELIVERED, true);
-        Order inactiveOrder = new Order(3, "Pedido Eliminado", "Soft-deleted", 15, State.CANCELED, false);
-        
+        Order inactiveOrder1 = new Order(3, "Pedido Eliminado", "Soft-deleted", 15, State.CANCELED, false);
+        Order inactiveOrder2 = new Order(4, "Pedido Eliminado2", "Soft-deleted2", 4, State.CANCELED, false);
         // Mock repository retorna todos (incluyendo inactivos)
-        List<Order> allOrders = Arrays.asList(activeOrder1, activeOrder2, inactiveOrder);
+        List<Order> allOrders = Arrays.asList(activeOrder1, activeOrder2, inactiveOrder1, inactiveOrder2);
         when(orderRepository.findAll()).thenReturn(allOrders);
         
         // Mock mapper convierte Orders a DTOs
@@ -90,14 +88,13 @@ class OrderServiceHuOrd01Test {
         });
         
         // WHEN - Ejecutar método bajo test
-        // ❌ ESTE MÉTODO NO EXISTE - El test debe FALLAR aquí
         List<OrderDto> result = orderService.findAllActiveOrders();
         
         // THEN - Verificaciones
         assertNotNull(result, "El resultado no debe ser null");
+        System.out.println(result);        // Verificar que NO contiene el pedido inactivo
+
         assertEquals(2, result.size(), "Debe retornar solo 2 pedidos activos");
-        
-        // Verificar que NO contiene el pedido inactivo
         boolean containsInactive = result.stream()
             .anyMatch(dto -> dto.getId() == 3);
         assertFalse(containsInactive, "NO debe incluir pedidos con active=false");
@@ -112,14 +109,13 @@ class OrderServiceHuOrd01Test {
      * CA-02: Listado vacío cuando no hay pedidos activos
      * 
      * GIVEN: No existen pedidos activos en PostgreSQL
-     * WHEN: Se invoca findAllActiveOrders()
+     * WHEN: Se invoca listAllOrders()
      * THEN: Se retorna lista vacía []
      * 
-     * ❌ DEBE FALLAR porque el método findAllActiveOrders() NO EXISTE
      */
     @Test
-    @DisplayName("RED: findAllActiveOrders debe retornar lista vacía si no hay pedidos activos")
-    void findAllActiveOrders_shouldReturnEmptyListWhenNoActiveOrders() {
+    @DisplayName("RED: listAllOrders debe retornar lista vacía si no hay pedidos activos")
+    void listAllOrders_shouldReturnEmptyListWhenNoActiveOrders() {
         // GIVEN - Solo hay pedidos inactivos
         Order inactiveOrder1 = new Order(1, "Pedido Eliminado 1", "Soft-deleted", 5, State.CANCELED, false);
         Order inactiveOrder2 = new Order(2, "Pedido Eliminado 2", "Soft-deleted", 10, State.CANCELED, false);
@@ -127,7 +123,6 @@ class OrderServiceHuOrd01Test {
         when(orderRepository.findAll()).thenReturn(Arrays.asList(inactiveOrder1, inactiveOrder2));
         
         // WHEN
-        // ❌ ESTE MÉTODO NO EXISTE - El test debe FALLAR aquí
         List<OrderDto> result = orderService.findAllActiveOrders();
         
         verify(orderRepository).findAll();
@@ -139,17 +134,16 @@ class OrderServiceHuOrd01Test {
      * Edge Case: Base de datos completamente vacía
      * 
      * GIVEN: No existen pedidos en PostgreSQL (tabla vacía)
-     * WHEN: Se invoca findAllActiveOrders()
+     * WHEN: Se invoca listAllOrders()
      * THEN: Se retorna lista vacía []
      */
     @Test
-    @DisplayName("RED: findAllActiveOrders debe retornar lista vacía cuando BD está vacía")
-    void findAllActiveOrders_shouldReturnEmptyListWhenDatabaseEmpty() {
+    @DisplayName("RED: listAllOrders debe retornar lista vacía cuando BD está vacía")
+    void listAllOrders_shouldReturnEmptyListWhenDatabaseEmpty() {
         // GIVEN - BD vacía
         when(orderRepository.findAll()).thenReturn(Collections.emptyList());
         
         // WHEN
-        // ❌ ESTE MÉTODO NO EXISTE - El test debe FALLAR aquí
         List<OrderDto> result = orderService.findAllActiveOrders();
         
         // THEN
