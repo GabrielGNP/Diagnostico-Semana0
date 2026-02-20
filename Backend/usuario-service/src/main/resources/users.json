@@ -28,4 +28,52 @@
   "password" : "t",
   "mail" : "t@example.com",
   "active" : true
+}, {
+  "id" : 6,
+  "name" : "User One",
+  "password" : "SecurePass123",
+  "mail" : "user1@example.com",
+  "active" : true
+}, {
+  "id" : 7,
+  "name" : "User Two",
+  "password" : "SecurePass123",
+  "mail" : "user2@example.com",
+  "active" : true
+}, {
+  "id" : 8,
+  "name" : "Ana María Martínez",
+  "password" : "NewSecurePass123",
+  "mail" : "ana.maria@example.com",
+  "active" : true
+}, {
+  "id" : 9,
+  "name" : "María García",
+  "password" : "SecurePass123",
+  "mail" : "maria@example.com",
+  "active" : true
+}, {
+  "id" : 10,
+  "name" : "ID Test User",
+  "password" : "SecurePass123",
+  "mail" : "idtest@example.com",
+  "active" : true
+}, {
+  "id" : 11,
+  "name" : "Carlos López",
+  "password" : "SecurePass123",
+  "mail" : "carlos@example.com",
+  "active" : true
+}, {
+  "id" : 12,
+  "name" : "Elena María García",
+  "password" : "SecurePass123",
+  "mail" : "elena@example.com",
+  "active" : true
+}, {
+  "id" : 13,
+  "name" : "Juan Pérez",
+  "password" : "SecurePass123",
+  "mail" : "juan@example.com",
+  "active" : true
 } ]

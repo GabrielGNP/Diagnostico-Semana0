@@ -44,9 +44,9 @@ public class UsuarioService implements IUsuarioService {
     
     @Override
     public Collection<User> obtenerTodos() {
-        log.debug("Obteniendo todos los usuarios");
-        Collection<User> usuarios = userRepository.findAll();
-        log.info("Total de usuarios obtenidos: {}", usuarios.size());
+        log.debug("Obteniendo usuarios activos");
+        Collection<User> usuarios = userRepository.findAllActive();
+        log.info("Total de usuarios activos obtenidos: {}", usuarios.size());
         return usuarios;
     }
     
