@@ -44,6 +44,14 @@ public class OrderService {
 
     private static final long USER_REQUEST_TIMEOUT = 3000; // 3 seconds timeout
 
+    @Autowired
+    public OrderService(OrderJpaRepository orderJpaRepository, OrderMapper orderMapper,
+                        UserServiceProducer userServiceProducer, UserServiceConsumer userServiceConsumer) {
+        this.orderJpaRepository = orderJpaRepository;
+        this.orderMapper = orderMapper;
+        this.userServiceProducer = userServiceProducer;
+        this.userServiceConsumer = userServiceConsumer;
+    }
 
     public OrderDto createOrder(OrderDto orderDto) {
         /**

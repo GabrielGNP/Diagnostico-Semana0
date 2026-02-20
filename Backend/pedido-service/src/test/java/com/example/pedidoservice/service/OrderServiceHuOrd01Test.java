@@ -4,13 +4,10 @@ import com.example.pedidoservice.dto.OrderDto;
 import com.example.pedidoservice.mapper.OrderMapper;
 import com.example.pedidoservice.model.Order;
 import com.example.pedidoservice.model.State;
-import com.example.pedidoservice.repository.OrderRepository;
+import com.example.pedidoservice.repository.OrderJpaRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -41,18 +38,23 @@ import static org.mockito.Mockito.*;
  * 
  * Nota: Según HU-DB-09, solo se deben retornar pedidos con active=true
  */
-@ExtendWith(MockitoExtension.class)
 @DisplayName("♻️ REFACTOR - HU-ORD-01: Listado de Pedidos Active-Only")
 class OrderServiceHuOrd01Test {
 
-    @Mock
-    private OrderRepository orderRepository;
+    private OrderJpaRepository orderJpaRepository;
 
-    @Mock
     private OrderMapper orderMapper;
 
-    @InjectMocks
     private OrderService orderService;
+
+    @BeforeEach
+    void setupService() {
+        // Crear mocks manualmente para evitar dependencia de la inicialización automática
+        orderJpaRepository = mock(OrderJpaRepository.class);
+        orderMapper = mock(OrderMapper.class);
+        // Construir el servicio inyectando los mocks
+        orderService = new OrderService(orderJpaRepository, orderMapper, null, null);
+    }
 
     // ========== HELPER METHODS ==========
 
@@ -104,11 +106,9 @@ class OrderServiceHuOrd01Test {
         // GIVEN - Setup: 2 pedidos activos, 2 inactivos
         Order activeOrder1 = createTestOrder(1, "Pedido Activo 1", "Descripción 1", 5, State.PROCESSING, true);
         Order activeOrder2 = createTestOrder(2, "Pedido Activo 2", "Descripción 2", 10, State.DELIVERED, true);
-        Order inactiveOrder1 = createTestOrder(3, "Pedido Eliminado", "Soft-deleted", 15, State.CANCELED, false);
-        Order inactiveOrder2 = createTestOrder(4, "Pedido Eliminado2", "Soft-deleted2", 4, State.CANCELED, false);
 
-        List<Order> allOrders = Arrays.asList(activeOrder1, activeOrder2, inactiveOrder1, inactiveOrder2);
-        when(orderRepository.findAll()).thenReturn(allOrders);
+        // El servicio usa orderJpaRepository.findAllActive(), por lo que el mock debe devolver solo los activos
+        when(orderJpaRepository.findAllActive()).thenReturn(Arrays.asList(activeOrder1, activeOrder2));
 
         setupMapperMock();
 
@@ -129,7 +129,7 @@ class OrderServiceHuOrd01Test {
         assertFalse(containsInactiveOrder, "NO debe incluir pedidos con active=false");
 
         // Verificar interacción con repository
-        verify(orderRepository, times(1)).findAll();
+        verify(orderJpaRepository, times(1)).findAllActive();
         verify(orderMapper, times(2)).toDto(any(Order.class)); // Solo 2 mapeos (pedidos activos)
     }
 
@@ -150,10 +150,8 @@ class OrderServiceHuOrd01Test {
     @DisplayName("♻️ REFACTOR: findAllActiveOrders debe retornar lista vacía si no hay pedidos activos")
     void findAllActiveOrders_shouldReturnEmptyListWhenNoActiveOrders() {
         // GIVEN - Solo hay pedidos inactivos
-        Order inactiveOrder1 = createTestOrder(1, "Pedido Eliminado 1", "Soft-deleted", 5, State.CANCELED, false);
-        Order inactiveOrder2 = createTestOrder(2, "Pedido Eliminado 2", "Soft-deleted", 10, State.CANCELED, false);
 
-        when(orderRepository.findAll()).thenReturn(Arrays.asList(inactiveOrder1, inactiveOrder2));
+        when(orderJpaRepository.findAllActive()).thenReturn(Collections.emptyList());
         setupMapperMock();
 
         // WHEN
@@ -164,7 +162,7 @@ class OrderServiceHuOrd01Test {
         assertTrue(result.isEmpty(), "Debe retornar lista vacía cuando solo hay pedidos inactivos");
         assertEquals(0, result.size(), "El tamaño de la lista debe ser 0");
 
-        verify(orderRepository, times(1)).findAll();
+        verify(orderJpaRepository, times(1)).findAllActive();
         verify(orderMapper, never()).toDto(any(Order.class)); // No se debe mapear ningún pedido
     }
 
@@ -185,7 +183,7 @@ class OrderServiceHuOrd01Test {
     @DisplayName("♻️ REFACTOR: findAllActiveOrders debe retornar lista vacía cuando BD está vacía")
     void findAllActiveOrders_shouldReturnEmptyListWhenDatabaseEmpty() {
         // GIVEN - BD vacía
-        when(orderRepository.findAll()).thenReturn(Collections.emptyList());
+        when(orderJpaRepository.findAllActive()).thenReturn(Collections.emptyList());
         setupMapperMock();
 
         // WHEN
@@ -196,7 +194,7 @@ class OrderServiceHuOrd01Test {
         assertTrue(result.isEmpty(), "Debe retornar lista vacía cuando BD está vacía");
         assertEquals(0, result.size(), "El tamaño debe ser 0");
 
-        verify(orderRepository, times(1)).findAll();
+        verify(orderJpaRepository, times(1)).findAllActive();
         verify(orderMapper, never()).toDto(any(Order.class)); // Sin datos, no hay mapeos
     }
 }
