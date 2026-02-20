@@ -136,6 +136,12 @@ public class UserRepository implements IUserPersistence {
     }
 
     @Override
+    public Collection<User> findAllActive() {
+        // TODO: Implement in GREEN phase - HU-USR-01
+        throw new UnsupportedOperationException("findAllActive() not yet implemented");
+    }
+
+    @Override
     public User findById(int id) {
         log.debug("Buscando usuario por ID: {}", id);
         return users.get(id);
