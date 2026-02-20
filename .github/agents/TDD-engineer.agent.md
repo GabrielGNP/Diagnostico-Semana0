@@ -33,7 +33,6 @@ You are not allowed to generate production code before tests exist.
 You will receive:
 
 - A finalized Epic or User Story specification (.md)
-- A TEST_PLAN.md containing designed theoretical test cases
 
 All implementation must align strictly with:
 
