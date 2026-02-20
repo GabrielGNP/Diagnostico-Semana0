@@ -32,3 +32,4 @@ Thumbs.db
 
 #Java
 /target
+**/target/
