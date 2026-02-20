@@ -136,6 +136,14 @@ public class UserRepository implements IUserPersistence {
     }
 
     @Override
+    public Collection<User> findAllActive() {
+        log.debug("Obteniendo usuarios activos (excluyendo soft-deleted)");
+        return users.values().stream()
+                .filter(User::isActive)
+                .toList();
+    }
+
+    @Override
     public User findById(int id) {
         log.debug("Buscando usuario por ID: {}", id);
         return users.get(id);

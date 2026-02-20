@@ -59,6 +59,12 @@ public class CachedUserPersistenceDecorator implements IUserPersistence {
     }
 
     @Override
+    public Collection<User> findAllActive() {
+        log.debug("findAllActive() - Delegando sin caché (retorna usuarios activos)");
+        return delegate.findAllActive();
+    }
+
+    @Override
     public User findById(int id) {
         return idCache.computeIfAbsent(id, key -> {
             log.debug("Cache MISS para ID: {} - Consultando persistencia", id);

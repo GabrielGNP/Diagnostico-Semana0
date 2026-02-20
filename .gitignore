@@ -30,6 +30,6 @@ Thumbs.db
 # Vite
 *.local
 
-#java
-
-target/
+#Java
+/target
+**/target/

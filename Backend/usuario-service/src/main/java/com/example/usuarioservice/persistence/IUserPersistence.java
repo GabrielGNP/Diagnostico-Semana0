@@ -22,6 +22,12 @@ public interface IUserPersistence {
     Collection<User> findAll();
     
     /**
+     * Obtiene todos los usuarios activos (no soft-deleted).
+     * HU-USR-01: Filtrar usuarios con active=false
+     */
+    Collection<User> findAllActive();
+    
+    /**
      * Busca un usuario por ID
      */
     User findById(int id);
