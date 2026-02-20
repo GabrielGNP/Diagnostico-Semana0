@@ -19,11 +19,11 @@ public class OrderController {
      *
      * Endpoints:
      * - POST /order/add : create an order
-     * - DELETE /order/{id} : delete an order
+     * - DELETE /order/{id} : delete an order (soft-delete: sets active=false)
      * - GET /order/{id} : get order by id
      * - GET /order/{id}/with-user-info : get order with enriched user info
      * - GET /order/user/{idUser} : list orders by user id
-     * - GET /order/all : list all orders
+     * - GET /order/all : list all ACTIVE orders (HU-ORD-01: only returns orders with active=true)
      * - PATCH /order/{id} : change order state
      *
      * The controller delegates business logic to `OrderService` and converts
@@ -78,9 +78,25 @@ public class OrderController {
         return ResponseEntity.ok(orders);
     }
 
+    /**
+     * Lists all active orders.
+     *
+     * User Story: HU-ORD-01
+     *
+     * Functional Requirements:
+     * - FR-ORD-01-01: Retrieves all orders from PostgreSQL orders table
+     * - FR-ORD-01-02: Returns fields: id, name, description, idUser, state, active
+     * - FR-ORD-01-03: Returns HTTP 200 OK
+     *
+     * Business Rules:
+     * - Only returns orders where active=true (soft-delete pattern)
+     * - Returns empty list if no active orders exist
+     *
+     * @return ResponseEntity with list of active orders and HTTP 200 OK
+     */
     @GetMapping("/all")
     public ResponseEntity<List<OrderDto>> listAllOrders() {
-        List<OrderDto> orders = orderService.listAllOrders();
+        List<OrderDto> orders = orderService.findAllActiveOrders();
         return ResponseEntity.ok(orders);
     }
 

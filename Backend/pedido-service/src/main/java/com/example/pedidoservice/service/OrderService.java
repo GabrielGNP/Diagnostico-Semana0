@@ -131,11 +131,48 @@ public class OrderService {
     }
 
 
+    /**
+     * Lists all orders from the database.
+     *
+     * @deprecated Use {@link #findAllActiveOrders()} instead for production use.
+     * This method includes inactive (soft-deleted) orders and should only be used
+     * for administrative or audit purposes.
+     *
+     * @return List of all orders (active and inactive)
+     */
+    @Deprecated
     public List<OrderDto> listAllOrders() {
         return orderRepository.findAll().stream()
                 .map(orderMapper::toDto)
                 .collect(Collectors.toList());
     }
+
+    /**
+     * Retrieves all active orders from PostgreSQL database.
+     *
+     * Implementation details:
+     * - Queries only active orders directly from database (optimized query)
+     * - Uses JPA @Query for better performance
+     * - Maps entities to DTOs
+     *
+     * Business Rules (HU-ORD-01):
+     * - Only returns orders where active=true
+     * - Returns empty list if no active orders exist
+     * - Orders with active=false are excluded (soft-deleted)
+     *
+     * Performance:
+     * - Should respond in < 200ms for up to 1000 records (NFR-ORD-01-01)
+     * - Uses database-level filtering (more efficient than stream filtering)
+     * - Connection pooling via HikariCP
+     *
+     * @return List of active orders as DTOs, empty list if none exist
+     */
+    public List<OrderDto> findAllActiveOrders() {
+        return orderRepository.findAllActive().stream()
+                .map(orderMapper::toDto)
+                .collect(Collectors.toList());
+    }
+
 
     public OrderDto showOrderById(int id) {
         return orderRepository.findById(id)
