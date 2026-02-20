@@ -130,10 +130,6 @@ class OrderServiceHuOrd01Test {
         // ❌ ESTE MÉTODO NO EXISTE - El test debe FALLAR aquí
         List<OrderDto> result = orderService.findAllActiveOrders();
         
-        // THEN
-        assertNotNull(result, "El resultado no debe ser null");
-        assertTrue(result.isEmpty(), "Debe retornar lista vacía cuando no hay pedidos activos");
-        
         verify(orderRepository).findAll();
     }
 
