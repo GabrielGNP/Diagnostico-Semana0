@@ -1,106 +1,93 @@
 package com.example.pedidoservice.repository;
 
 import com.example.pedidoservice.model.Order;
-
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Order Repository - PostgreSQL implementation using JPA.
+ *
+ * User Story: HU-ORD-01
+ * Migration: JSON files → PostgreSQL database
+ *
+ * This repository now delegates to OrderJpaRepository for database access.
+ * The old file-based implementation has been replaced with JPA.
+ *
+ * Performance:
+ * - Database queries optimized with indexes
+ * - Connection pooling via HikariCP
+ * - Native PostgreSQL support
+ */
 @Repository
 public class OrderRepository {
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    @Autowired
+    private OrderJpaRepository jpaRepository;
 
-    // Try multiple locations for orders.json so the service works both from IDE and from Docker
-    private File resolveOrdersFile() {
-        // 1) environment override
-        String env = System.getenv("ORDERS_FILE");
-        if (env != null && !env.isBlank()) {
-            File f = new File(env);
-            if (f.exists()) return f;
-        }
-
-        // 2) current module data folder
-        File f1 = new File("data/orders.json");
-        if (f1.exists()) return f1;
-
-        // 3) parent folder (project-level Backend/data)
-        File f2 = new File("../data/orders.json");
-        if (f2.exists()) return f2;
-
-        // 4) target/classes (when packaged)
-        File f3 = new File("target/classes/orders.json");
-        if (f3.exists()) return f3;
-
-        // fallback to parent data path for writing later
-        return f2;
-    }
-
+    /**
+     * Find all orders from PostgreSQL database.
+     *
+     * @return List of all orders (active and inactive)
+     */
     public List<Order> findAll() {
-        File file = resolveOrdersFile();
-
-        if (file == null || !file.exists()) {
-            return new ArrayList<>();
-        }
-
-        try {
-            return objectMapper.readValue(file, new TypeReference<List<Order>>() {});
-        } catch (IOException e) {
-            e.printStackTrace();
-            return new ArrayList<>();
-        }
+        return jpaRepository.findAll();
     }
 
+    /**
+     * Save or update an order in PostgreSQL.
+     *
+     * @param order Order to save
+     * @return Saved order with generated ID if new
+     */
     public Order save(Order order) {
-        List<Order> orders = findAll();
-        // If update
-        orders.removeIf(o -> o.getId() == order.getId());
-        orders.add(order);
-        writeOrders(orders);
-        return order;
+        return jpaRepository.save(order);
     }
 
+    /**
+     * Soft-delete an order by ID.
+     * Sets active=false instead of physically deleting the record.
+     *
+     * @param id Order ID to delete
+     */
     public void deleteById(int id) {
-        List<Order> orders = findAll();
-        boolean removed = orders.removeIf(o -> o.getId() == id);
-        if (removed) {
-            writeOrders(orders);
+        Optional<Order> orderOpt = jpaRepository.findById(id);
+        if (orderOpt.isPresent()) {
+            Order order = orderOpt.get();
+            order.setActive(false);
+            jpaRepository.save(order);
         }
     }
 
+    /**
+     * Find an order by ID.
+     *
+     * @param id Order ID
+     * @return Optional containing the order if found
+     */
     public Optional<Order> findById(int id) {
-        return findAll().stream().filter(o -> o.getId() == id).findFirst();
+        return jpaRepository.findById(id);
     }
 
+    /**
+     * Find all orders by user ID.
+     *
+     * @param userId User ID to filter by
+     * @return List of orders belonging to the user
+     */
     public List<Order> findByUserId(int userId) {
-        List<Order> orders = findAll();
-        List<Order> result = new ArrayList<>();
-        for (Order order : orders) {
-            if (order.getIdUser() == userId) {
-                result.add(order);
-            }
-        }
-        return result;
+        return jpaRepository.findByIdUser(userId);
     }
 
-    private void writeOrders(List<Order> orders) {
-        try {
-            File out = resolveOrdersFile();
-            if (out == null) {
-                out = new File("../data/orders.json");
-            }
-            File parent = out.getParentFile();
-            if (parent != null) parent.mkdirs();
-            objectMapper.writerWithDefaultPrettyPrinter().writeValue(out, orders);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+    /**
+     * Find all active orders (HU-ORD-01).
+     * Only returns orders where active=true.
+     *
+     * @return List of active orders
+     */
+    public List<Order> findAllActive() {
+        return jpaRepository.findAllActive();
     }
 }
