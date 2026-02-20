@@ -76,4 +76,10 @@
   "password" : "SecurePass123",
   "mail" : "juan@example.com",
   "active" : true
+}, {
+  "id" : 14,
+  "name" : "Ana Martínez",
+  "password" : "SecurePass123",
+  "mail" : "ana@example.com",
+  "active" : true
 } ]

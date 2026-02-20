@@ -1,1 +1,19 @@
-[ ]
+[ {
+  "id" : 1,
+  "name" : "User 1",
+  "password" : "pass1",
+  "mail" : "user1@test.com",
+  "active" : true
+}, {
+  "id" : 2,
+  "name" : "User 2",
+  "password" : "pass2",
+  "mail" : "user2@test.com",
+  "active" : true
+}, {
+  "id" : 3,
+  "name" : "User 3",
+  "password" : "pass3",
+  "mail" : "user3@test.com",
+  "active" : true
+} ]
