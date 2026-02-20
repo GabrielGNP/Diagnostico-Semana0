@@ -1,0 +1,14 @@
+FROM node:20-slim
+
+WORKDIR /app
+
+# Copiar solo los manifiestos de dependencias para aprovechar el cache
+COPY package*.json ./
+RUN npm install
+
+# Copiar el resto del proyecto (se sobreescribe con el volumen en desarrollo)
+COPY . .
+
+EXPOSE 5173
+
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "5173"]
