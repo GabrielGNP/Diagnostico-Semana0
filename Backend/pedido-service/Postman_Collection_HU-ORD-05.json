@@ -1,0 +1,239 @@
+{
+  "info": {
+    "name": "Pedido Service - HU-ORD-05",
+    "description": "Colección de endpoints para probar la creación de pedidos con PostgreSQL",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Crear Pedido - Caso Exitoso",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Pedido de Prueba\",\n  \"description\": \"Este es un pedido de prueba desde Postman\",\n  \"idUser\": 1\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8082/order/add",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8082",
+          "path": ["order", "add"]
+        },
+        "description": "Crea un pedido con datos válidos. Debe retornar 200 OK con el pedido creado."
+      },
+      "response": []
+    },
+    {
+      "name": "2. Crear Pedido - Sin name (Error)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"description\": \"Pedido sin nombre\",\n  \"idUser\": 1\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8082/order/add",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8082",
+          "path": ["order", "add"]
+        },
+        "description": "Debe retornar 400 Bad Request con mensaje: El campo 'name' es requerido"
+      },
+      "response": []
+    },
+    {
+      "name": "3. Crear Pedido - Sin description (Error)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Pedido sin descripción\",\n  \"idUser\": 1\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8082/order/add",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8082",
+          "path": ["order", "add"]
+        },
+        "description": "Debe retornar 400 Bad Request con mensaje: El campo 'description' es requerido"
+      },
+      "response": []
+    },
+    {
+      "name": "4. Crear Pedido - idUser inválido (Error)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Pedido con idUser inválido\",\n  \"description\": \"Descripción\",\n  \"idUser\": 0\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8082/order/add",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8082",
+          "path": ["order", "add"]
+        },
+        "description": "Debe retornar 400 Bad Request con mensaje: El campo 'idUser' debe ser un valor positivo válido"
+      },
+      "response": []
+    },
+    {
+      "name": "5. Crear Pedido - name vacío (Error)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"\",\n  \"description\": \"Descripción válida\",\n  \"idUser\": 1\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8082/order/add",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8082",
+          "path": ["order", "add"]
+        },
+        "description": "Debe retornar 400 Bad Request con mensaje: El campo 'name' no puede estar vacío"
+      },
+      "response": []
+    },
+    {
+      "name": "6. Listar Todos los Pedidos Activos",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8082/order/all",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8082",
+          "path": ["order", "all"]
+        },
+        "description": "Lista todos los pedidos activos (active=true)"
+      },
+      "response": []
+    },
+    {
+      "name": "7. Obtener Pedido por ID",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8082/order/1",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8082",
+          "path": ["order", "1"]
+        },
+        "description": "Obtiene un pedido específico por su ID"
+      },
+      "response": []
+    },
+    {
+      "name": "8. Listar Pedidos por Usuario",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8082/order/user/1",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8082",
+          "path": ["order", "user", "1"]
+        },
+        "description": "Lista todos los pedidos de un usuario específico"
+      },
+      "response": []
+    },
+    {
+      "name": "9. Cambiar Estado de Pedido",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"state\": \"COMPLETED\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8082/order/1",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8082",
+          "path": ["order", "1"]
+        },
+        "description": "Cambia el estado de un pedido. Estados válidos: PROCESSING, COMPLETED, CANCELLED"
+      },
+      "response": []
+    },
+    {
+      "name": "10. Eliminar Pedido (Soft-delete)",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8082/order/1",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8082",
+          "path": ["order", "1"]
+        },
+        "description": "Elimina un pedido (soft-delete: establece active=false)"
+      },
+      "response": []
+    },
+    {
+      "name": "11. Obtener Pedido con Info Usuario (RabbitMQ)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8082/order/1/with-user-info",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8082",
+          "path": ["order", "1", "with-user-info"]
+        },
+        "description": "Obtiene un pedido enriquecido con información del usuario via RabbitMQ"
+      },
+      "response": []
+    }
+  ]
+}
