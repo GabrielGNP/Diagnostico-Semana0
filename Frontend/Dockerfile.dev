@@ -1,14 +1,30 @@
+# ============================================================
+#  Dockerfile.dev — Frontend (Vite + React + TypeScript)
+#
+#  Hot reload AUTOMÁTICO:
+#  - Vite HMR detecta cambios en src/ sin reiniciar el contenedor
+#  - usePolling: true en vite.config.js garantiza detección en Windows/WSL2
+#  - hmr.clientPort: 3000 sincroniza el socket HMR con el puerto expuesto
+#
+#  Acceso: http://localhost:3000
+# ============================================================
 FROM node:20-slim
 
 WORKDIR /app
 
-# Copiar solo los manifiestos de dependencias para aprovechar el cache
-COPY package*.json ./
-RUN npm install
+# ── 1. Instalar dependencias (capa cacheada) ──
+# Solo copiamos manifiestos para no invalidar el cache al cambiar código
+COPY package.json package-lock.json ./
+RUN npm ci
 
-# Copiar el resto del proyecto (se sobreescribe con el volumen en desarrollo)
+# ── 2. Copiar el resto del proyecto ──
+# En dev, src/ y otros dirs son sobreescritos por volúmenes del compose,
+# pero se incluyen aquí para que la imagen funcione de forma standalone
 COPY . .
 
+# Puerto de Vite dev server
 EXPOSE 5173
 
+# ── 3. Arrancar Vite con HMR habilitado ──
+# --host 0.0.0.0 → hace el server accesible desde fuera del contenedor
 CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "5173"]
