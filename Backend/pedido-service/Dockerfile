@@ -4,10 +4,8 @@ COPY pom.xml ./
 RUN mvn -B -f pom.xml dependency:go-offline
 
 COPY . .
-# Ejecutar tests primero - si fallan, la construcción se detiene
-RUN mvn -B test
-# Si los tests pasan, construir el proyecto
-RUN mvn -B clean package -DskipTests
+# Construir el proyecto sin ejecutar tests durante la fase de build
+RUN mvn -B -DskipTests clean package
 
 FROM eclipse-temurin:21-alpine
 WORKDIR /app

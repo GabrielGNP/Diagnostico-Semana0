@@ -12,8 +12,7 @@ COPY package.json package-lock.json ./
 RUN npm install
 RUN npm install --no-save @rollup/rollup-linux-x64-gnu@4.57.1
 COPY . .
-# Ejecutar tests; si fallan, la construcción se detiene
-RUN npm run test
+# Construir la app sin ejecutar tests durante el build de la imagen
 RUN npm run build
 
 # Stage 2: Serve

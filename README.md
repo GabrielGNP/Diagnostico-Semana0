@@ -62,6 +62,48 @@ docker-compose up -d --build
 - **Usuario Service API:** http://localhost:8083
 - **Pedido Service API:** http://localhost:8082
 - **RabbitMQ Management:** http://localhost:15672 (usuario: `guest`, contraseña: `guest`)
+ - **pgAdmin (PGAdmin4):** http://localhost:5050 (usuario: `admin@admin.com`, contraseña: `admin123`)
+
+### Acceso a pgAdmin y ver las bases de datos
+
+- El `docker-compose.yml` arranca un servicio `pgadmin` mapeado en el puerto `5050`. Usa las credenciales del servicio:
+
+    - Email: `admin@admin.com`
+    - Password: `admin123`
+
+- Desde la interfaz web de pgAdmin crea un nuevo servidor (clic derecho en Servers → Create → Server) y usa estos datos de conexión:
+
+    - **Nombre:** postgres (o cualquier nombre descriptivo)
+    - **Host name/address:** postgres
+    - **Port:** 5432
+    - **Maintenance database:** postgres
+    - **Username:** postgres
+    - **Password:** postgres
+
+    Nota: cuando pgAdmin corre como contenedor, debe conectarse al servicio `postgres` por su nombre de servicio de la red Docker (`postgres`) — NO uses `localhost` aquí.
+
+- Alternativamente, puedes añadir dos conexiones separadas usando las cuentas creadas por los scripts de inicialización si prefieres ver/usar cada base con su usuario específico:
+
+    1) Conexión a `users_db` (usuario-service)
+
+         - **Host:** postgres
+         - **Port:** 5432
+         - **Maintenance database:** users_db
+         - **Username:** usuario_user
+         - **Password:** usuario_pass
+
+    2) Conexión a `orders_db` (pedido-service)
+
+         - **Host:** postgres
+         - **Port:** 5432
+         - **Maintenance database:** orders_db
+         - **Username:** pedido_user
+         - **Password:** pedido_pass
+
+    Estas cuentas son creadas por los scripts montados en el contenedor `postgres` (`Backend/usuario-service/init-db/01-init-users.sql` y `Backend/pedido-service/init-db/01-init-orders.sql`).
+
+ - Una vez conectado, expande el servidor y verás las bases `users_db` y `orders_db` bajo la sección `Databases`.
+
 
 ## Detener los servicios
 
