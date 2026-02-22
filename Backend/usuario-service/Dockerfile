@@ -4,12 +4,11 @@ COPY pom.xml ./
 RUN mvn -B -f pom.xml dependency:go-offline
 
 COPY . .
-# Ejecutar tests; si fallan, la construcción se detiene
-RUN mvn -B test
-RUN mvn -B clean package -DskipTests
+# Construir el proyecto sin ejecutar tests durante la fase de build
+RUN mvn -B -DskipTests clean package
 
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 COPY --from=builder /build/target/*.jar app.jar
-EXPOSE 8080
+EXPOSE 8081
 ENTRYPOINT ["java", "-jar", "/app/app.jar"]

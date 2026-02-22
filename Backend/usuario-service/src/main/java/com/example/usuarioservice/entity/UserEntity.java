@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
  * Maps to 'usuarios' table.
  */
 @Entity
-@Table(name = "usuarios")
+@Table(name = "users")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
