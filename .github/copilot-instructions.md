@@ -64,8 +64,11 @@ CI pipeline (`.github/workflows/ci-full-pipeline.yml`): Unit -> Component Integr
 
 ## Patterns & conventions
 
-- **Persistence**: JSON files (`Backend/*/data/*.json`) are mock data only. PostgreSQL exists in docker-compose but is intentionally disabled (`MIGRATION_ENABLED=false`) - no DB persistence by design.
- - **Persistence**: Production persistence uses PostgreSQL (started via `docker-compose`). The JSON files under `Backend/*/data/*.json` are test fixtures/mocks only and are NOT the system of record. The project includes DB migration support but migrations are disabled by default (`MIGRATION_ENABLED=false`). To change runtime state prefer running migrations or using DB tools (pgAdmin) instead of editing JSON files directly.
+- **Persistence (actual)**: PostgreSQL is the single source of truth for all runtime data. All application data MUST be stored in PostgreSQL in production and persisted environments.
+
+- **Legacy fixtures (JSON)**: The JSON files under `Backend/*/data/*.json` are legacy test fixtures only. They were used for early local testing and are scheduled to be removed in upcoming versions — do not edit them and do not rely on them for runtime state.
+
+- **Migrations & seeds (clarification)**: The `MIGRATION_ENABLED` flag controls DB schema migrations and optional seed scripts (e.g., Flyway/Liquibase or SQL scripts under `Backend/*/init-db/`) that prepare Postgres schemas and initial data. This flag does NOT trigger any automatic conversion of JSON fixtures into the database. Enabling migrations (`MIGRATION_ENABLED=true`) is for applying schema and approved seed scripts to Postgres in environments that require persistent storage. If you need to populate Postgres for tests or staging, use the provided SQL seed scripts or add explicit migration scripts; there is no plan to migrate data from the JSON fixtures automatically.
 - **Enums**: Use `UPPER_CASE` values. See `State.java` for reference: `PROCESSING`, `TRAVELING_TO_WAREHOUSE`, `DELIVERED`, etc.
 - **DTO + Mapper**: `OrderMapper`, entities/DTOs separated. Use MapStruct annotations.
 - **Controller -> Service**: Controllers are thin, delegate to `*Service` classes.
