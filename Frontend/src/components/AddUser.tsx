@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Mail, Lock, Eye, EyeOff } from "lucide-react";
-import { addUser } from "../services/usuarioService";
+import useAddUser from "../hooks/useAddUser";
 
 interface FormData {
   nombre: string;
@@ -19,8 +19,7 @@ interface FormData {
 const AddUser: React.FC = () => {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { loading, error, createUser } = useAddUser();
   const [formData, setFormData] = useState<FormData>({
     nombre: "",
     email: "",
@@ -31,23 +30,10 @@ const AddUser: React.FC = () => {
     e: React.FormEvent<HTMLFormElement>,
   ): Promise<void> => {
     e.preventDefault();
-    setLoading(true);
-    setError(null);
 
-    try {
-      await addUser({
-        name: formData.nombre,
-        mail: formData.email,
-        password: formData.password,
-        active: true,
-      });
-
-      console.log("Usuario creado exitosamente");
-      navigate("/");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Error desconocido");
-    } finally {
-      setLoading(false);
+    const result = await createUser(formData);
+    if (result) {
+      navigate('/');
     }
   };
 
