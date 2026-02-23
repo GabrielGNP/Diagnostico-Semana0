@@ -1,5 +1,6 @@
 # Metodología
 
+
 - Revisión inicial del contexto del proyecto y los documentos clave proporcionados.
 - Definición de los casos de uso
 - evaluación de propuesta diseñada por IA y reiteraciones sobre propuestas
