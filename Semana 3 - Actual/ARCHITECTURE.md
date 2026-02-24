@@ -975,3 +975,5 @@ Teniendo en cuenta que el proyecto en su estado actual tiene una arquitectura de
 Esto también es procedente en virtud de poder asegurar entregas eficientes y oportunas
 
 ### 11.2. Postura en contra de conservar el esquema MVC
+
+Implementar Clean Architecture es una decisión orientada a preservar la estabilidad del dominio frente a la volatilidad tecnológica. Nos permite desacoplar reglas de negocio de detalles técnicos, reducir el costo acumulativo del cambio, mejorar la testabilidad y garantizar que el sistema pueda evolucionar sin degradarse estructuralmente. No es una moda ni una sobreingeniería; es una estrategia para controlar complejidad en sistemas de largo plazo.
