@@ -980,7 +980,7 @@ Esto también es procedente en virtud de poder asegurar entregas eficientes y op
 
 ## 12. Uso Correcto Semántico de Verbos HTTP
 
-Esta sección establece las convenciones y estándares para el uso apropiado de los verbos HTTP en las APIs REST del proyecto, basándose en los criterios de aceptación definidos en **HU-ORD-08** y las mejores prácticas de la industria.
+Esta sección establece las convenciones y estándares para el uso apropiado de los verbos HTTP en las APIs REST del proyecto, con las mejores prácticas de la industria.
 
 ---
 
@@ -1194,7 +1194,9 @@ Todas las respuestas de error **DEBEN** seguir la siguiente estructura JSON para
 
 ---
 
-### 12.7 Matriz de Cumplimiento por Endpoint (pedido-service)
+### 12.7 Matrices de Cumplimiento por Endpoint
+
+#### 12.7.1 pedido-service (Base path: `/order`)
 
 Basado en los criterios de aceptación de **HU-ORD-08**:
 
@@ -1206,10 +1208,54 @@ Basado en los criterios de aceptación de **HU-ORD-08**:
 | `/order/{id}` | `GET` (error) | 🔴 `500` sin body | 🟢 `500` + body genérico | CA-05 |
 | `/order/add` | `POST` (inválido) | 🟡 `400` string | 🟢 `400` + body estructurado | CA-04 |
 | `/order/{id}` | `DELETE` (no existe) | 🔴 `404` sin body | 🟢 `404` + body estructurado | CA-06 |
+| `/order/all` | `GET` | 🟢 `200 OK` | 🟢 `200 OK` | - |
+| `/order/user/{idUser}` | `GET` | 🟢 `200 OK` | 🟢 `200 OK` | - |
+| `/order/{id}` | `PATCH` | 🟢 `200 OK` / `400` | 🟢 `200 OK` / `400` | - |
+| `/order/{id}/with-user-info` | `GET` | 🔴 `System.err` + `500` | 🟢 Logger + body estructurado | - |
+
+**Resumen pedido-service:**
+- ✅ Cumple: 3 endpoints
+- ⚠️ Parcial: 2 endpoints
+- ❌ No cumple: 5 endpoints
 
 ---
 
-### 12.8 Checklist de Implementación
+#### 12.7.2 usuario-service (Base path: `/api/v1/usuarios`)
+
+| Endpoint | Verbo | Estado Actual | Estado Esperado | Cumple |
+|----------|-------|---------------|-----------------|--------|
+| `/api/v1/usuarios` | `GET` | 🟢 `200 OK` | 🟢 `200 OK` | ✅ |
+| `/api/v1/usuarios/{id}` | `GET` | 🟢 `200 OK` / `404` estructurado | 🟢 `200 OK` / `404` estructurado | ✅ |
+| `/api/v1/usuarios` | `POST` | 🟢 `201 Created` | 🟡 `201 Created` + `Location` | ⚠️ Falta `Location` header |
+| `/api/v1/usuarios/{id}` | `PUT` | 🟢 `200 OK` / `404` estructurado | 🟢 `200 OK` / `404` estructurado | ✅ |
+| `/api/v1/usuarios/{id}` | `PATCH` | 🟢 `200 OK` / `404` estructurado | 🟢 `200 OK` / `404` estructurado | ✅ |
+| `/api/v1/usuarios/{id}` | `DELETE` | 🟢 `204 No Content` / `404` | 🟢 `204 No Content` / `404` | ✅ |
+
+**Resumen usuario-service:**
+- ✅ Cumple: 5 endpoints
+- ⚠️ Parcial: 1 endpoint (POST falta `Location` header)
+- ❌ No cumple: 0 endpoints
+
+---
+
+#### 12.7.3 Comparativa de Madurez REST
+
+| Aspecto | usuario-service | pedido-service |
+|---------|-----------------|----------------|
+| `GlobalExceptionHandler` | ✅ Implementado | ❌ Faltante |
+| Códigos HTTP correctos | 🟢 95% | 🔴 40% |
+| Header `Location` en POST | ⚠️ Faltante | ❌ Faltante |
+| Respuestas de error estructuradas | ✅ Sí | ❌ No |
+| Logging con SLF4J | ✅ Sí | ❌ Usa `System.err` |
+| Validación con `@Valid` | ✅ Sí | ❌ Manual en Service |
+
+**Conclusión:** `usuario-service` está significativamente más maduro en términos de adherencia REST. `pedido-service` requiere implementar las mejoras definidas en **HU-ORD-08** para alcanzar paridad.
+
+---
+
+### 12.8 Checklist de Implementación por Servicio
+
+#### 12.8.1 Checklist General (Ambos Servicios)
 
 Para cumplir con los estándares de verbos HTTP, cada endpoint debe verificar:
 
@@ -1238,4 +1284,33 @@ Para cumplir con los estándares de verbos HTTP, cada endpoint debe verificar:
   - [ ] Sin `System.err` ni `System.out` en controllers
   - [ ] Logs con SLF4J a nivel apropiado (WARN/ERROR)
   - [ ] Body de error con: `timestamp`, `status`, `error`, `message`, `path`
-  
+
+---
+
+#### 12.8.2 Checklist Específico: pedido-service
+
+| Tarea | Prioridad | Estado |
+|-------|-----------|--------|
+| Crear `GlobalExceptionHandler` con `@RestControllerAdvice` | 🔴 Alta | ❌ Pendiente |
+| Crear excepción `OrderNotFoundException` | 🔴 Alta | ❌ Pendiente |
+| Cambiar `POST /order/add` → `201 Created` + `Location` | 🔴 Alta | ❌ Pendiente |
+| Cambiar `DELETE /order/{id}` → `204 No Content` | 🟡 Media | ❌ Pendiente |
+| Remover `System.err` de `OrderController` | 🔴 Alta | ❌ Pendiente |
+| Estructurar respuestas de error en JSON | 🔴 Alta | ❌ Pendiente |
+| Mapear `IllegalArgumentException` → `400 Bad Request` | 🟡 Media | ❌ Pendiente |
+| Añadir logging SLF4J en controller | 🟡 Media | ❌ Pendiente |
+
+---
+
+#### 12.8.3 Checklist Específico: usuario-service
+
+| Tarea | Prioridad | Estado |
+|-------|-----------|--------|
+| `GlobalExceptionHandler` implementado | - | ✅ Completado |
+| Excepción `UsuarioNotFoundException` creada | - | ✅ Completado |
+| `POST` retorna `201 Created` | - | ✅ Completado |
+| `DELETE` retorna `204 No Content` | - | ✅ Completado |
+| Logging con SLF4J | - | ✅ Completado |
+| Respuestas de error estructuradas | - | ✅ Completado |
+| Añadir header `Location` en `POST /api/v1/usuarios` | 🟢 Baja | ❌ Pendiente |
+| Unificar constante `API_PATH` con `@RequestMapping` | 🟢 Baja | ❌ Pendiente |
