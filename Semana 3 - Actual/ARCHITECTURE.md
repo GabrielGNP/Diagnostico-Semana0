@@ -975,3 +975,267 @@ Teniendo en cuenta que el proyecto en su estado actual tiene una arquitectura de
 Esto también es procedente en virtud de poder asegurar entregas eficientes y oportunas
 
 ### 11.2. Postura en contra de conservar el esquema MVC
+
+---
+
+## 12. Uso Correcto Semántico de Verbos HTTP
+
+Esta sección establece las convenciones y estándares para el uso apropiado de los verbos HTTP en las APIs REST del proyecto, basándose en los criterios de aceptación definidos en **HU-ORD-08** y las mejores prácticas de la industria.
+
+---
+
+### 12.1 Tabla de Verbos HTTP y su Semántica
+
+| Verbo HTTP | Propósito | Idempotente | Seguro | Cuerpo Request | Cuerpo Response |
+|------------|-----------|-------------|--------|----------------|-----------------|
+| `GET` | Obtener recurso(s) | ✅ Sí | ✅ Sí | ❌ No | ✅ Sí |
+| `POST` | Crear nuevo recurso | ❌ No | ❌ No | ✅ Sí | ✅ Sí |
+| `PUT` | Reemplazar recurso completo | ✅ Sí | ❌ No | ✅ Sí | ✅ Sí |
+| `PATCH` | Actualizar parcialmente | ❌ No* | ❌ No | ✅ Sí | ✅ Sí |
+| `DELETE` | Eliminar recurso | ✅ Sí | ❌ No | ❌ No | ❌ No |
+
+> *PATCH puede ser idempotente dependiendo de la implementación.
+
+---
+
+### 12.2 Códigos de Estado HTTP por Operación
+
+#### 12.2.1 Operaciones de Creación (`POST`)
+
+| Escenario | Código HTTP | Header Requerido | Cuerpo Response |
+|-----------|-------------|------------------|-----------------|
+| Creación exitosa | `201 Created` | `Location: /resource/{id}` | Recurso creado |
+| Datos inválidos | `400 Bad Request` | - | Detalles de error |
+| Recurso ya existe | `409 Conflict` | - | Mensaje de conflicto |
+| Error de servidor | `500 Internal Server Error` | - | Mensaje genérico |
+
+**Ejemplo de respuesta exitosa (201 Created):**
+```http
+HTTP/1.1 201 Created
+Location: /order/42
+Content-Type: application/json
+
+{
+  "id": 42,
+  "name": "Pedido nuevo",
+  "description": "Descripción del pedido",
+  "idUser": 1,
+  "state": "PROCESSING",
+  "active": true
+}
+```
+
+---
+
+#### 12.2.2 Operaciones de Lectura (`GET`)
+
+| Escenario | Código HTTP | Cuerpo Response |
+|-----------|-------------|-----------------|
+| Recurso encontrado | `200 OK` | Recurso solicitado |
+| Lista vacía | `200 OK` | Array vacío `[]` |
+| Recurso no encontrado | `404 Not Found` | Estructura de error |
+| Parámetros inválidos | `400 Bad Request` | Detalles de validación |
+
+**Ejemplo de respuesta recurso no encontrado (404 Not Found):**
+```http
+HTTP/1.1 404 Not Found
+Content-Type: application/json
+
+{
+  "timestamp": "2026-02-24T10:30:00",
+  "status": 404,
+  "error": "Not Found",
+  "message": "Order with id 999 not found",
+  "path": "/order/999"
+}
+```
+
+---
+
+#### 12.2.3 Operaciones de Actualización Completa (`PUT`)
+
+| Escenario | Código HTTP | Cuerpo Response |
+|-----------|-------------|-----------------|
+| Actualización exitosa | `200 OK` | Recurso actualizado |
+| Recurso no encontrado | `404 Not Found` | Estructura de error |
+| Datos inválidos | `400 Bad Request` | Detalles de validación |
+| Conflicto de versión | `409 Conflict` | Mensaje de conflicto |
+
+---
+
+#### 12.2.4 Operaciones de Actualización Parcial (`PATCH`)
+
+| Escenario | Código HTTP | Cuerpo Response |
+|-----------|-------------|-----------------|
+| Actualización exitosa | `200 OK` | Recurso actualizado |
+| Recurso no encontrado | `404 Not Found` | Estructura de error |
+| Campo inválido | `400 Bad Request` | Detalles de validación |
+| Transición de estado inválida | `422 Unprocessable Entity` | Reglas de negocio violadas |
+
+**Ejemplo de actualización de estado:**
+```http
+PATCH /order/42 HTTP/1.1
+Content-Type: application/json
+
+{
+  "state": "TRAVELING_TO_WAREHOUSE"
+}
+```
+
+---
+
+#### 12.2.5 Operaciones de Eliminación (`DELETE`)
+
+| Escenario | Código HTTP | Cuerpo Response |
+|-----------|-------------|-----------------|
+| Eliminación exitosa | `204 No Content` | ❌ Sin cuerpo |
+| Recurso no encontrado | `404 Not Found` | Estructura de error |
+| No se puede eliminar (dependencias) | `409 Conflict` | Mensaje explicativo |
+
+**Ejemplo de eliminación exitosa (204 No Content):**
+```http
+HTTP/1.1 204 No Content
+```
+
+**Ejemplo de eliminación de recurso no existente (404 Not Found):**
+```http
+HTTP/1.1 404 Not Found
+Content-Type: application/json
+
+{
+  "timestamp": "2026-02-24T10:35:00",
+  "status": 404,
+  "error": "Not Found",
+  "message": "Order with id 999 not found",
+  "path": "/order/999"
+}
+```
+
+---
+
+### 12.3 Estructura Estándar de Respuestas de Error
+
+Todas las respuestas de error **DEBEN** seguir la siguiente estructura JSON para garantizar consistencia y facilitar el parsing en clientes:
+
+```json
+{
+  "timestamp": "2026-02-24T10:30:00",
+  "status": 404,
+  "error": "Not Found",
+  "message": "Descripción legible del error",
+  "path": "/order/999"
+}
+```
+
+| Campo | Tipo | Descripción | Requerido |
+|-------|------|-------------|-----------|
+| `timestamp` | `string` (ISO 8601) | Momento en que ocurrió el error | ✅ Sí |
+| `status` | `integer` | Código de estado HTTP | ✅ Sí |
+| `error` | `string` | Nombre estándar del error HTTP | ✅ Sí |
+| `message` | `string` | Descripción legible para humanos | ✅ Sí |
+| `path` | `string` | URI del recurso solicitado | ✅ Sí |
+| `details` | `array` | Detalles adicionales (validación) | ❌ Opcional |
+
+---
+
+### 12.4 Mapeo de Excepciones a Códigos HTTP
+
+#### Implementación Requerida en `@ControllerAdvice`
+
+| Excepción Java | Código HTTP | Nivel de Log |
+|----------------|-------------|--------------|
+| `OrderNotFoundException` | `404 Not Found` | `WARN` |
+| `UsuarioNotFoundException` | `404 Not Found` | `WARN` |
+| `IllegalArgumentException` | `400 Bad Request` | `WARN` |
+| `MethodArgumentNotValidException` | `400 Bad Request` | `WARN` |
+| `ConstraintViolationException` | `400 Bad Request` | `WARN` |
+| `DataIntegrityViolationException` | `409 Conflict` | `WARN` |
+| `InvalidStateTransitionException` | `422 Unprocessable Entity` | `WARN` |
+| `Exception` (genérica) | `500 Internal Server Error` | `ERROR` |
+
+**Reglas de logging:**
+- Errores `4xx` → Nivel `WARN` (problema del cliente)
+- Errores `5xx` → Nivel `ERROR` (problema del servidor)
+- **NUNCA** exponer stack traces al cliente
+- **SIEMPRE** registrar stack trace completo en logs del servidor
+
+---
+
+### 12.5 Convenciones de Headers HTTP
+
+#### Headers de Respuesta Requeridos
+
+| Header | Cuándo Usar | Ejemplo |
+|--------|-------------|---------|
+| `Location` | `201 Created`, `301/302 Redirect` | `Location: /order/42` |
+| `Content-Type` | Todas las respuestas con cuerpo | `Content-Type: application/json` |
+| `X-Request-Id` | Todas las respuestas (trazabilidad) | `X-Request-Id: abc-123-def` |
+
+#### Headers de Request Recomendados
+
+| Header | Propósito | Ejemplo |
+|--------|-----------|---------|
+| `Content-Type` | Tipo de contenido enviado | `Content-Type: application/json` |
+| `Accept` | Tipo de contenido esperado | `Accept: application/json` |
+| `X-Request-Id` | Correlación de requests | `X-Request-Id: abc-123-def` |
+
+---
+
+### 12.6 Anti-patrones a Evitar
+
+| ❌ Anti-patrón | ✅ Correcto | Justificación |
+|----------------|-------------|---------------|
+| `POST` retorna `200 OK` en creación | `POST` retorna `201 Created` | Semántica HTTP correcta |
+| `DELETE` retorna `200 OK` vacío | `DELETE` retorna `204 No Content` | Sin cuerpo = 204 |
+| Usar `System.err.println()` para errores | Usar SLF4J logger | Observabilidad y niveles |
+| Exponer stack traces al cliente | Mensaje genérico + log interno | Seguridad |
+| Retornar `500` para not-found | Retornar `404 Not Found` | Código específico |
+| Body de error como string plano | Body de error JSON estructurado | Consistencia de parsing |
+
+---
+
+### 12.7 Matriz de Cumplimiento por Endpoint (pedido-service)
+
+Basado en los criterios de aceptación de **HU-ORD-08**:
+
+| Endpoint | Verbo | Estado Actual | Estado Esperado | Criterio |
+|----------|-------|---------------|-----------------|----------|
+| `/order/add` | `POST` | 🔴 `200 OK` | 🟢 `201 Created` + `Location` | CA-01 |
+| `/order/{id}` | `DELETE` | 🔴 `200 OK` vacío | 🟢 `204 No Content` | CA-02 |
+| `/order/{id}` | `GET` | 🟢 `404` si no existe | 🟢 `404` + body estructurado | CA-03 |
+| `/order/{id}` | `GET` (error) | 🔴 `500` sin body | 🟢 `500` + body genérico | CA-05 |
+| `/order/add` | `POST` (inválido) | 🟡 `400` string | 🟢 `400` + body estructurado | CA-04 |
+| `/order/{id}` | `DELETE` (no existe) | 🔴 `404` sin body | 🟢 `404` + body estructurado | CA-06 |
+
+---
+
+### 12.8 Checklist de Implementación
+
+Para cumplir con los estándares de verbos HTTP, cada endpoint debe verificar:
+
+- [ ] **POST (Creación)**
+  - [ ] Retorna `201 Created` en éxito
+  - [ ] Incluye header `Location` apuntando al nuevo recurso
+  - [ ] Retorna recurso creado en body
+  - [ ] Valida campos requeridos → `400 Bad Request`
+
+- [ ] **GET (Lectura)**
+  - [ ] Retorna `200 OK` con recurso encontrado
+  - [ ] Retorna `404 Not Found` con body estructurado si no existe
+  - [ ] Lista vacía retorna `200 OK` con `[]`
+
+- [ ] **PUT/PATCH (Actualización)**
+  - [ ] Retorna `200 OK` con recurso actualizado
+  - [ ] Retorna `404 Not Found` si recurso no existe
+  - [ ] Valida transiciones de estado → `422 Unprocessable Entity`
+
+- [ ] **DELETE (Eliminación)**
+  - [ ] Retorna `204 No Content` sin body en éxito
+  - [ ] Retorna `404 Not Found` con body estructurado si no existe
+
+- [ ] **Manejo de Errores Global**
+  - [ ] `GlobalExceptionHandler` con `@RestControllerAdvice`
+  - [ ] Sin `System.err` ni `System.out` en controllers
+  - [ ] Logs con SLF4J a nivel apropiado (WARN/ERROR)
+  - [ ] Body de error con: `timestamp`, `status`, `error`, `message`, `path`
+  
