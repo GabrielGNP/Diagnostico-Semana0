@@ -976,7 +976,6 @@ Esto también es procedente en virtud de poder asegurar entregas eficientes y op
 
 ### 11.2. Postura en contra de conservar el esquema MVC
 
-<<<<<<< HEAD
 ---
 
 ## 12. Uso Correcto Semántico de Verbos HTTP
@@ -1315,6 +1314,3 @@ Para cumplir con los estándares de verbos HTTP, cada endpoint debe verificar:
 | Respuestas de error estructuradas | - | ✅ Completado |
 | Añadir header `Location` en `POST /api/v1/usuarios` | 🟢 Baja | ❌ Pendiente |
 | Unificar constante `API_PATH` con `@RequestMapping` | 🟢 Baja | ❌ Pendiente |
-=======
-Implementar Clean Architecture es una decisión orientada a preservar la estabilidad del dominio frente a la volatilidad tecnológica. Nos permite desacoplar reglas de negocio de detalles técnicos, reducir el costo acumulativo del cambio, mejorar la testabilidad y garantizar que el sistema pueda evolucionar sin degradarse estructuralmente. No es una moda ni una sobreingeniería; es una estrategia para controlar complejidad en sistemas de largo plazo.
->>>>>>> 0aa3563bc83a1eae9b2eff6181f7457d5b505c32
