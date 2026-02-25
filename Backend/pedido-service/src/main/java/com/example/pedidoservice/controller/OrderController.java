@@ -2,6 +2,8 @@ package com.example.pedidoservice.controller;
 
 import com.example.pedidoservice.dto.OrderDto;
 import com.example.pedidoservice.dto.OrderWithUserDto;
+import com.example.pedidoservice.dto.OrderStateUpdateDto;
+import jakarta.validation.Valid;
 import com.example.pedidoservice.model.State;
 import com.example.pedidoservice.service.OrderService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,20 +13,19 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/order")
+@RequestMapping("/orders")
 public class OrderController {
 
     /**
      * REST controller that exposes order-related operations.
      *
      * Endpoints:
-     * - POST /order/add : create an order
-     * - DELETE /order/{id} : delete an order (soft-delete: sets active=false)
-     * - GET /order/{id} : get order by id
-     * - GET /order/{id}/with-user-info : get order with enriched user info
-     * - GET /order/user/{idUser} : list orders by user id
-     * - GET /order/all : list all ACTIVE orders (HU-ORD-01: only returns orders with active=true)
-     * - PATCH /order/{id} : change order state
+     * - POST /orders : create an order (returns 201 Created with Location header)
+     * - GET /orders : list active orders; supports optional query `userId` to filter results
+     * - GET /orders/{id} : get order by id
+     * - GET /orders/{id}?expand=user : get order with enriched user info
+     * - DELETE /orders/{id} : delete an order (soft-delete: sets active=false)
+     * - PATCH /orders/{id} : change order state
      *
      * The controller delegates business logic to `OrderService` and converts
      * results into appropriate HTTP responses.
@@ -34,110 +35,111 @@ public class OrderController {
     private OrderService orderService;
 
     /**
-     * Create a new order (HU-ORD-05).
-     *
-     * @param orderDto Order data (name, description, idUser required)
-     * @return Created order with ID or 400 Bad Request if validation fails
+        * Create a new order.
+        * <p>
+        * Endpoint: POST /orders
+        * <p>
+        * On success returns HTTP 201 Created and sets the `Location` header to
+        * `/orders/{id}` when the created DTO contains an id. If validation fails
+        * returns HTTP 400 Bad Request with the validation message.
+        *
+        * @param orderDto Order data (name, description, idUser required)
+        * @return Created order DTO or error message
      */
-    @PostMapping("/add")
-    public ResponseEntity<?> createOrder(@RequestBody OrderDto orderDto) {
-        try {
-            OrderDto createdOrder = orderService.createOrder(orderDto);
-            return ResponseEntity.ok(createdOrder);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+    @PostMapping
+    public ResponseEntity<OrderDto> createOrder(@Valid @RequestBody OrderDto orderDto) {
+        OrderDto createdOrder = orderService.createOrder(orderDto);
+        if (createdOrder != null && createdOrder.getId() != null) {
+            return ResponseEntity.created(java.net.URI.create("/orders/" + createdOrder.getId())).body(createdOrder);
+        } else {
+            return ResponseEntity.status(201).body(createdOrder);
         }
     }
 
     /**
-     * Soft-delete an order by ID.
-     *
-     * @param id Order ID
-     * @return 200 OK or 404 Not Found
+        * Soft-delete an order by ID.
+        *
+        * Endpoint: DELETE /orders/{id}
+        * <p>
+        * Performs a soft delete by setting `active=false`. On success returns
+        * HTTP 204 No Content. If the order does not exist returns HTTP 404 Not Found.
+        *
+        * @param id Order ID
+        * @return 204 No Content or 404 Not Found
      */
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteOrder(@PathVariable("id") Integer id) {
-        try {
-            orderService.deleteOrder(id);
-            return ResponseEntity.ok().build();
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.notFound().build();
-        }
-    }
-
-    @GetMapping("/{id}")
-    public ResponseEntity<OrderDto> showOrderById(@PathVariable("id") Integer id) {
-        OrderDto orderDto = orderService.showOrderById(id);
-        if (orderDto != null) {
-            return ResponseEntity.ok(orderDto);
-        } else {
-            return ResponseEntity.notFound().build();
-        }
-    }
-
-
-    @GetMapping("/{id}/with-user-info")
-    public ResponseEntity<OrderWithUserDto> getOrderWithUserInfo(@PathVariable("id") Integer id) {
-        try{
-            OrderWithUserDto order = orderService.getOrderWithUserInfo(id);
-            if (order != null) {
-                return ResponseEntity.ok(order);
-            } else {
-                return ResponseEntity.notFound().build();
-            }
-        }catch(Exception e){
-            System.err.println("Error fetching order with user info: " + e.getMessage());
-            return ResponseEntity.status(500).build();
-        }
-    }
-
-
-    @GetMapping("/user/{idUser}")
-    public ResponseEntity<List<OrderDto>> listOrdersByIdUser(@PathVariable("idUser") Integer idUser) {
-        List<OrderDto> orders = orderService.listOrdersByIdUser(idUser);
-        return ResponseEntity.ok(orders);
+    public ResponseEntity<Void> deleteOrder(@PathVariable("id") Integer id) {
+        orderService.deleteOrder(id);
+        return ResponseEntity.noContent().build();
     }
 
     /**
-     * Lists all active orders.
+     * Get an order by id.
      *
-     * User Story: HU-ORD-01
+     * Endpoint: GET /orders/{id}
+     * <p>
+     * Optional query parameter: `expand=user` — when present the response will
+     * include user details and use the enriched DTO. Without `expand` returns
+     * the standard `OrderDto`.
      *
-     * Functional Requirements:
-     * - FR-ORD-01-01: Retrieves all orders from PostgreSQL orders table
-     * - FR-ORD-01-02: Returns fields: id, name, description, idUser, state, active
-     * - FR-ORD-01-03: Returns HTTP 200 OK
-     *
-     * Business Rules:
-     * - Only returns orders where active=true (soft-delete pattern)
-     * - Returns empty list if no active orders exist
-     *
-     * @return ResponseEntity with list of active orders and HTTP 200 OK
+     * @param id     Order ID
+     * @param expand optional expansion parameter, expects value `user`
+     * @return Order DTO (enriched if `expand=user`) or 404 Not Found
      */
-    @GetMapping("/all")
-    public ResponseEntity<List<OrderDto>> listAllOrders() {
-        List<OrderDto> orders = orderService.findAllActiveOrders();
-        return ResponseEntity.ok(orders);
+    @GetMapping("/{id}")
+    public ResponseEntity<Object> showOrderById(@PathVariable("id") Integer id, @RequestParam(value = "expand", required = false) String expand) {
+        if ("user".equals(expand)) {
+            OrderWithUserDto order = orderService.getOrderWithUserInfo(id);
+            return ResponseEntity.ok(order);
+        } else {
+            OrderDto orderDto = orderService.showOrderById(id);
+            return ResponseEntity.ok(orderDto);
+        }
+    }
+
+
+    /**
+     * List orders.
+     *
+     * Endpoint: GET /orders
+     * <p>
+     * Optional query parameter `userId` filters orders by the given user. If no
+     * `userId` is provided the endpoint returns all active orders (soft-deleted
+     * orders are excluded).
+     *
+     * @param userId optional user id to filter results
+     * @return list of orders (HTTP 200)
+     */
+    @GetMapping
+    public ResponseEntity<List<OrderDto>> listOrders(@RequestParam(value = "userId", required = false) Integer userId) {
+        if (userId != null) {
+            List<OrderDto> orders = orderService.listOrdersByIdUser(userId);
+            return ResponseEntity.ok(orders);
+        } else {
+            List<OrderDto> orders = orderService.findAllActiveOrders();
+            return ResponseEntity.ok(orders);
+        }
     }
 
     /**
      * Change order state.
      *
-     * @param id Order ID
-     * @param orderDto DTO containing new state
+     * Endpoint: PATCH /orders/{id}
+     * <p>
+     * Expects an `OrderStateUpdateDto` in the request body containing the
+     * `state` to set. Returns the updated `OrderDto` on success (HTTP 200).
+     * Validation errors return HTTP 400. If the order does not exist returns
+     * HTTP 404.
+     *
+     * @param id       Order ID
+     * @param orderStateUpdateDto DTO containing new state
      * @return Updated order or 404/400
      */
     @PatchMapping("/{id}")
-    public ResponseEntity<?> changeStateOrder(@PathVariable("id") Integer id, @RequestBody OrderDto orderDto) {
-        State newState = orderDto.getState();
-        if (newState == null) {
-            return ResponseEntity.badRequest().body("El campo 'state' es requerido");
-        }
-        try {
-            OrderDto updatedOrder = orderService.changeStateOrder(id, newState);
-            return ResponseEntity.ok(updatedOrder);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.notFound().build();
-        }
+    public ResponseEntity<OrderDto> changeStateOrder(@PathVariable("id") Integer id, @Valid @RequestBody OrderStateUpdateDto orderStateUpdateDto) {
+        State newState = orderStateUpdateDto.getState();
+        OrderDto updatedOrder = orderService.changeStateOrder(id, newState);
+        return ResponseEntity.ok(updatedOrder);
     }
+
 }

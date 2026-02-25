@@ -1,6 +1,8 @@
 package com.example.pedidoservice.messaging;
 
 import com.example.pedidoservice.config.RabbitMQConfig;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
 
@@ -10,13 +12,15 @@ import java.util.concurrent.ConcurrentHashMap;
 @Component
 public class UserServiceConsumer {
 
+    private static final Logger log = LoggerFactory.getLogger(UserServiceConsumer.class);
+
     private final Map<Integer, UserResponse> userResponses = new ConcurrentHashMap<>();
     private final Object lock = new Object();
 
     @RabbitListener(queues = RabbitMQConfig.USER_RESPONSE_QUEUE)
     public void receiveUserResponse(UserResponse response) {
         // Received asynchronously from RabbitMQ - store and notify waiting threads
-        System.out.println("User response received: " + response);
+        log.debug("User response received: {}", response);
         if (response != null && response.getId() != null) {
             userResponses.put(response.getId(), response);
             synchronized (lock) {

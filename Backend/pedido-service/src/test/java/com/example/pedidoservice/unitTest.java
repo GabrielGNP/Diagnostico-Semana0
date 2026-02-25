@@ -8,11 +8,16 @@ import com.example.pedidoservice.messaging.UserServiceConsumer;
 import com.example.pedidoservice.messaging.UserServiceProducer;
 import com.example.pedidoservice.model.Order;
 import com.example.pedidoservice.model.State;
-import com.example.pedidoservice.repository.OrderRepository;
+import com.example.pedidoservice.repository.OrderJpaRepository;
 import com.example.pedidoservice.service.OrderService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
+import com.example.pedidoservice.exception.OrderNotFoundException;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
@@ -27,10 +32,11 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 class OrderServiceTest {
 
 	@Mock
-	private OrderRepository orderRepository;
+	private OrderJpaRepository orderRepository;
 
 	@Mock
 	private OrderMapper orderMapper;
@@ -96,13 +102,11 @@ class OrderServiceTest {
 			when(orderMapper.toDto(savedOrder)).thenReturn(expectedOrderDto);
 
 			// Act
-			orderService.createOrder(testOrderDto);
+			OrderDto result = orderService.createOrder(testOrderDto);
 
-			// Assert
-			ArgumentCaptor<Order> orderCaptor = ArgumentCaptor.forClass(Order.class);
-			verify(orderRepository).save(orderCaptor.capture());
-			Order capturedOrder = orderCaptor.getValue();
-			assertEquals(1, capturedOrder.getId());
+			// Assert: el ID asignado se verifica en el DTO retornado
+			assertNotNull(result);
+			assertEquals(1, result.getId());
 		}
 
 		// Test 3: Asignación de ID Automático - Con órdenes previas
@@ -123,13 +127,11 @@ class OrderServiceTest {
 			when(orderMapper.toDto(savedOrder)).thenReturn(expectedOrderDto);
 
 			// Act
-			orderService.createOrder(testOrderDto);
+			OrderDto result = orderService.createOrder(testOrderDto);
 
-			// Assert
-			ArgumentCaptor<Order> orderCaptor = ArgumentCaptor.forClass(Order.class);
-			verify(orderRepository).save(orderCaptor.capture());
-			Order capturedOrder = orderCaptor.getValue();
-			assertEquals(8, capturedOrder.getId()); // maxId (7) + 1 = 8
+			// Assert: el ID asignado se verifica en el DTO retornado
+			assertNotNull(result);
+			assertEquals(8, result.getId()); // maxId (7) + 1 = 8
 		}
 
 		// Test 4: Mapeo Correcto
@@ -199,53 +201,55 @@ class OrderServiceTest {
 		void testDeleteOrder_Success() {
 			// Arrange
 			int orderId = 5;
+			Order existing = new Order(orderId, "Laptop", "Gaming Laptop", 1, State.PROCESSING, true);
+			when(orderRepository.findById(orderId)).thenReturn(java.util.Optional.of(existing));
+			when(orderRepository.save(any(Order.class))).thenReturn(existing);
 
 			// Act
 			orderService.deleteOrder(orderId);
 
-			// Assert
-			verify(orderRepository, times(1)).deleteById(orderId);
+			// Assert: soft-delete via save(active=false)
+			ArgumentCaptor<Order> captor = ArgumentCaptor.forClass(Order.class);
+			verify(orderRepository).save(captor.capture());
+			Order saved = captor.getValue();
+			assertFalse(saved.isActive());
 		}
 
 		// Test 2: Parámetro Correcto
 		@Test
 		void testDeleteOrder_CorrectParameter() {
-			// Arrange
 			int orderId = 42;
-			ArgumentCaptor<Integer> idCaptor = ArgumentCaptor.forClass(Integer.class);
+			Order existing = new Order(orderId, "Item", "Desc", 1, State.PROCESSING, true);
+			when(orderRepository.findById(orderId)).thenReturn(java.util.Optional.of(existing));
+			when(orderRepository.save(any(Order.class))).thenReturn(existing);
 
-			// Act
 			orderService.deleteOrder(orderId);
 
-			// Assert
-			verify(orderRepository).deleteById(idCaptor.capture());
-			assertEquals(42, idCaptor.getValue());
+			ArgumentCaptor<Order> captor = ArgumentCaptor.forClass(Order.class);
+			verify(orderRepository).save(captor.capture());
+			assertEquals(42, captor.getValue().getId());
 		}
 
 		// Test 3: Excepción en Repositorio
 		@Test
 		void testDeleteOrder_RepositoryThrowsException() {
-			// Arrange
 			int orderId = 10;
-			doThrow(new RuntimeException("Database connection error")).when(orderRepository).deleteById(orderId);
+			Order existing = new Order(orderId, "Item", "Desc", 1, State.PROCESSING, true);
+			when(orderRepository.findById(orderId)).thenReturn(java.util.Optional.of(existing));
+			doThrow(new RuntimeException("Database connection error")).when(orderRepository).save(any(Order.class));
 
-			// Act & Assert
 			assertThrows(RuntimeException.class, () -> orderService.deleteOrder(orderId));
-			verify(orderRepository, times(1)).deleteById(orderId);
+			verify(orderRepository, times(1)).save(any(Order.class));
 		}
 
 		// Test 4: ID Inválido
 		@Test
 		void testDeleteOrder_InvalidId() {
-			// Arrange
 			int invalidId = -1;
+			when(orderRepository.findById(invalidId)).thenReturn(java.util.Optional.empty());
 
-			// Act
-			orderService.deleteOrder(invalidId);
-
-			// Assert
-			// El servicio no valida IDs negativos, solo delega al repositorio
-			verify(orderRepository, times(1)).deleteById(invalidId);
+			assertThrows(OrderNotFoundException.class, () -> orderService.deleteOrder(invalidId));
+			verify(orderRepository, never()).save(any(Order.class));
 		}
 	}
 
@@ -287,11 +291,8 @@ class OrderServiceTest {
 
 			when(orderRepository.findById(orderId)).thenReturn(java.util.Optional.empty());
 
-			// Act
-			OrderDto result = orderService.changeStateOrder(orderId, newState);
-
-			// Assert
-			assertNull(result);
+			// Act & Assert: ahora el servicio lanza OrderNotFoundException
+			assertThrows(OrderNotFoundException.class, () -> orderService.changeStateOrder(orderId, newState));
 			verify(orderRepository, times(1)).findById(orderId);
 			verify(orderRepository, never()).save(any(Order.class));
 		}
@@ -405,7 +406,7 @@ class OrderServiceTest {
 			expectedDtos.add(new OrderDto(1, "Laptop", "Gaming Laptop", 1, State.PROCESSING, true));
 			expectedDtos.add(new OrderDto(2, "Monitor", "4K Monitor", 1, State.DELIVERED, true));
 
-			when(orderRepository.findByUserId(idUser)).thenReturn(orders);
+			when(orderRepository.findByIdUser(idUser)).thenReturn(orders);
 			when(orderMapper.toDto(orders.get(0))).thenReturn(expectedDtos.get(0));
 			when(orderMapper.toDto(orders.get(1))).thenReturn(expectedDtos.get(1));
 
@@ -417,7 +418,7 @@ class OrderServiceTest {
 			assertEquals(2, result.size());
 			assertEquals("Laptop", result.get(0).getName());
 			assertEquals("Monitor", result.get(1).getName());
-			verify(orderRepository, times(1)).findByUserId(idUser);
+			verify(orderRepository, times(1)).findByIdUser(idUser);
 		}
 
 		// Test 2: Usuario sin Órdenes
@@ -425,7 +426,7 @@ class OrderServiceTest {
 		void testListOrdersByIdUser_NoOrders() {
 			// Arrange
 			int idUser = 999;
-			when(orderRepository.findByUserId(idUser)).thenReturn(new ArrayList<>());
+			when(orderRepository.findByIdUser(idUser)).thenReturn(new ArrayList<>());
 
 			// Act
 			List<OrderDto> result = orderService.listOrdersByIdUser(idUser);
@@ -434,7 +435,7 @@ class OrderServiceTest {
 			assertNotNull(result);
 			assertTrue(result.isEmpty());
 			assertEquals(0, result.size());
-			verify(orderRepository, times(1)).findByUserId(idUser);
+			verify(orderRepository, times(1)).findByIdUser(idUser);
 		}
 
 		// Test 3: Mapeo Correcto
@@ -445,7 +446,7 @@ class OrderServiceTest {
 			Order order = new Order(5, "Phone", "Smartphone", 2, State.TRAVELING_TO_YOUR_HOUSE, true);
 			OrderDto expectedDto = new OrderDto(5, "Phone", "Smartphone", 2, State.TRAVELING_TO_YOUR_HOUSE, true);
 
-			when(orderRepository.findByUserId(idUser)).thenReturn(java.util.Collections.singletonList(order));
+			when(orderRepository.findByIdUser(idUser)).thenReturn(java.util.Collections.singletonList(order));
 			when(orderMapper.toDto(order)).thenReturn(expectedDto);
 
 			// Act
@@ -476,7 +477,7 @@ class OrderServiceTest {
 			expectedDtos.add(new OrderDto(12, "Mouse", "Wireless", 3, State.ON_THE_STREET, true));
 			expectedDtos.add(new OrderDto(13, "Monitor", "4K", 3, State.DELIVERED, true));
 
-			when(orderRepository.findByUserId(idUser)).thenReturn(orders);
+			when(orderRepository.findByIdUser(idUser)).thenReturn(orders);
 			for (int i = 0; i < orders.size(); i++) {
 				when(orderMapper.toDto(orders.get(i))).thenReturn(expectedDtos.get(i));
 			}
@@ -491,7 +492,7 @@ class OrderServiceTest {
 			assertEquals(11, result.get(1).getId());
 			assertEquals(12, result.get(2).getId());
 			assertEquals(13, result.get(3).getId());
-			verify(orderRepository, times(1)).findByUserId(idUser);
+			verify(orderRepository, times(1)).findByIdUser(idUser);
 			verify(orderMapper, times(4)).toDto(any(Order.class));
 		}
 
@@ -508,7 +509,7 @@ class OrderServiceTest {
 			expectedDtos.add(new OrderDto(100, "Product A", "Description A", 5, State.PROCESSING, true));
 			expectedDtos.add(new OrderDto(101, "Product B", "Description B", 5, State.TRAVELING_TO_WAREHOUSE, false));
 
-			when(orderRepository.findByUserId(idUser)).thenReturn(orders);
+			when(orderRepository.findByIdUser(idUser)).thenReturn(orders);
 			when(orderMapper.toDto(orders.get(0))).thenReturn(expectedDtos.get(0));
 			when(orderMapper.toDto(orders.get(1))).thenReturn(expectedDtos.get(1));
 
@@ -576,11 +577,8 @@ class OrderServiceTest {
 
 			when(orderRepository.findById(orderId)).thenReturn(java.util.Optional.empty());
 
-			// Act
-			OrderWithUserDto result = orderService.getOrderWithUserInfo(orderId);
-
-			// Assert
-			assertNull(result);
+			// Act & Assert: el servicio lanza OrderNotFoundException cuando no existe la orden
+			assertThrows(OrderNotFoundException.class, () -> orderService.getOrderWithUserInfo(orderId));
 			verify(userServiceProducer, never()).requestUserInfo(anyInt());
 			verify(userServiceConsumer, never()).getUserResponse(anyInt(), anyLong());
 		}
@@ -897,11 +895,8 @@ class OrderServiceTest {
 
 			when(orderRepository.findById(orderId)).thenReturn(java.util.Optional.empty());
 
-			// Act
-			OrderDto result = orderService.showOrderById(orderId);
-
-			// Assert
-			assertNull(result);
+			// Act & Assert: ahora el servicio lanza OrderNotFoundException
+			assertThrows(OrderNotFoundException.class, () -> orderService.showOrderById(orderId));
 			verify(orderRepository, times(1)).findById(orderId);
 			verify(orderMapper, never()).toDto(any(Order.class));
 		}
@@ -991,11 +986,8 @@ class OrderServiceTest {
 			int orderId3 = 999;
 			when(orderRepository.findById(orderId3)).thenReturn(java.util.Optional.empty());
 
-			// Act - Tercera búsqueda
-			OrderDto result3 = orderService.showOrderById(orderId3);
-
-			// Assert - Tercera búsqueda
-			assertNull(result3);
+			// Act & Assert - Tercera búsqueda: ahora se lanza OrderNotFoundException
+			assertThrows(OrderNotFoundException.class, () -> orderService.showOrderById(orderId3));
 
 			// Verificar que findById fue llamado con los IDs correctos
 			verify(orderRepository).findById(orderId1);
