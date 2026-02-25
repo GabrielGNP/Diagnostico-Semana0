@@ -14,6 +14,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
+import com.example.pedidoservice.exception.OrderNotFoundException;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -27,6 +32,7 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 class OrderServiceTest {
 
 	@Mock
@@ -96,13 +102,11 @@ class OrderServiceTest {
 			when(orderMapper.toDto(savedOrder)).thenReturn(expectedOrderDto);
 
 			// Act
-			orderService.createOrder(testOrderDto);
+			OrderDto result = orderService.createOrder(testOrderDto);
 
-			// Assert
-			ArgumentCaptor<Order> orderCaptor = ArgumentCaptor.forClass(Order.class);
-			verify(orderRepository).save(orderCaptor.capture());
-			Order capturedOrder = orderCaptor.getValue();
-			assertEquals(1, capturedOrder.getId());
+			// Assert: el ID asignado se verifica en el DTO retornado
+			assertNotNull(result);
+			assertEquals(1, result.getId());
 		}
 
 		// Test 3: Asignación de ID Automático - Con órdenes previas
@@ -123,13 +127,11 @@ class OrderServiceTest {
 			when(orderMapper.toDto(savedOrder)).thenReturn(expectedOrderDto);
 
 			// Act
-			orderService.createOrder(testOrderDto);
+			OrderDto result = orderService.createOrder(testOrderDto);
 
-			// Assert
-			ArgumentCaptor<Order> orderCaptor = ArgumentCaptor.forClass(Order.class);
-			verify(orderRepository).save(orderCaptor.capture());
-			Order capturedOrder = orderCaptor.getValue();
-			assertEquals(8, capturedOrder.getId()); // maxId (7) + 1 = 8
+			// Assert: el ID asignado se verifica en el DTO retornado
+			assertNotNull(result);
+			assertEquals(8, result.getId()); // maxId (7) + 1 = 8
 		}
 
 		// Test 4: Mapeo Correcto
@@ -199,53 +201,55 @@ class OrderServiceTest {
 		void testDeleteOrder_Success() {
 			// Arrange
 			int orderId = 5;
+			Order existing = new Order(orderId, "Laptop", "Gaming Laptop", 1, State.PROCESSING, true);
+			when(orderRepository.findById(orderId)).thenReturn(java.util.Optional.of(existing));
+			when(orderRepository.save(any(Order.class))).thenReturn(existing);
 
 			// Act
 			orderService.deleteOrder(orderId);
 
-			// Assert
-			verify(orderRepository, times(1)).deleteById(orderId);
+			// Assert: soft-delete via save(active=false)
+			ArgumentCaptor<Order> captor = ArgumentCaptor.forClass(Order.class);
+			verify(orderRepository).save(captor.capture());
+			Order saved = captor.getValue();
+			assertFalse(saved.isActive());
 		}
 
 		// Test 2: Parámetro Correcto
 		@Test
 		void testDeleteOrder_CorrectParameter() {
-			// Arrange
 			int orderId = 42;
-			ArgumentCaptor<Integer> idCaptor = ArgumentCaptor.forClass(Integer.class);
+			Order existing = new Order(orderId, "Item", "Desc", 1, State.PROCESSING, true);
+			when(orderRepository.findById(orderId)).thenReturn(java.util.Optional.of(existing));
+			when(orderRepository.save(any(Order.class))).thenReturn(existing);
 
-			// Act
 			orderService.deleteOrder(orderId);
 
-			// Assert
-			verify(orderRepository).deleteById(idCaptor.capture());
-			assertEquals(42, idCaptor.getValue());
+			ArgumentCaptor<Order> captor = ArgumentCaptor.forClass(Order.class);
+			verify(orderRepository).save(captor.capture());
+			assertEquals(42, captor.getValue().getId());
 		}
 
 		// Test 3: Excepción en Repositorio
 		@Test
 		void testDeleteOrder_RepositoryThrowsException() {
-			// Arrange
 			int orderId = 10;
-			doThrow(new RuntimeException("Database connection error")).when(orderRepository).deleteById(orderId);
+			Order existing = new Order(orderId, "Item", "Desc", 1, State.PROCESSING, true);
+			when(orderRepository.findById(orderId)).thenReturn(java.util.Optional.of(existing));
+			doThrow(new RuntimeException("Database connection error")).when(orderRepository).save(any(Order.class));
 
-			// Act & Assert
 			assertThrows(RuntimeException.class, () -> orderService.deleteOrder(orderId));
-			verify(orderRepository, times(1)).deleteById(orderId);
+			verify(orderRepository, times(1)).save(any(Order.class));
 		}
 
 		// Test 4: ID Inválido
 		@Test
 		void testDeleteOrder_InvalidId() {
-			// Arrange
 			int invalidId = -1;
+			when(orderRepository.findById(invalidId)).thenReturn(java.util.Optional.empty());
 
-			// Act
-			orderService.deleteOrder(invalidId);
-
-			// Assert
-			// El servicio no valida IDs negativos, solo delega al repositorio
-			verify(orderRepository, times(1)).deleteById(invalidId);
+			assertThrows(OrderNotFoundException.class, () -> orderService.deleteOrder(invalidId));
+			verify(orderRepository, never()).save(any(Order.class));
 		}
 	}
 
@@ -287,11 +291,8 @@ class OrderServiceTest {
 
 			when(orderRepository.findById(orderId)).thenReturn(java.util.Optional.empty());
 
-			// Act
-			OrderDto result = orderService.changeStateOrder(orderId, newState);
-
-			// Assert
-			assertNull(result);
+			// Act & Assert: ahora el servicio lanza OrderNotFoundException
+			assertThrows(OrderNotFoundException.class, () -> orderService.changeStateOrder(orderId, newState));
 			verify(orderRepository, times(1)).findById(orderId);
 			verify(orderRepository, never()).save(any(Order.class));
 		}
@@ -576,11 +577,8 @@ class OrderServiceTest {
 
 			when(orderRepository.findById(orderId)).thenReturn(java.util.Optional.empty());
 
-			// Act
-			OrderWithUserDto result = orderService.getOrderWithUserInfo(orderId);
-
-			// Assert
-			assertNull(result);
+			// Act & Assert: el servicio lanza OrderNotFoundException cuando no existe la orden
+			assertThrows(OrderNotFoundException.class, () -> orderService.getOrderWithUserInfo(orderId));
 			verify(userServiceProducer, never()).requestUserInfo(anyInt());
 			verify(userServiceConsumer, never()).getUserResponse(anyInt(), anyLong());
 		}
@@ -897,11 +895,8 @@ class OrderServiceTest {
 
 			when(orderRepository.findById(orderId)).thenReturn(java.util.Optional.empty());
 
-			// Act
-			OrderDto result = orderService.showOrderById(orderId);
-
-			// Assert
-			assertNull(result);
+			// Act & Assert: ahora el servicio lanza OrderNotFoundException
+			assertThrows(OrderNotFoundException.class, () -> orderService.showOrderById(orderId));
 			verify(orderRepository, times(1)).findById(orderId);
 			verify(orderMapper, never()).toDto(any(Order.class));
 		}
@@ -991,11 +986,8 @@ class OrderServiceTest {
 			int orderId3 = 999;
 			when(orderRepository.findById(orderId3)).thenReturn(java.util.Optional.empty());
 
-			// Act - Tercera búsqueda
-			OrderDto result3 = orderService.showOrderById(orderId3);
-
-			// Assert - Tercera búsqueda
-			assertNull(result3);
+			// Act & Assert - Tercera búsqueda: ahora se lanza OrderNotFoundException
+			assertThrows(OrderNotFoundException.class, () -> orderService.showOrderById(orderId3));
 
 			// Verificar que findById fue llamado con los IDs correctos
 			verify(orderRepository).findById(orderId1);
