@@ -59,7 +59,7 @@ class ComponentIntegrationTests {
 
         // Assert
         assertNotNull(response, "Response should not be null");
-        assertEquals(200, response.getStatusCode().value(), "Status code should be 200");
+        assertEquals(201, response.getStatusCode().value(), "Status code should be 201");
         Object respBody = response.getBody();
         assertNotNull(respBody, "Response body should not be null");
         assertInstanceOf(OrderDto.class, respBody, "Response body should be an OrderDto");
@@ -86,14 +86,17 @@ class ComponentIntegrationTests {
         int orderId = ((OrderDto) createBody).getId();
 
         // Act
-        ResponseEntity<OrderDto> getResponse = orderController.showOrderById(orderId);
+        ResponseEntity<?> getResponse = orderController.showOrderById(orderId, null);
 
         // Assert
         assertNotNull(getResponse, "Get response should not be null");
         assertEquals(200, getResponse.getStatusCode().value(), "Status code should be 200");
-        assertNotNull(getResponse.getBody(), "Get response body should not be null");
-        assertEquals(orderId, getResponse.getBody().getId(), "Order ID should match");
-        assertEquals("Order for Retrieval", getResponse.getBody().getName(), "Order name should match");
+        Object getBody = getResponse.getBody();
+        assertNotNull(getBody, "Get response body should not be null");
+        assertInstanceOf(OrderDto.class, getBody, "Get response body should be an OrderDto");
+        OrderDto fetchedDto = (OrderDto) getBody;
+        assertEquals(orderId, fetchedDto.getId(), "Order ID should match");
+        assertEquals("Order for Retrieval", fetchedDto.getName(), "Order name should match");
     }
 
     @Test
@@ -113,7 +116,7 @@ class ComponentIntegrationTests {
 
         // Act
         ResponseEntity<?> deleteResponse = orderController.deleteOrder(orderId);
-        ResponseEntity<OrderDto> getResponse = orderController.showOrderById(orderId);
+        ResponseEntity<?> getResponse = orderController.showOrderById(orderId, null);
 
         // Assert
         assertNotNull(deleteResponse, "Delete response should not be null");
@@ -192,9 +195,9 @@ class ComponentIntegrationTests {
 
     @Test
     @DisplayName("Integration: Non-existent Order Retrieval")
-    public void testNonExistentOrderRetrieval() {
+    public void     testNonExistentOrderRetrieval() {
         // Act
-        ResponseEntity<OrderDto> response = orderController.showOrderById(99999);
+        ResponseEntity<?> response = orderController.showOrderById(99999, null);
 
         // Assert
         assertNotNull(response, "Response should not be null");
