@@ -2,12 +2,19 @@ package com.example.pedidoservice.dto;
 
 import com.example.pedidoservice.model.State;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 public class OrderDto {
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private Integer id;
+    @NotBlank(message = "El campo 'name' es requerido")
     private String name;
+    @NotNull(message = "El campo 'description' es requerido")
     private String description;
+    @NotNull(message = "El campo 'idUser' es requerido")
+    @Min(value = 1, message = "El campo 'idUser' debe ser un valor positivo válido (mayor que cero)")
     private Integer idUser;
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private State state;

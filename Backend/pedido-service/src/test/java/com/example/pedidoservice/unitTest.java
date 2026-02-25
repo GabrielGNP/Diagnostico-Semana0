@@ -8,7 +8,7 @@ import com.example.pedidoservice.messaging.UserServiceConsumer;
 import com.example.pedidoservice.messaging.UserServiceProducer;
 import com.example.pedidoservice.model.Order;
 import com.example.pedidoservice.model.State;
-import com.example.pedidoservice.repository.OrderRepository;
+import com.example.pedidoservice.repository.OrderJpaRepository;
 import com.example.pedidoservice.service.OrderService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -30,7 +30,7 @@ import static org.mockito.Mockito.*;
 class OrderServiceTest {
 
 	@Mock
-	private OrderRepository orderRepository;
+	private OrderJpaRepository orderRepository;
 
 	@Mock
 	private OrderMapper orderMapper;
@@ -405,7 +405,7 @@ class OrderServiceTest {
 			expectedDtos.add(new OrderDto(1, "Laptop", "Gaming Laptop", 1, State.PROCESSING, true));
 			expectedDtos.add(new OrderDto(2, "Monitor", "4K Monitor", 1, State.DELIVERED, true));
 
-			when(orderRepository.findByUserId(idUser)).thenReturn(orders);
+			when(orderRepository.findByIdUser(idUser)).thenReturn(orders);
 			when(orderMapper.toDto(orders.get(0))).thenReturn(expectedDtos.get(0));
 			when(orderMapper.toDto(orders.get(1))).thenReturn(expectedDtos.get(1));
 
@@ -417,7 +417,7 @@ class OrderServiceTest {
 			assertEquals(2, result.size());
 			assertEquals("Laptop", result.get(0).getName());
 			assertEquals("Monitor", result.get(1).getName());
-			verify(orderRepository, times(1)).findByUserId(idUser);
+			verify(orderRepository, times(1)).findByIdUser(idUser);
 		}
 
 		// Test 2: Usuario sin Órdenes
@@ -425,7 +425,7 @@ class OrderServiceTest {
 		void testListOrdersByIdUser_NoOrders() {
 			// Arrange
 			int idUser = 999;
-			when(orderRepository.findByUserId(idUser)).thenReturn(new ArrayList<>());
+			when(orderRepository.findByIdUser(idUser)).thenReturn(new ArrayList<>());
 
 			// Act
 			List<OrderDto> result = orderService.listOrdersByIdUser(idUser);
@@ -434,7 +434,7 @@ class OrderServiceTest {
 			assertNotNull(result);
 			assertTrue(result.isEmpty());
 			assertEquals(0, result.size());
-			verify(orderRepository, times(1)).findByUserId(idUser);
+			verify(orderRepository, times(1)).findByIdUser(idUser);
 		}
 
 		// Test 3: Mapeo Correcto
@@ -445,7 +445,7 @@ class OrderServiceTest {
 			Order order = new Order(5, "Phone", "Smartphone", 2, State.TRAVELING_TO_YOUR_HOUSE, true);
 			OrderDto expectedDto = new OrderDto(5, "Phone", "Smartphone", 2, State.TRAVELING_TO_YOUR_HOUSE, true);
 
-			when(orderRepository.findByUserId(idUser)).thenReturn(java.util.Collections.singletonList(order));
+			when(orderRepository.findByIdUser(idUser)).thenReturn(java.util.Collections.singletonList(order));
 			when(orderMapper.toDto(order)).thenReturn(expectedDto);
 
 			// Act
@@ -476,7 +476,7 @@ class OrderServiceTest {
 			expectedDtos.add(new OrderDto(12, "Mouse", "Wireless", 3, State.ON_THE_STREET, true));
 			expectedDtos.add(new OrderDto(13, "Monitor", "4K", 3, State.DELIVERED, true));
 
-			when(orderRepository.findByUserId(idUser)).thenReturn(orders);
+			when(orderRepository.findByIdUser(idUser)).thenReturn(orders);
 			for (int i = 0; i < orders.size(); i++) {
 				when(orderMapper.toDto(orders.get(i))).thenReturn(expectedDtos.get(i));
 			}
@@ -491,7 +491,7 @@ class OrderServiceTest {
 			assertEquals(11, result.get(1).getId());
 			assertEquals(12, result.get(2).getId());
 			assertEquals(13, result.get(3).getId());
-			verify(orderRepository, times(1)).findByUserId(idUser);
+			verify(orderRepository, times(1)).findByIdUser(idUser);
 			verify(orderMapper, times(4)).toDto(any(Order.class));
 		}
 
@@ -508,7 +508,7 @@ class OrderServiceTest {
 			expectedDtos.add(new OrderDto(100, "Product A", "Description A", 5, State.PROCESSING, true));
 			expectedDtos.add(new OrderDto(101, "Product B", "Description B", 5, State.TRAVELING_TO_WAREHOUSE, false));
 
-			when(orderRepository.findByUserId(idUser)).thenReturn(orders);
+			when(orderRepository.findByIdUser(idUser)).thenReturn(orders);
 			when(orderMapper.toDto(orders.get(0))).thenReturn(expectedDtos.get(0));
 			when(orderMapper.toDto(orders.get(1))).thenReturn(expectedDtos.get(1));
 

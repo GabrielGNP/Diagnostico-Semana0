@@ -13,6 +13,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Disabled;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.http.ResponseEntity;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -22,7 +23,15 @@ import static org.junit.jupiter.api.Assertions.*;
  * Verifica la integración entre Controller, Service, Repository y Mapper.
  * Prueba flujos de negocio completos del sistema de órdenes.
  */
-@SpringBootTest
+@SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT,
+    properties = {
+        "spring.datasource.url=jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1",
+        "spring.datasource.driver-class-name=org.h2.Driver",
+        "spring.jpa.hibernate.ddl-auto=create-drop",
+        "pedido.migration.enabled=false",
+        "spring.autoconfigure.exclude=org.springframework.boot.autoconfigure.amqp.RabbitAutoConfiguration"
+    }
+)
 @DisplayName("Component Integration Tests - Order Service")
 @Disabled("Pruebas de integración antiguas deshabilitadas temporalmente")
 class ComponentIntegrationTests {

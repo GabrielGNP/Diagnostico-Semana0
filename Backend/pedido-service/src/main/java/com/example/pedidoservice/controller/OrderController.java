@@ -2,6 +2,8 @@ package com.example.pedidoservice.controller;
 
 import com.example.pedidoservice.dto.OrderDto;
 import com.example.pedidoservice.dto.OrderWithUserDto;
+import com.example.pedidoservice.dto.OrderStateUpdateDto;
+import jakarta.validation.Valid;
 import com.example.pedidoservice.model.State;
 import com.example.pedidoservice.service.OrderService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,16 +47,12 @@ public class OrderController {
         * @return Created order DTO or error message
      */
     @PostMapping
-    public ResponseEntity<?> createOrder(@RequestBody OrderDto orderDto) {
-        try {
-            OrderDto createdOrder = orderService.createOrder(orderDto);
-            if (createdOrder != null && createdOrder.getId() != null) {
-                return ResponseEntity.created(java.net.URI.create("/orders/" + createdOrder.getId())).body(createdOrder);
-            } else {
-                return ResponseEntity.status(201).body(createdOrder);
-            }
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+    public ResponseEntity<OrderDto> createOrder(@Valid @RequestBody OrderDto orderDto) {
+        OrderDto createdOrder = orderService.createOrder(orderDto);
+        if (createdOrder != null && createdOrder.getId() != null) {
+            return ResponseEntity.created(java.net.URI.create("/orders/" + createdOrder.getId())).body(createdOrder);
+        } else {
+            return ResponseEntity.status(201).body(createdOrder);
         }
     }
 
@@ -64,19 +62,15 @@ public class OrderController {
         * Endpoint: DELETE /orders/{id}
         * <p>
         * Performs a soft delete by setting `active=false`. On success returns
-        * HTTP 200 OK. If the order does not exist returns HTTP 404 Not Found.
+        * HTTP 204 No Content. If the order does not exist returns HTTP 404 Not Found.
         *
         * @param id Order ID
-        * @return 200 OK or 404 Not Found
+        * @return 204 No Content or 404 Not Found
      */
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteOrder(@PathVariable("id") Integer id) {
-        try {
-            orderService.deleteOrder(id);
-            return ResponseEntity.ok().build();
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.notFound().build();
-        }
+    public ResponseEntity<Void> deleteOrder(@PathVariable("id") Integer id) {
+        orderService.deleteOrder(id);
+        return ResponseEntity.noContent().build();
     }
 
     /**
@@ -93,25 +87,13 @@ public class OrderController {
      * @return Order DTO (enriched if `expand=user`) or 404 Not Found
      */
     @GetMapping("/{id}")
-    public ResponseEntity<?> showOrderById(@PathVariable("id") Integer id, @RequestParam(value = "expand", required = false) String expand) {
+    public ResponseEntity<Object> showOrderById(@PathVariable("id") Integer id, @RequestParam(value = "expand", required = false) String expand) {
         if ("user".equals(expand)) {
-            try {
-                OrderWithUserDto order = orderService.getOrderWithUserInfo(id);
-                if (order != null) {
-                    return ResponseEntity.ok(order);
-                } else {
-                    return ResponseEntity.notFound().build();
-                }
-            } catch (Exception e) {
-                return ResponseEntity.status(500).build();
-            }
+            OrderWithUserDto order = orderService.getOrderWithUserInfo(id);
+            return ResponseEntity.ok(order);
         } else {
             OrderDto orderDto = orderService.showOrderById(id);
-            if (orderDto != null) {
-                return ResponseEntity.ok(orderDto);
-            } else {
-                return ResponseEntity.notFound().build();
-            }
+            return ResponseEntity.ok(orderDto);
         }
     }
 
@@ -144,26 +126,20 @@ public class OrderController {
      *
      * Endpoint: PATCH /orders/{id}
      * <p>
-     * Expects an `OrderDto` in the request body where the `state` field is set
-     * to the desired new value. Returns the updated `OrderDto` on success
-     * (HTTP 200). If `state` is missing returns HTTP 400. If the order does
-     * not exist returns HTTP 404.
+     * Expects an `OrderStateUpdateDto` in the request body containing the
+     * `state` to set. Returns the updated `OrderDto` on success (HTTP 200).
+     * Validation errors return HTTP 400. If the order does not exist returns
+     * HTTP 404.
      *
      * @param id       Order ID
-     * @param orderDto DTO containing new state
+     * @param orderStateUpdateDto DTO containing new state
      * @return Updated order or 404/400
      */
     @PatchMapping("/{id}")
-    public ResponseEntity<?> changeStateOrder(@PathVariable("id") Integer id, @RequestBody OrderDto orderDto) {
-        State newState = orderDto.getState();
-        if (newState == null) {
-            return ResponseEntity.badRequest().body("El campo 'state' es requerido");
-        }
-        try {
-            OrderDto updatedOrder = orderService.changeStateOrder(id, newState);
-            return ResponseEntity.ok(updatedOrder);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.notFound().build();
-        }
+    public ResponseEntity<OrderDto> changeStateOrder(@PathVariable("id") Integer id, @Valid @RequestBody OrderStateUpdateDto orderStateUpdateDto) {
+        State newState = orderStateUpdateDto.getState();
+        OrderDto updatedOrder = orderService.changeStateOrder(id, newState);
+        return ResponseEntity.ok(updatedOrder);
     }
+
 }
