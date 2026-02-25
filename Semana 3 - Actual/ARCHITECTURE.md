@@ -966,7 +966,7 @@ pedido-service/
 *Fuentes: HANDOVER_REPORT.md, API_AUDIT_REPORT.md, análisis de código fuente*  
 *Última actualización: 24 de Febrero, 2026*
 
-## 11 Justificación de dejar el módelo de MVC vs Clean Architecrture
+## 11 Justificación de dejar el módelo de MVC vs migrar a Clean Architecture
 
 ### 11.1. Postura a favor de conservar el esquema MVC
 
@@ -974,7 +974,22 @@ Teniendo en cuenta que el proyecto en su estado actual tiene una arquitectura de
 
 Esto también es procedente en virtud de poder asegurar entregas eficientes y oportunas
 
-### 11.2. Postura en contra de conservar el esquema MVC
+### 11.2. Postura en contra de conservar el esquema MVC y migrar a Clean Architecture 
+
+#### Argumento a favor de usar Clean Architecture
+
+Clean Architecture aporta una separación clara entre dominio, casos de uso e infraestructura, lo que reduce el acoplamiento y facilita pruebas unitarias rápidas y confiables. Al aislar la lógica de negocio de frameworks (Spring, JPA, RabbitMQ), los cambios tecnológicos —por ejemplo cambiar la base de datos o el sistema de mensajería— se limitan a adaptadores sin afectar el núcleo de la aplicación. Esto hace más seguras las refactorizaciones, acelera el feedback de testing y disminuye el coste de mantenimiento a largo plazo, especialmente cuando el sistema crece o varios equipos trabajan simultáneamente.
+
+Además, Clean Architecture facilita la creación de dominios ricos (con comportamiento en lugar de entidades anémicas), promueve la inversión de dependencias mediante puertos (interfaces) y mejora la testabilidad y la resiliencia del sistema.
+#### Conclusión operativa
+
+No obstante, dado el alcance actual del proyecto y que hoy sólo existen dos microservicios, la recomendación práctica es mantener el esquema MVC por ahora y centrar los esfuerzos en las correcciones críticas ya identificadas (seguridad, logging, resiliencia, y consistencia de API). No se realizarán refactors masivos hacia Clean Architecture a menos que se cumpla alguna de las siguientes condiciones:
+
+- Se añada un tercer microservicio que aumente la complejidad y el acoplamiento entre servicios, justificando la inversión en una arquitectura por capas más estricta.
+- El cliente solicite explícitamente la migración a Clean Architecture como requisito del proyecto.
+
+Mientras tanto, se sugiere introducir mejoras incrementales y de bajo riesgo que preparen el camino para una futura migración, sin bloquear entregas ni aumentar el riesgo de despliegue.
+
 
 ---
 
