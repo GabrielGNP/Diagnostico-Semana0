@@ -1,4 +1,4 @@
-package com.example.usuarioservice.service;
+package com.example.usuarioservice.persistence;
 
 import java.io.File;
 import java.io.IOException;

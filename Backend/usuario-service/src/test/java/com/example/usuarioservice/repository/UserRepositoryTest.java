@@ -1,7 +1,7 @@
 package com.example.usuarioservice.repository;
 
 import com.example.usuarioservice.model.User;
-import com.example.usuarioservice.service.UserRepository;
+import com.example.usuarioservice.persistence.UserRepository;
 import org.junit.jupiter.api.*;
 import java.util.*;
 import java.io.*;

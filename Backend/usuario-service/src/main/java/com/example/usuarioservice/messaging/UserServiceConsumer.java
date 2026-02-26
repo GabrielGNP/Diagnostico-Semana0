@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component;
 
 import com.example.usuarioservice.config.RabbitMQConfig;
 import com.example.usuarioservice.model.User;
-import com.example.usuarioservice.service.UserRepository;
+import com.example.usuarioservice.persistence.UserRepository;
 
 @Component
 public class UserServiceConsumer {
