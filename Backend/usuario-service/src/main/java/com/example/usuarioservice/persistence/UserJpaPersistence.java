@@ -14,12 +14,6 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-/**
- * JPA implementation of IUserPersistence.
- * Uses PostgreSQL via Spring Data JPA.
- * 
- * @Primary annotation ensures this is used instead of the JSON file-based repository.
- */
 @Repository
 @Primary
 @RequiredArgsConstructor

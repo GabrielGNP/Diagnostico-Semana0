@@ -13,6 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.Collection;
+import java.util.List;
 import java.util.stream.Collectors;
 
 /**
@@ -38,11 +39,8 @@ public class UsuarioController {
     public ResponseEntity<Collection<UsuarioResponse>> obtenerTodos() {
         log.info("GET {} - Obteniendo todos los usuarios", API_PATH);
         
-        Collection<UsuarioResponse> usuarios = usuarioService.obtenerTodos()
-            .stream()
-            .map(UsuarioResponse::from)
-            .collect(Collectors.toList());
-        
+        List<UsuarioResponse> usuarios = mapToResponses(usuarioService.obtenerTodos());
+
         return ResponseEntity.ok(usuarios);
     }
     
@@ -56,7 +54,8 @@ public class UsuarioController {
         log.info("GET {}/{} - Obteniendo usuario", API_PATH, identificador);
         
         return usuarioService.obtenerPorIdentificador(identificador)
-            .map(u -> ResponseEntity.ok(UsuarioResponse.from(u)))
+            .map(this::mapToResponse)
+            .map(ResponseEntity::ok)
             .orElseThrow(() -> new UsuarioNotFoundException(
                 "Usuario no encontrado: " + identificador
             ));
@@ -75,7 +74,7 @@ public class UsuarioController {
         
         return ResponseEntity
             .status(HttpStatus.CREATED)
-            .body(UsuarioResponse.from(usuario));
+            .body(mapToResponse(usuario));
     }
     
     /**
@@ -89,7 +88,8 @@ public class UsuarioController {
         log.info("PUT {}/{} - Actualizando usuario", API_PATH, id);
         
         return usuarioService.actualizar(id, request)
-            .map(u -> ResponseEntity.ok(UsuarioResponse.from(u)))
+            .map(this::mapToResponse)
+            .map(ResponseEntity::ok)
             .orElseThrow(() -> new UsuarioNotFoundException("Usuario no encontrado: " + id));
     }
     
@@ -104,7 +104,8 @@ public class UsuarioController {
         log.info("PATCH {}/{} - Actualizando parcialmente usuario", API_PATH, id);
         
         return usuarioService.actualizarParcial(id, request)
-            .map(u -> ResponseEntity.ok(UsuarioResponse.from(u)))
+            .map(this::mapToResponse)
+            .map(ResponseEntity::ok)
             .orElseThrow(() -> new UsuarioNotFoundException("Usuario no encontrado: " + id));
     }
     
@@ -121,5 +122,29 @@ public class UsuarioController {
         }
         
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * Convierte una colección de usuarios a una lista de responses.
+     * Método privado para facilitar testing indirecto.
+     *
+     * @param users Colección de usuarios del dominio
+     * @return Lista de UsuarioResponse
+     */
+    private List<UsuarioResponse> mapToResponses(Collection<User> users) {
+        return users.stream()
+            .map(UsuarioResponse::from)
+            .collect(Collectors.toList());
+    }
+
+    /**
+     * Convierte un usuario del dominio a DTO de respuesta.
+     * Método privado para facilitar testing indirecto.
+     *
+     * @param user Usuario del dominio
+     * @return UsuarioResponse
+     */
+    private UsuarioResponse mapToResponse(User user) {
+        return UsuarioResponse.from(user);
     }
 }
