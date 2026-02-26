@@ -4,7 +4,7 @@ import com.example.pedidoservice.dto.OrderDto;
 import com.example.pedidoservice.dto.OrderWithUserDto;
 import com.example.pedidoservice.mapper.OrderMapper;
 import com.example.pedidoservice.messaging.UserResponse;
-import com.example.pedidoservice.messaging.IUserInfoClient;
+import com.example.pedidoservice.service.UserEnrichmentService;
 import com.example.pedidoservice.model.Order;
 import com.example.pedidoservice.model.State;
 import com.example.pedidoservice.repository.OrderJpaRepository;
@@ -41,17 +41,14 @@ public class OrderService {
     private OrderMapper orderMapper;
 
 
-    private final IUserInfoClient userInfoClient;
-
-    @Value("${user.service.timeout:3000}")
-    private long userRequestTimeout; // configurable timeout for user service requests
+    private final UserEnrichmentService userEnrichmentService;
 
     @Autowired
     public OrderService(OrderJpaRepository orderJpaRepository, OrderMapper orderMapper,
-                        IUserInfoClient userInfoClient) {
+                        UserEnrichmentService userEnrichmentService) {
         this.orderJpaRepository = orderJpaRepository;
         this.orderMapper = orderMapper;
-        this.userInfoClient = userInfoClient;
+        this.userEnrichmentService = userEnrichmentService;
     }
 
     private Order findOrderByIdOrThrow(Integer id) {
@@ -155,10 +152,10 @@ public class OrderService {
         Integer idUser = orderDto.getIdUser();
         UserResponse userResponse = null;
         try {
-            userResponse = userInfoClient.fetchUserInfo(idUser, userRequestTimeout);
+            userResponse = userEnrichmentService.fetchUserInfo(idUser);
         } catch (Exception ex) {
-            // Log and continue — return order with null user if messaging fails
-            log.warn("Error requesting/receiving user info for userId={}", idUser, ex);
+            // Log and continue — return order with null user if enrichment fails
+            log.warn("Error fetching user info for userId={}", idUser, ex);
         }
 
         // Map to OrderWithUserDto including user information

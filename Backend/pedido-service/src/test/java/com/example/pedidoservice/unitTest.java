@@ -4,7 +4,7 @@ import com.example.pedidoservice.dto.OrderDto;
 import com.example.pedidoservice.dto.OrderWithUserDto;
 import com.example.pedidoservice.mapper.OrderMapper;
 import com.example.pedidoservice.messaging.UserResponse;
-import com.example.pedidoservice.messaging.IUserInfoClient;
+import com.example.pedidoservice.service.UserEnrichmentService;
 import com.example.pedidoservice.model.Order;
 import com.example.pedidoservice.model.State;
 import com.example.pedidoservice.repository.OrderJpaRepository;
@@ -41,7 +41,7 @@ class OrderServiceTest {
 	private OrderMapper orderMapper;
 
 	@Mock
-	private IUserInfoClient userInfoClient;
+	private UserEnrichmentService userEnrichmentService;
 
 	@InjectMocks
 	private OrderService orderService;
@@ -549,7 +549,7 @@ class OrderServiceTest {
 
 			when(orderRepository.findById(orderId)).thenReturn(java.util.Optional.of(order));
 			when(orderMapper.toDto(order)).thenReturn(orderDto);
-			when(userInfoClient.fetchUserInfo(eq(idUser), anyLong())).thenReturn(userResponse);
+			when(userEnrichmentService.fetchUserInfo(eq(idUser))).thenReturn(userResponse);
 
 			// Act
 			OrderWithUserDto result = orderService.getOrderWithUserInfo(orderId);
@@ -561,7 +561,7 @@ class OrderServiceTest {
 			assertEquals(idUser, result.getIdUser());
 			assertNotNull(result.getUser());
 			assertEquals("Juan", result.getUser().getName());
-			verify(userInfoClient, times(1)).fetchUserInfo(eq(idUser), anyLong());
+			verify(userEnrichmentService, times(1)).fetchUserInfo(eq(idUser));
 		}
 
 		// Test 2: Orden No Encontrada
@@ -574,7 +574,7 @@ class OrderServiceTest {
 
 			// Act & Assert: el servicio lanza OrderNotFoundException cuando no existe la orden
 			assertThrows(OrderNotFoundException.class, () -> orderService.getOrderWithUserInfo(orderId));
-			verify(userInfoClient, never()).fetchUserInfo(anyInt(), anyLong());
+			verify(userEnrichmentService, never()).fetchUserInfo(anyInt());
 		}
 
 		// Test 3: Fallo en Comunicación RabbitMQ
@@ -588,7 +588,7 @@ class OrderServiceTest {
 
 			when(orderRepository.findById(orderId)).thenReturn(java.util.Optional.of(order));
 			when(orderMapper.toDto(order)).thenReturn(orderDto);
-			    when(userInfoClient.fetchUserInfo(eq(idUser), anyLong())).thenThrow(new RuntimeException("RabbitMQ connection error"));
+				when(userEnrichmentService.fetchUserInfo(eq(idUser))).thenThrow(new RuntimeException("RabbitMQ connection error"));
 
 			    // Act
 			OrderWithUserDto result = orderService.getOrderWithUserInfo(orderId);
@@ -599,7 +599,7 @@ class OrderServiceTest {
 			assertEquals("Monitor", result.getName());
 			// userResponse debe ser null cuando falla la comunicación
 			assertNull(result.getUser());
-			verify(userInfoClient, times(1)).fetchUserInfo(eq(idUser), anyLong());
+			verify(userEnrichmentService, times(1)).fetchUserInfo(eq(idUser));
 		}
 
 		// Test 4: Timeout en RabbitMQ
@@ -613,7 +613,7 @@ class OrderServiceTest {
 
 			when(orderRepository.findById(orderId)).thenReturn(java.util.Optional.of(order));
 			when(orderMapper.toDto(order)).thenReturn(orderDto);
-			when(userInfoClient.fetchUserInfo(eq(idUser), anyLong())).thenReturn(null);
+			when(userEnrichmentService.fetchUserInfo(eq(idUser))).thenReturn(null);
 
 			// Act
 			OrderWithUserDto result = orderService.getOrderWithUserInfo(orderId);
@@ -623,7 +623,7 @@ class OrderServiceTest {
 			assertEquals("Keyboard", result.getName());
 			// userResponse debe ser null cuando hay timeout
 			assertNull(result.getUser());
-			verify(userInfoClient, times(1)).fetchUserInfo(eq(idUser), anyLong());
+			verify(userEnrichmentService, times(1)).fetchUserInfo(eq(idUser));
 		}
 
 		// Test 5: Mapeo Correcto
@@ -638,7 +638,7 @@ class OrderServiceTest {
 
 			when(orderRepository.findById(orderId)).thenReturn(java.util.Optional.of(order));
 			when(orderMapper.toDto(order)).thenReturn(orderDto);
-			when(userInfoClient.fetchUserInfo(eq(idUser), anyLong())).thenReturn(userResponse);
+			when(userEnrichmentService.fetchUserInfo(eq(idUser))).thenReturn(userResponse);
             
 			// Act
 			OrderWithUserDto result = orderService.getOrderWithUserInfo(orderId);
@@ -668,7 +668,7 @@ class OrderServiceTest {
 
 			when(orderRepository.findById(orderId)).thenReturn(java.util.Optional.of(order));
 			when(orderMapper.toDto(order)).thenReturn(orderDto);
-			when(userInfoClient.fetchUserInfo(eq(idUser), anyLong())).thenThrow(new IllegalStateException("Invalid user state"));
+			when(userEnrichmentService.fetchUserInfo(eq(idUser))).thenThrow(new IllegalStateException("Invalid user state"));
 
 			// Act (debe no lanzar excepción)
 			OrderWithUserDto result = orderService.getOrderWithUserInfo(orderId);
@@ -680,7 +680,7 @@ class OrderServiceTest {
 			// La excepción fue capturada, userResponse es null
 			assertNull(result.getUser());
 			// Verificar que el flujo continuó sin lanzar excepción
-			verify(userInfoClient, times(1)).fetchUserInfo(eq(idUser), anyLong());
+			verify(userEnrichmentService, times(1)).fetchUserInfo(eq(idUser));
 		}
 	}
 

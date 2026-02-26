@@ -2,7 +2,7 @@ package com.example.pedidoservice.service;
 
 import com.example.pedidoservice.dto.OrderDto;
 import com.example.pedidoservice.mapper.OrderMapper;
-import com.example.pedidoservice.messaging.IUserInfoClient;
+import com.example.pedidoservice.service.UserEnrichmentService;
 import com.example.pedidoservice.model.Order;
 import com.example.pedidoservice.model.State;
 import com.example.pedidoservice.repository.OrderJpaRepository;
@@ -48,7 +48,7 @@ class OrderServiceHuOrd05Test {
     private OrderMapper orderMapper;
 
     @Mock
-    private IUserInfoClient userInfoClient;
+    private UserEnrichmentService userEnrichmentService;
 
     @InjectMocks
     private OrderService orderService;
