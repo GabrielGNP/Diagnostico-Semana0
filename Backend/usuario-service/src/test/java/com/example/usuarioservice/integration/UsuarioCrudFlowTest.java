@@ -19,6 +19,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.*;
 
 /**
@@ -88,7 +89,7 @@ class UsuarioCrudFlowTest {
         assertTrue(deleted);
 
         verify(persistence).save(any(User.class));
-        verify(persistence, atLeastOnce()).findById(any());
+        verify(persistence, atLeastOnce()).findById(anyInt());
         verify(persistence).update(eq(1), any(User.class));
         verify(persistence).deleteById(1);
     }
@@ -152,7 +153,6 @@ class UsuarioCrudFlowTest {
         User updatedUser = new User(1, "New Name", "oldpass", "email@test.com", true);
 
         when(persistence.findById(1)).thenReturn(existingUser);
-        when(persistence.findByEmail("email@test.com")).thenReturn(existingUser);
         when(persistence.update(eq(1), any())).thenReturn(updatedUser);
 
         UpdateUsuarioRequest request = UpdateUsuarioRequest.builder()
