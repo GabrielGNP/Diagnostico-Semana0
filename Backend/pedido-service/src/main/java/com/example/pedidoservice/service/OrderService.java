@@ -8,8 +8,8 @@ import com.example.pedidoservice.service.UserEnrichmentService;
 import com.example.pedidoservice.model.Order;
 import com.example.pedidoservice.model.State;
 import com.example.pedidoservice.repository.OrderJpaRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.slf4j.Logger;
@@ -34,16 +34,12 @@ public class OrderService {
 
     private static final Logger log = LoggerFactory.getLogger(OrderService.class);
 
-    @Autowired
-    private OrderJpaRepository orderJpaRepository;
+    private final OrderJpaRepository orderJpaRepository;
 
-    @Autowired
-    private OrderMapper orderMapper;
-
+    private final OrderMapper orderMapper;
 
     private final UserEnrichmentService userEnrichmentService;
 
-    @Autowired
     public OrderService(OrderJpaRepository orderJpaRepository, OrderMapper orderMapper,
                         UserEnrichmentService userEnrichmentService) {
         this.orderJpaRepository = orderJpaRepository;

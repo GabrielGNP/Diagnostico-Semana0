@@ -10,6 +10,8 @@
 
 ## ⚠️ Dependencias Circulares
 
+
+**Estado:** REFACTORIZADO — `OrderController` refactorizado a inyección por constructor.
 No se detectaron dependencias circulares ✅
 
 ---
@@ -678,7 +680,7 @@ Basado en las capas de dependencia, resolver en esta secuencia para evitar rehac
 6. **Externalizar configuración** — Mover timeouts y constantes a `application.properties`
 
 ### Largo Plazo (Próximo Trimestre)
-7. **Definir interfaces para mensajería** — Crear `IUserInfoClient` para facilitar testing y desacoplamiento
+7. **Definir interfaces para mensajería** — Crear `IUserInfoClient` para facilitar testing y desacoplamiento — **Estado:** REFACTORIZADO
 8. **Implementar patrón Strategy para expansores** — Preparar el sistema para múltiples tipos de expansión de datos
 
 ---
