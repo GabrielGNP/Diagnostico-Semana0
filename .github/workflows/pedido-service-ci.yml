@@ -29,11 +29,12 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.m2/repository
-          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          key: ${{ runner.os }}-m2-${{ hashFiles('Backend/pedido-service/pom.xml') }}
           restore-keys: |
             ${{ runner.os }}-m2-
 
       - name: Build and run tests
+        working-directory: Backend/pedido-service
         run: mvn -B -DskipTests=false verify
 
       - name: Upload test and coverage reports
