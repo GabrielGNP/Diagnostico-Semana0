@@ -161,6 +161,8 @@ public void setUser(UserResponse user) {
 }
 ```
 
+**Estado:** REFACTORIZADO — métodos redundantes eliminados en `OrderWithUserDto.java`.
+
 ---
 
 #### ✅ `config/RabbitMQConfig.java` — Sin hallazgos
@@ -217,6 +219,8 @@ public class UserServiceProducer {
         this.rabbitTemplate = rabbitTemplate;
     }
 ```
+
+**Estado:** REFACTORIZADO — `UserServiceProducer` refactorizado a inyección por constructor.
 
 ---
 
@@ -279,6 +283,8 @@ public class UserServiceConsumer {
     }
 }
 ```
+
+**Estado:** REFACTORIZADO — `UserResponseCache` creado y `UserServiceConsumer` refactorizado para delegar en la cache.
 
 ---
 
@@ -375,6 +381,8 @@ public OrderWithUserDto getOrderWithUserInfo(Integer orderId) {
     );
 }
 ```
+
+**Estado:** REFACTORIZADO — `OrderRepository.java` eliminado; el código usa `OrderJpaRepository` directamente.
 
 **Solución sugerida:** Extraer la lógica de enriquecimiento de usuario a una clase dedicada:
 ```java

@@ -58,6 +58,11 @@ public class OrderService {
         this.userServiceConsumer = userServiceConsumer;
     }
 
+    private Order findOrderByIdOrThrow(Integer id) {
+        return orderJpaRepository.findById(id)
+                .orElseThrow(() -> new OrderNotFoundException("Pedido con ID " + id + " no encontrado"));
+    }
+
     public OrderDto createOrder(OrderDto orderDto) {
         /**
          * HU-ORD-05: Create a new order with validation and PostgreSQL persistence.
@@ -100,8 +105,7 @@ public class OrderService {
      * @throws IllegalArgumentException if order not found
      */
     public void deleteOrder(Integer id) {
-        Order order = orderJpaRepository.findById(id)
-            .orElseThrow(() -> new OrderNotFoundException("Pedido con ID " + id + " no encontrado"));
+        Order order = findOrderByIdOrThrow(id);
         order.setActive(false);
         orderJpaRepository.save(order);
     }
@@ -115,8 +119,7 @@ public class OrderService {
      * @throws IllegalArgumentException if order not found
      */
     public OrderDto changeStateOrder(Integer id, State newState) {
-        Order order = orderJpaRepository.findById(id)
-            .orElseThrow(() -> new OrderNotFoundException("Pedido con ID " + id + " no encontrado"));
+        Order order = findOrderByIdOrThrow(id);
         order.setState(newState);
         Order savedOrder = orderJpaRepository.save(order);
         return orderMapper.toDto(savedOrder);
@@ -221,8 +224,7 @@ public class OrderService {
      * @return Order DTO or null if not found
      */
     public OrderDto showOrderById(Integer id) {
-        return orderJpaRepository.findById(id)
-            .map(orderMapper::toDto)
-            .orElseThrow(() -> new OrderNotFoundException("Pedido con ID " + id + " no encontrado"));
+        Order order = findOrderByIdOrThrow(id);
+        return orderMapper.toDto(order);
     }
 }
