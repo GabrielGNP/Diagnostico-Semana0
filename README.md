@@ -1,139 +1,117 @@
-# Diagnostico-Semana0#
+# Diagnostico-Semana0
 
 ## Descripción
 
-Proyecto de microservicios para gestión de usuarios y pedidos. Incluye un frontend en React (Vite) y dos servicios backend en Spring Boot, comunicados mediante RabbitMQ.
+Proyecto de microservicios para gestión de usuarios y pedidos, con frontend SPA en React (Vite), backend en Spring Boot y comunicación asíncrona por RabbitMQ.
 
 ## Arquitectura
 
-```
-┌─────────────────┐     ┌─────────────────┐
-│    Frontend     │     │    RabbitMQ     │
-│   (React/Vite)  │     │   (Mensajería)  │
-│    Puerto 3000  │     │  Puerto 15672   │
-└────────┬────────┘     └────────┬────────┘
-         │                       │
-         ▼                       ▼
-┌─────────────────┐     ┌─────────────────┐
-│ Usuario Service │     │  Pedido Service │
-│  (Spring Boot)  │◄───►│  (Spring Boot)  │
-│   Puerto 8083   │     │   Puerto 8082   │
-└─────────────────┘     └─────────────────┘
-```
+### Backend (orquestado con Docker Compose)
 
-## Servicios
+- `postgres` (persistencia)
+- `pgadmin` (administración de BD)
+- `rabbitmq` (mensajería)
+- `usuario-service` (API usuarios)
+- `pedido-service` (API pedidos)
 
-| Servicio            | Tecnología   | Puerto       | Descripción                |
-| ------------------- | ------------ | ------------ | -------------------------- |
-| **frontend**        | React + Vite | 3000         | Interfaz de usuario        |
-| **usuario-service** | Spring Boot  | 8083         | API de gestión de usuarios |
-| **pedido-service**  | Spring Boot  | 8082         | API de gestión de pedidos  |
-| **rabbitmq**        | RabbitMQ     | 5672 / 15672 | Broker de mensajería       |
+Archivo de orquestación backend: [backend/docker-compose.yml](backend/docker-compose.yml)
 
-## Requisitos Previos
+### Frontend (ejecución independiente)
 
-- Docker
-- Docker Compose
+- `Frontend/` se ejecuta de forma separada del compose backend.
+- En local puede correr con `npm run dev` o con su propio `Dockerfile`.
+- Consume APIs vía variables Vite:
+  - `VITE_APIUSER=http://localhost:8083`
+  - `VITE_APIORDER=http://localhost:8082`
 
-## Ejecución Local
+Plantilla: [Frontend/.env.template](Frontend/.env.template)
 
-### 1. Clonar el repositorio
+## Requisitos previos
+
+- Docker + Docker Compose v2
+- Node.js 20+ (para desarrollo frontend)
+
+## Ejecución local
+
+### 1) Levantar backend
+
+Desde la raíz del repo:
 
 ```bash
-git clone <url-del-repositorio>
-cd Diagnostico-Semana0
+docker compose -f backend/docker-compose.yml up --build
 ```
 
-### 2. Ejecutar con Docker Compose
+En segundo plano:
 
 ```bash
-docker-compose up --build
+docker compose -f backend/docker-compose.yml up -d --build
 ```
 
-Para ejecutar en segundo plano:
+### 2) Levantar frontend (separado)
 
 ```bash
-docker-compose up -d --build
+cd Frontend
+cp .env.template .env
+npm install
+npm run dev
 ```
 
-### 3. Acceder a los servicios
+Frontend disponible en `http://localhost:5173` (o el puerto que indique Vite).
 
-- **Frontend:** http://localhost:3000
-- **Usuario Service API:** http://localhost:8083
-- **Pedido Service API:** http://localhost:8082
-- **RabbitMQ Management:** http://localhost:15672 (usuario: `guest`, contraseña: `guest`)
- - **pgAdmin (PGAdmin4):** http://localhost:5050 (usuario: `admin@admin.com`, contraseña: `admin123`)
+## Endpoints y accesos
 
-### Acceso a pgAdmin y ver las bases de datos
+- Frontend: `http://localhost:5173` (dev) o `http://localhost:3000` si lo publicas con contenedor propio
+- Usuario Service API: `http://localhost:8083`
+- Pedido Service API: `http://localhost:8082`
+- RabbitMQ Management: `http://localhost:15672` (`guest` / `guest`)
+- pgAdmin: `http://localhost:5050` (`admin@admin.com` / `admin123`)
 
-- El `docker-compose.yml` arranca un servicio `pgadmin` mapeado en el puerto `5050`. Usa las credenciales del servicio:
+## Base de datos e inicialización
 
-    - Email: `admin@admin.com`
-    - Password: `admin123`
+Los scripts SQL de inicialización se mantienen intactos y se montan desde el compose backend:
 
-- Desde la interfaz web de pgAdmin crea un nuevo servidor (clic derecho en Servers → Create → Server) y usa estos datos de conexión:
+- `../Backend/usuario-service/init-db/01-init-users.sql`
+- `../Backend/pedido-service/init-db/01-init-orders.sql`
 
-    - **Nombre:** postgres (o cualquier nombre descriptivo)
-    - **Host name/address:** postgres
-    - **Port:** 5432
-    - **Maintenance database:** postgres
-    - **Username:** postgres
-    - **Password:** postgres
+Esto preserva la creación de `users_db` y `orders_db` al inicializar Postgres.
 
-    Nota: cuando pgAdmin corre como contenedor, debe conectarse al servicio `postgres` por su nombre de servicio de la red Docker (`postgres`) — NO uses `localhost` aquí.
-
-- Alternativamente, puedes añadir dos conexiones separadas usando las cuentas creadas por los scripts de inicialización si prefieres ver/usar cada base con su usuario específico:
-
-    1) Conexión a `users_db` (usuario-service)
-
-         - **Host:** postgres
-         - **Port:** 5432
-         - **Maintenance database:** users_db
-         - **Username:** usuario_user
-         - **Password:** usuario_pass
-
-    2) Conexión a `orders_db` (pedido-service)
-
-         - **Host:** postgres
-         - **Port:** 5432
-         - **Maintenance database:** orders_db
-         - **Username:** pedido_user
-         - **Password:** pedido_pass
-
-    Estas cuentas son creadas por los scripts montados en el contenedor `postgres` (`Backend/usuario-service/init-db/01-init-users.sql` y `Backend/pedido-service/init-db/01-init-orders.sql`).
-
- - Una vez conectado, expande el servidor y verás las bases `users_db` y `orders_db` bajo la sección `Databases`.
-
-
-## Detener los servicios
+## Detener backend
 
 ```bash
-docker-compose down
+docker compose -f backend/docker-compose.yml down
 ```
 
-Para eliminar también los volúmenes:
+Con limpieza de volúmenes:
 
 ```bash
-docker-compose down -v
+docker compose -f backend/docker-compose.yml down -v
 ```
 
-## Estructura del Proyecto
+## Estructura (resumen)
 
-```
+```text
 Diagnostico-Semana0/
-├── docker-compose.yml
-├── README.md
+├── backend/
+│   └── docker-compose.yml
 ├── Backend/
-│   ├── data/
-│   │   └── orders.json
-│   ├── pedido-service/      # Microservicio de pedidos
-│   └── usuario-service/     # Microservicio de usuarios
-├── Frontend/                # Aplicación React
+│   ├── usuario-service/
+│   └── pedido-service/
+└── Frontend/
+    ├── Dockerfile
+    ├── Dockerfile.dev
+    └── .env.template
 ```
 
+## Estrategia de despliegue (producción)
 
-## Tests y CI/CD
+- Backend: mantener compose o migrar a orquestador según madurez, pero con imágenes versionadas por servicio.
+- Frontend: servir como estático (Nginx/CDN) usando el `Frontend/Dockerfile` multi-stage.
+- Configuración de URLs del frontend en build/release (`VITE_APIUSER`, `VITE_APIORDER`) apuntando a dominios de API reales (no `localhost`).
+- No es necesario meter frontend en el mismo compose backend para producción: separarlo mejora independencia de despliegue, caching/CDN y tiempos de release.
 
-- **Tests unitarios:** cada subproyecto tiene su propia suite (JUnit en backend, Vitest en frontend).
-- **CI:** en cada push o PR a `main`/`master`, GitHub Actions ejecuta los tests de los tres subproyectos. Ver [docs/TESTING_AND_CI.md](docs/TESTING_AND_CI.md) para detalles y cómo exigir que los tests pasen antes de merge.
-=======
+## Tests y CI
+
+- Frontend unit: `cd Frontend && npm test`
+- Frontend integration: `cd Frontend && npm run test:integration`
+- Backend unit: `mvn -f Backend/<service>/pom.xml test`
+- E2E: `cd tests/e2e && npm install && npm test`
