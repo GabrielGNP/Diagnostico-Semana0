@@ -97,7 +97,7 @@ class GlobalExceptionHandlerTest {
 
         when(bindingResult.getAllErrors()).thenReturn(errors);
         MethodArgumentNotValidException exception = new MethodArgumentNotValidException(
-            mock(org.springframework.web.servlet.mvc.support.DefaultHandlerExceptionResolver.class),
+            mock(org.springframework.core.MethodParameter.class),
             bindingResult
         );
         when(webRequest.getDescription(false)).thenReturn("uri=/api/v1/usuarios");
