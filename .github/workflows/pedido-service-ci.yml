@@ -3,8 +3,14 @@ name: CI - pedido-service
 on:
   push:
     branches: ['**']
+    paths:
+      - 'Backend/pedido-service/**'
+      - '.github/workflows/pedido-service-ci.yml'
   pull_request:
     branches: ['**']
+    paths:
+      - 'Backend/pedido-service/**'
+      - '.github/workflows/pedido-service-ci.yml'
 
 permissions:
   contents: read
