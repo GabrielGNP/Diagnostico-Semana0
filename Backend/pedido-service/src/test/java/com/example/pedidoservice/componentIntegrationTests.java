@@ -5,7 +5,7 @@ import com.example.pedidoservice.dto.OrderDto;
 import com.example.pedidoservice.model.Order;
 import com.example.pedidoservice.model.State;
 import com.example.pedidoservice.service.OrderService;
-import com.example.pedidoservice.repository.OrderRepository;
+import com.example.pedidoservice.repository.OrderJpaRepository;
 import com.example.pedidoservice.mapper.OrderMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -43,15 +43,18 @@ class ComponentIntegrationTests {
     private OrderService orderService;
 
     @Autowired
-    private OrderRepository orderRepository;
+    private OrderJpaRepository orderRepository;
 
     @Autowired
     private OrderMapper orderMapper;
 
     @BeforeEach
     public void setUp() {
-        // Limpia el repositorio antes de cada test
-        orderRepository.findAll().forEach(order -> orderRepository.deleteById(order.getId()));
+        // Limpia el repositorio antes de cada test (soft-delete)
+        orderRepository.findAll().forEach(order -> {
+            order.setActive(false);
+            orderRepository.save(order);
+        });
     }
 
     @Test
@@ -95,7 +98,7 @@ class ComponentIntegrationTests {
         int orderId = ((OrderDto) createBody).getId();
 
         // Act
-        ResponseEntity<?> getResponse = orderController.showOrderById(orderId, null);
+        ResponseEntity<?> getResponse = orderController.showOrderById(orderId);
 
         // Assert
         assertNotNull(getResponse, "Get response should not be null");
@@ -125,7 +128,7 @@ class ComponentIntegrationTests {
 
         // Act
         ResponseEntity<?> deleteResponse = orderController.deleteOrder(orderId);
-        ResponseEntity<?> getResponse = orderController.showOrderById(orderId, null);
+        ResponseEntity<?> getResponse = orderController.showOrderById(orderId);
 
         // Assert
         assertNotNull(deleteResponse, "Delete response should not be null");
@@ -206,7 +209,7 @@ class ComponentIntegrationTests {
     @DisplayName("Integration: Non-existent Order Retrieval")
     public void     testNonExistentOrderRetrieval() {
         // Act
-        ResponseEntity<?> response = orderController.showOrderById(99999, null);
+        ResponseEntity<?> response = orderController.showOrderById(99999);
 
         // Assert
         assertNotNull(response, "Response should not be null");

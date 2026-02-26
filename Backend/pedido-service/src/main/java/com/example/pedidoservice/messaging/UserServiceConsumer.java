@@ -6,27 +6,23 @@ import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
 
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 @Component
 public class UserServiceConsumer {
 
     private static final Logger log = LoggerFactory.getLogger(UserServiceConsumer.class);
 
-    private final Map<Integer, UserResponse> userResponses = new ConcurrentHashMap<>();
-    private final Object lock = new Object();
+    private final UserResponseCache cache;
+
+    public UserServiceConsumer(UserResponseCache cache) {
+        this.cache = cache;
+    }
 
     @RabbitListener(queues = RabbitMQConfig.USER_RESPONSE_QUEUE)
     public void receiveUserResponse(UserResponse response) {
-        // Received asynchronously from RabbitMQ - store and notify waiting threads
+        // Received asynchronously from RabbitMQ - delegate storage to cache
         log.debug("User response received: {}", response);
-        if (response != null && response.getId() != null) {
-            userResponses.put(response.getId(), response);
-            synchronized (lock) {
-                lock.notifyAll();
-            }
-        }
+        cache.store(response);
     }
 
     public UserResponse getUserResponse(int userId, long timeoutMs) {
@@ -41,26 +37,7 @@ public class UserServiceConsumer {
          * Note: callers should keep the timeout short to avoid blocking request
          * handling threads for long periods.
          */
-        long startTime = System.currentTimeMillis();
-
-        while (System.currentTimeMillis() - startTime < timeoutMs) {
-            if (userResponses.containsKey(userId)) {
-                return userResponses.remove(userId);
-            }
-
-            synchronized (lock) {
-                try {
-                    lock.wait(100);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    break;
-                }
-            }
-        }
-
-        // Cleanup if still waiting
-        userResponses.remove(userId);
-        return null;
+        return cache.awaitResponse(userId, timeoutMs);
     }
 }
 

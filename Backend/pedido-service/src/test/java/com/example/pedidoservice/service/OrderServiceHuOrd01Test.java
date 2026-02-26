@@ -53,7 +53,7 @@ class OrderServiceHuOrd01Test {
         orderJpaRepository = mock(OrderJpaRepository.class);
         orderMapper = mock(OrderMapper.class);
         // Construir el servicio inyectando los mocks
-        orderService = new OrderService(orderJpaRepository, orderMapper, null, null);
+        orderService = new OrderService(orderJpaRepository, orderMapper, null);
     }
 
     // ========== HELPER METHODS ==========

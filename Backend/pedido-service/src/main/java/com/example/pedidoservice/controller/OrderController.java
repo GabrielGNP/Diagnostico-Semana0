@@ -6,7 +6,6 @@ import com.example.pedidoservice.dto.OrderStateUpdateDto;
 import jakarta.validation.Valid;
 import com.example.pedidoservice.model.State;
 import com.example.pedidoservice.service.OrderService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -31,8 +30,11 @@ public class OrderController {
      * results into appropriate HTTP responses.
      */
 
-    @Autowired
-    private OrderService orderService;
+    private final OrderService orderService;
+
+    public OrderController(OrderService orderService) {
+        this.orderService = orderService;
+    }
 
     /**
         * Create a new order.
@@ -49,11 +51,7 @@ public class OrderController {
     @PostMapping
     public ResponseEntity<OrderDto> createOrder(@Valid @RequestBody OrderDto orderDto) {
         OrderDto createdOrder = orderService.createOrder(orderDto);
-        if (createdOrder != null && createdOrder.getId() != null) {
-            return ResponseEntity.created(java.net.URI.create("/orders/" + createdOrder.getId())).body(createdOrder);
-        } else {
-            return ResponseEntity.status(201).body(createdOrder);
-        }
+        return ResponseEntity.created(java.net.URI.create("/orders/" + createdOrder.getId())).body(createdOrder);
     }
 
     /**
@@ -87,14 +85,19 @@ public class OrderController {
      * @return Order DTO (enriched if `expand=user`) or 404 Not Found
      */
     @GetMapping("/{id}")
-    public ResponseEntity<Object> showOrderById(@PathVariable("id") Integer id, @RequestParam(value = "expand", required = false) String expand) {
-        if ("user".equals(expand)) {
-            OrderWithUserDto order = orderService.getOrderWithUserInfo(id);
-            return ResponseEntity.ok(order);
-        } else {
-            OrderDto orderDto = orderService.showOrderById(id);
-            return ResponseEntity.ok(orderDto);
-        }
+    public ResponseEntity<OrderDto> showOrderById(@PathVariable("id") Integer id) {
+        OrderDto orderDto = orderService.showOrderById(id);
+        return ResponseEntity.ok(orderDto);
+    }
+
+    /**
+     * Get an order by id with enriched user information.
+     * Endpoint: GET /orders/{id}/user
+     */
+    @GetMapping("/{id}/user")
+    public ResponseEntity<OrderWithUserDto> showOrderWithUser(@PathVariable("id") Integer id) {
+        OrderWithUserDto order = orderService.getOrderWithUserInfo(id);
+        return ResponseEntity.ok(order);
     }
 
 
@@ -111,14 +114,29 @@ public class OrderController {
      * @return list of orders (HTTP 200)
      */
     @GetMapping
-    public ResponseEntity<List<OrderDto>> listOrders(@RequestParam(value = "userId", required = false) Integer userId) {
-        if (userId != null) {
-            List<OrderDto> orders = orderService.listOrdersByIdUser(userId);
-            return ResponseEntity.ok(orders);
-        } else {
-            List<OrderDto> orders = orderService.findAllActiveOrders();
-            return ResponseEntity.ok(orders);
-        }
+    public ResponseEntity<List<OrderDto>> listOrders() {
+        List<OrderDto> orders = orderService.findAllActiveOrders();
+        return ResponseEntity.ok(orders);
+    }
+
+    /**
+     * List orders for a given user.
+     * Endpoint: GET /orders/user/{userId}
+     */
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<List<OrderDto>> listOrdersByUser(@PathVariable("userId") Integer userId) {
+        List<OrderDto> orders = orderService.listOrdersByIdUser(userId);
+        return ResponseEntity.ok(orders);
+    }
+
+    /**
+     * Administrative endpoint returning all orders (including inactive).
+     * Endpoint: GET /orders/all
+     */
+    @GetMapping("/all")
+    public ResponseEntity<List<OrderDto>> listAllOrdersEndpoint() {
+        List<OrderDto> orders = orderService.listAllOrders();
+        return ResponseEntity.ok(orders);
     }
 
     /**
