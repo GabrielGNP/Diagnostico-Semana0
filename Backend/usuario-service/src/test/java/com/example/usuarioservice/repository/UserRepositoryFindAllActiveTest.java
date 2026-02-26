@@ -4,7 +4,6 @@ import com.example.usuarioservice.model.User;
 import com.example.usuarioservice.persistence.UserRepository;
 import org.junit.jupiter.api.*;
 
-import java.io.File;
 import java.util.Collection;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -18,20 +17,22 @@ import static org.junit.jupiter.api.Assertions.*;
 class UserRepositoryFindAllActiveTest {
 
     private UserRepository userRepository;
-    private final String testFilePath = "test-users-active.json";
+
+    @org.junit.jupiter.api.io.TempDir
+    java.nio.file.Path tempDir;
 
     @BeforeEach
-    void setUp() {
+    void setUp() throws Exception {
         userRepository = new UserRepository();
-        // Clean test file
-        File file = new File(testFilePath);
-        if (file.exists()) file.delete();
+        java.nio.file.Path tempFile = tempDir.resolve("users-test-active.json");
+        userRepository.setFilePathForTests(tempFile.toString());
+        userRepository.initialize();
+        userRepository.deleteAll();
     }
 
     @AfterEach
     void tearDown() {
-        File file = new File(testFilePath);
-        if (file.exists()) file.delete();
+        // no-op: tempDir cleanup handled by JUnit
     }
 
     /**

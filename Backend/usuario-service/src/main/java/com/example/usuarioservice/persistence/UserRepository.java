@@ -13,6 +13,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.example.usuarioservice.model.User;
 import com.example.usuarioservice.persistence.IUserPersistence;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 /**
@@ -27,6 +28,13 @@ public class UserRepository implements IUserPersistence {
     private final Map<Integer, User> users = Collections.synchronizedMap(new HashMap<>());
     private final AtomicInteger nextId = new AtomicInteger(1);
     private File jsonFile;
+
+    @Value("${users.persistence.file}")
+    private String filePath;
+
+    public void setFilePathForTests(String filePath) {
+        this.filePath = filePath;
+    }
 
     /**
      * Implementa el método de la interfaz IUserPersistence.
@@ -44,59 +52,29 @@ public class UserRepository implements IUserPersistence {
     public void init() throws IOException {
         log.info("Inicializando persistencia de usuarios desde JSON");
         String usersFileEnv = System.getenv("USERS_FILE");
-        File external = null;
+
         if (usersFileEnv != null && !usersFileEnv.isBlank()) {
-            external = new File(usersFileEnv);
+            jsonFile = new File(usersFileEnv);
+        } else if (filePath != null && !filePath.isBlank()) {
+            jsonFile = new File(filePath);
+        } else {
+            throw new IllegalStateException("users.persistence.file no está configurado");
         }
 
-        File resourceFile = new File("src/main/resources/users.json");
-        File targetFile = new File("target/classes/users.json");
-
-        if (external != null) {
-            jsonFile = external;
-            if (jsonFile.exists()) {
-                try {
-                    log.debug("Cargando usuarios desde archivo externo: {}", jsonFile.getAbsolutePath());
-                    Collection<User> fromFile = mapper.readValue(jsonFile, new TypeReference<Collection<User>>() {});
-                    loadUsers(fromFile);
-                    log.info("Usuarios cargados exitosamente desde archivo externo");
-                    return;
-                } catch (Exception ex) {
-                    log.warn("Error cargando usuarios desde archivo externo, intentando siguiente opción", ex);
-                }
-            }
-        }
-
-        if (resourceFile.exists()) {
-            jsonFile = resourceFile;
+        if (jsonFile.exists()) {
             try {
-                log.debug("Cargando usuarios desde resources: {}", resourceFile.getAbsolutePath());
-                Collection<User> fromFile = mapper.readValue(resourceFile, new TypeReference<Collection<User>>() {});
+                log.debug("Cargando usuarios desde archivo: {}", jsonFile.getAbsolutePath());
+                Collection<User> fromFile = mapper.readValue(jsonFile, new TypeReference<Collection<User>>() {});
                 loadUsers(fromFile);
-                log.info("Usuarios cargados exitosamente desde resources");
+                log.info("Usuarios cargados exitosamente");
                 return;
             } catch (Exception ex) {
-                log.warn("Error cargando usuarios desde resources, intentando siguiente opción", ex);
+                log.warn("Error cargando usuarios desde archivo, creando nuevo", ex);
             }
         }
 
-        if (targetFile.exists()) {
-            jsonFile = targetFile;
-            try {
-                log.debug("Cargando usuarios desde target: {}", targetFile.getAbsolutePath());
-                Collection<User> fromFile = mapper.readValue(targetFile, new TypeReference<Collection<User>>() {});
-                loadUsers(fromFile);
-                log.info("Usuarios cargados exitosamente desde target");
-                return;
-            } catch (Exception ex) {
-                log.warn("Error cargando usuarios desde target", ex);
-            }
-        }
-
-        // fallback: create resourceFile
         log.info("Archivo de usuarios no encontrado, creando nuevo");
-        jsonFile = resourceFile;
-        File parent = resourceFile.getParentFile();
+        File parent = jsonFile.getParentFile();
         if (parent != null) parent.mkdirs();
         writeToFile();
     }
@@ -118,7 +96,12 @@ public class UserRepository implements IUserPersistence {
 
     public synchronized void writeToFile() {
         try {
-            if (jsonFile == null) jsonFile = new File("users.json");
+            if (jsonFile == null) {
+                if (filePath == null || filePath.isBlank()) {
+                    throw new IllegalStateException("users.persistence.file no está configurado");
+                }
+                jsonFile = new File(filePath);
+            }
             File parent = jsonFile.getParentFile();
             if (parent != null) parent.mkdirs();
             mapper.writerWithDefaultPrettyPrinter().writeValue(jsonFile, users.values());
@@ -183,6 +166,12 @@ public class UserRepository implements IUserPersistence {
         }
         log.warn("Usuario no encontrado para eliminar: {}", id);
         return false;
+    }
+
+    @Override
+    public void deleteAll() {
+        users.clear();
+        writeToFile();
     }
 
     @Override

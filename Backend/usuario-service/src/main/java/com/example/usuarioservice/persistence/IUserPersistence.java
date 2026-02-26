@@ -24,4 +24,6 @@ public interface IUserPersistence {
     User partialUpdate(int id, java.util.Map<String, Object> updates);
 
     boolean deleteById(int id);
+
+    void deleteAll();
 }

@@ -146,4 +146,11 @@ public class UserJpaPersistence implements IUserPersistence {
         log.warn("User {} not found for deletion", id);
         return false;
     }
+
+    @Override
+    public void deleteAll() {
+        log.info("Deleting all users");
+        jpaRepository.deleteAll();
+        log.info("All users deleted successfully");
+    }
 }

@@ -1,15 +1,15 @@
 [ {
   "id" : 1,
-  "name" : "Alice",
-  "password" : "alice123",
-  "mail" : "alice@example.com",
+  "name" : "Updated",
+  "password" : "oldpass",
+  "mail" : "original@test.com",
   "active" : true
 }, {
   "id" : 2,
-  "name" : "Bob",
-  "password" : "bob123",
-  "mail" : "bob@example.com",
-  "active" : true
+  "name" : "Inactive",
+  "password" : "pass",
+  "mail" : "inactive@test.com",
+  "active" : false
 }, {
   "id" : 3,
   "name" : "Clara",
@@ -82,4 +82,88 @@
   "password" : "SecurePass123",
   "mail" : "ana@example.com",
   "active" : true
+}, {
+  "id" : 15,
+  "name" : "User1",
+  "password" : "pass1",
+  "mail" : "user1@test.com",
+  "active" : true
+}, {
+  "id" : 16,
+  "name" : "User2",
+  "password" : "pass2",
+  "mail" : "user2@test.com",
+  "active" : true
+}, {
+  "id" : 17,
+  "name" : "User",
+  "password" : "pass",
+  "mail" : "user@test.com",
+  "active" : true
+}, {
+  "id" : 18,
+  "name" : "User1",
+  "password" : "pass1",
+  "mail" : "user1@test.com",
+  "active" : true
+}, {
+  "id" : 19,
+  "name" : "User2",
+  "password" : "pass2",
+  "mail" : "user2@test.com",
+  "active" : true
+}, {
+  "id" : 20,
+  "name" : "User3",
+  "password" : "pass3",
+  "mail" : "user3@test.com",
+  "active" : false
+}, {
+  "id" : 100,
+  "name" : "User",
+  "password" : "pass",
+  "mail" : "user@test.com",
+  "active" : true
+}, {
+  "id" : 101,
+  "name" : "User1",
+  "password" : "pass1",
+  "mail" : "user1@test.com",
+  "active" : true
+}, {
+  "id" : 102,
+  "name" : "User2",
+  "password" : "pass2",
+  "mail" : "user2@test.com",
+  "active" : true
+}, {
+  "id" : 103,
+  "name" : "User",
+  "password" : "pass",
+  "mail" : "user@test.com",
+  "active" : true
+}, {
+  "id" : 999,
+  "name" : "NewUser",
+  "password" : "pass",
+  "mail" : "new@test.com",
+  "active" : true
+}, {
+  "id" : 104,
+  "name" : "User1",
+  "password" : "pass1",
+  "mail" : "user1@test.com",
+  "active" : true
+}, {
+  "id" : 105,
+  "name" : "User2",
+  "password" : "pass2",
+  "mail" : "user2@test.com",
+  "active" : true
+}, {
+  "id" : 106,
+  "name" : "User3",
+  "password" : "pass3",
+  "mail" : "user3@test.com",
+  "active" : false
 } ]

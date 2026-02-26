@@ -171,6 +171,13 @@ public class CachedUserPersistenceDecorator implements IUserPersistence {
         return deleted;
     }
 
+    @Override
+    public void deleteAll() {
+        log.info("Eliminando todos los usuarios y limpiando caché");
+        delegate.deleteAll();
+        clearCache();
+    }
+
     /**
      * Invalida todas las entradas de caché relacionadas con un usuario.
      * 
