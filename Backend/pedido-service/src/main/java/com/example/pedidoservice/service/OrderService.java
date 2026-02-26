@@ -4,8 +4,7 @@ import com.example.pedidoservice.dto.OrderDto;
 import com.example.pedidoservice.dto.OrderWithUserDto;
 import com.example.pedidoservice.mapper.OrderMapper;
 import com.example.pedidoservice.messaging.UserResponse;
-import com.example.pedidoservice.messaging.UserServiceConsumer;
-import com.example.pedidoservice.messaging.UserServiceProducer;
+import com.example.pedidoservice.messaging.IUserInfoClient;
 import com.example.pedidoservice.model.Order;
 import com.example.pedidoservice.model.State;
 import com.example.pedidoservice.repository.OrderJpaRepository;
@@ -42,22 +41,17 @@ public class OrderService {
     private OrderMapper orderMapper;
 
 
-    @Autowired
-    private UserServiceProducer userServiceProducer;
-
-    @Autowired
-    private UserServiceConsumer userServiceConsumer;
+    private final IUserInfoClient userInfoClient;
 
     @Value("${user.service.timeout:3000}")
     private long userRequestTimeout; // configurable timeout for user service requests
 
     @Autowired
     public OrderService(OrderJpaRepository orderJpaRepository, OrderMapper orderMapper,
-                        UserServiceProducer userServiceProducer, UserServiceConsumer userServiceConsumer) {
+                        IUserInfoClient userInfoClient) {
         this.orderJpaRepository = orderJpaRepository;
         this.orderMapper = orderMapper;
-        this.userServiceProducer = userServiceProducer;
-        this.userServiceConsumer = userServiceConsumer;
+        this.userInfoClient = userInfoClient;
     }
 
     private Order findOrderByIdOrThrow(Integer id) {
@@ -161,9 +155,7 @@ public class OrderService {
         Integer idUser = orderDto.getIdUser();
         UserResponse userResponse = null;
         try {
-            userServiceProducer.requestUserInfo(idUser);
-            // Wait for user response
-            userResponse = userServiceConsumer.getUserResponse(idUser, userRequestTimeout);
+            userResponse = userInfoClient.fetchUserInfo(idUser, userRequestTimeout);
         } catch (Exception ex) {
             // Log and continue — return order with null user if messaging fails
             log.warn("Error requesting/receiving user info for userId={}", idUser, ex);

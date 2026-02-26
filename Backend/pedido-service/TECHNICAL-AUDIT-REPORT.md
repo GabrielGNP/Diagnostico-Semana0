@@ -477,6 +477,9 @@ public class OrderService {
     }
 }
 ```
+---
+
+**Estado:** REFACTORIZADO — `IUserInfoClient` created; `RabbitMQUserInfoClient` implemented and `OrderService` refactored to depend on the abstraction. Unit tests updated to mock `IUserInfoClient`.
 
 ---
 
@@ -508,6 +511,9 @@ private Order findOrderByIdOrThrow(Integer id) {
 // Uso
 Order order = findOrderByIdOrThrow(id);
 ```
+---
+
+**Estado:** REFACTORIZADO — extracted `findOrderByIdOrThrow` helper and replaced duplicate usages across `OrderService`.
 
 ---
 

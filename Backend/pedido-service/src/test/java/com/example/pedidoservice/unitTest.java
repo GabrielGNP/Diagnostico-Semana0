@@ -4,8 +4,7 @@ import com.example.pedidoservice.dto.OrderDto;
 import com.example.pedidoservice.dto.OrderWithUserDto;
 import com.example.pedidoservice.mapper.OrderMapper;
 import com.example.pedidoservice.messaging.UserResponse;
-import com.example.pedidoservice.messaging.UserServiceConsumer;
-import com.example.pedidoservice.messaging.UserServiceProducer;
+import com.example.pedidoservice.messaging.IUserInfoClient;
 import com.example.pedidoservice.model.Order;
 import com.example.pedidoservice.model.State;
 import com.example.pedidoservice.repository.OrderJpaRepository;
@@ -42,10 +41,7 @@ class OrderServiceTest {
 	private OrderMapper orderMapper;
 
 	@Mock
-	private UserServiceProducer userServiceProducer;
-
-	@Mock
-	private UserServiceConsumer userServiceConsumer;
+	private IUserInfoClient userInfoClient;
 
 	@InjectMocks
 	private OrderService orderService;
@@ -553,7 +549,7 @@ class OrderServiceTest {
 
 			when(orderRepository.findById(orderId)).thenReturn(java.util.Optional.of(order));
 			when(orderMapper.toDto(order)).thenReturn(orderDto);
-			when(userServiceConsumer.getUserResponse(eq(idUser), anyLong())).thenReturn(userResponse);
+			when(userInfoClient.fetchUserInfo(eq(idUser), anyLong())).thenReturn(userResponse);
 
 			// Act
 			OrderWithUserDto result = orderService.getOrderWithUserInfo(orderId);
@@ -565,8 +561,7 @@ class OrderServiceTest {
 			assertEquals(idUser, result.getIdUser());
 			assertNotNull(result.getUser());
 			assertEquals("Juan", result.getUser().getName());
-			verify(userServiceProducer, times(1)).requestUserInfo(idUser);
-			verify(userServiceConsumer, times(1)).getUserResponse(eq(idUser), anyLong());
+			verify(userInfoClient, times(1)).fetchUserInfo(eq(idUser), anyLong());
 		}
 
 		// Test 2: Orden No Encontrada
@@ -579,8 +574,7 @@ class OrderServiceTest {
 
 			// Act & Assert: el servicio lanza OrderNotFoundException cuando no existe la orden
 			assertThrows(OrderNotFoundException.class, () -> orderService.getOrderWithUserInfo(orderId));
-			verify(userServiceProducer, never()).requestUserInfo(anyInt());
-			verify(userServiceConsumer, never()).getUserResponse(anyInt(), anyLong());
+			verify(userInfoClient, never()).fetchUserInfo(anyInt(), anyLong());
 		}
 
 		// Test 3: Fallo en Comunicación RabbitMQ
@@ -594,10 +588,9 @@ class OrderServiceTest {
 
 			when(orderRepository.findById(orderId)).thenReturn(java.util.Optional.of(order));
 			when(orderMapper.toDto(order)).thenReturn(orderDto);
-			doThrow(new RuntimeException("RabbitMQ connection error"))
-					.when(userServiceProducer).requestUserInfo(idUser);
+			    when(userInfoClient.fetchUserInfo(eq(idUser), anyLong())).thenThrow(new RuntimeException("RabbitMQ connection error"));
 
-			// Act
+			    // Act
 			OrderWithUserDto result = orderService.getOrderWithUserInfo(orderId);
 
 			// Assert
@@ -606,7 +599,7 @@ class OrderServiceTest {
 			assertEquals("Monitor", result.getName());
 			// userResponse debe ser null cuando falla la comunicación
 			assertNull(result.getUser());
-			verify(userServiceProducer, times(1)).requestUserInfo(idUser);
+			verify(userInfoClient, times(1)).fetchUserInfo(eq(idUser), anyLong());
 		}
 
 		// Test 4: Timeout en RabbitMQ
@@ -620,9 +613,7 @@ class OrderServiceTest {
 
 			when(orderRepository.findById(orderId)).thenReturn(java.util.Optional.of(order));
 			when(orderMapper.toDto(order)).thenReturn(orderDto);
-			doNothing().when(userServiceProducer).requestUserInfo(idUser);
-			// Simular timeout retornando null (comportamiento real tras timeout)
-			when(userServiceConsumer.getUserResponse(eq(idUser), anyLong())).thenReturn(null);
+			when(userInfoClient.fetchUserInfo(eq(idUser), anyLong())).thenReturn(null);
 
 			// Act
 			OrderWithUserDto result = orderService.getOrderWithUserInfo(orderId);
@@ -632,8 +623,7 @@ class OrderServiceTest {
 			assertEquals("Keyboard", result.getName());
 			// userResponse debe ser null cuando hay timeout
 			assertNull(result.getUser());
-			verify(userServiceProducer, times(1)).requestUserInfo(idUser);
-			verify(userServiceConsumer, times(1)).getUserResponse(eq(idUser), anyLong());
+			verify(userInfoClient, times(1)).fetchUserInfo(eq(idUser), anyLong());
 		}
 
 		// Test 5: Mapeo Correcto
@@ -648,8 +638,8 @@ class OrderServiceTest {
 
 			when(orderRepository.findById(orderId)).thenReturn(java.util.Optional.of(order));
 			when(orderMapper.toDto(order)).thenReturn(orderDto);
-			when(userServiceConsumer.getUserResponse(eq(idUser), anyLong())).thenReturn(userResponse);
-
+			when(userInfoClient.fetchUserInfo(eq(idUser), anyLong())).thenReturn(userResponse);
+            
 			// Act
 			OrderWithUserDto result = orderService.getOrderWithUserInfo(orderId);
 
@@ -678,8 +668,7 @@ class OrderServiceTest {
 
 			when(orderRepository.findById(orderId)).thenReturn(java.util.Optional.of(order));
 			when(orderMapper.toDto(order)).thenReturn(orderDto);
-			doNothing().when(userServiceProducer).requestUserInfo(idUser);
-			when(userServiceConsumer.getUserResponse(eq(idUser), anyLong())).thenThrow(new IllegalStateException("Invalid user state"));
+			when(userInfoClient.fetchUserInfo(eq(idUser), anyLong())).thenThrow(new IllegalStateException("Invalid user state"));
 
 			// Act (debe no lanzar excepción)
 			OrderWithUserDto result = orderService.getOrderWithUserInfo(orderId);
@@ -691,7 +680,7 @@ class OrderServiceTest {
 			// La excepción fue capturada, userResponse es null
 			assertNull(result.getUser());
 			// Verificar que el flujo continuó sin lanzar excepción
-			verify(userServiceProducer, times(1)).requestUserInfo(idUser);
+			verify(userInfoClient, times(1)).fetchUserInfo(eq(idUser), anyLong());
 		}
 	}
 
