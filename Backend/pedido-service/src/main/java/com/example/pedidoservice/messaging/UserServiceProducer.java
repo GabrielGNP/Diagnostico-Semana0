@@ -12,8 +12,11 @@ public class UserServiceProducer {
 
     private static final Logger log = LoggerFactory.getLogger(UserServiceProducer.class);
 
-    @Autowired
-    private RabbitTemplate rabbitTemplate;
+    private final RabbitTemplate rabbitTemplate;
+
+    public UserServiceProducer(RabbitTemplate rabbitTemplate) {
+        this.rabbitTemplate = rabbitTemplate;
+    }
 
     public void requestUserInfo(int userId) {
     /**
