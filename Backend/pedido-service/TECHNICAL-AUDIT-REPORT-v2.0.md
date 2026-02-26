@@ -220,11 +220,11 @@ Aplicación: Refactorizar `OrderController` para exponer estos endpoints y mover
 
 ## ✅ Resumen de Cambios Recomendados (ordenados por prioridad)
 
-1. (Alta) Añadir `@ControllerAdvice` para mapear `OrderNotFoundException` a 404 y evitar 500s inesperados.
-2. (Alta) Extraer la lógica de enriquecimiento a un `OrderEnrichmentFacade` o adaptador (`IUserEnrichmentClient`) y delegar desde `OrderService`.
-3. (Media) Programar contra interfaces: introducir `IOrderMapper`/`IUserEnrichmentClient` si no existen (MapStruct genera interfaces habitualmente).
-4. (Baja) Eliminar imports duplicados en `OrderService.java`.
-5. (Baja) Validar retornos `null` en el controlador y devolver 404 apropiado.
+1. (Alta) Añadir `@ControllerAdvice` para mapear `OrderNotFoundException` a 404 y evitar 500s inesperados. — REFACTORIZADO (GlobalExceptionHandler presente)
+2. (Alta) Extraer la lógica de enriquecimiento a un `OrderEnrichmentFacade` o adaptador (`IUserEnrichmentClient`) y delegar desde `OrderService`. — REFACTORIZADO (OrderEnrichmentFacade implementado)
+3. (Media) Programar contra interfaces: introducir `IOrderMapper`/`IUserEnrichmentClient` si no existen (MapStruct genera interfaces habitualmente). — REFACTORIZADO (IUserEnrichmentClient añadido; servicios adaptados)
+4. (Baja) Eliminar imports duplicados en `OrderService.java`. — REFACTORIZADO (imports limpios)
+5. (Baja) Validar retornos `null` en el controlador y devolver 404 apropiado. — REFACTORIZADO (moved handling to service + GlobalExceptionHandler)
 
 ---
 

@@ -98,7 +98,7 @@ class ComponentIntegrationTests {
         int orderId = ((OrderDto) createBody).getId();
 
         // Act
-        ResponseEntity<?> getResponse = orderController.showOrderById(orderId, null);
+        ResponseEntity<?> getResponse = orderController.showOrderById(orderId);
 
         // Assert
         assertNotNull(getResponse, "Get response should not be null");
@@ -128,7 +128,7 @@ class ComponentIntegrationTests {
 
         // Act
         ResponseEntity<?> deleteResponse = orderController.deleteOrder(orderId);
-        ResponseEntity<?> getResponse = orderController.showOrderById(orderId, null);
+        ResponseEntity<?> getResponse = orderController.showOrderById(orderId);
 
         // Assert
         assertNotNull(deleteResponse, "Delete response should not be null");
@@ -209,7 +209,7 @@ class ComponentIntegrationTests {
     @DisplayName("Integration: Non-existent Order Retrieval")
     public void     testNonExistentOrderRetrieval() {
         // Act
-        ResponseEntity<?> response = orderController.showOrderById(99999, null);
+        ResponseEntity<?> response = orderController.showOrderById(99999);
 
         // Assert
         assertNotNull(response, "Response should not be null");

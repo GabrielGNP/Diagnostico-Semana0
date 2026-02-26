@@ -237,8 +237,10 @@ class OrderServiceHuOrd05Test {
 
             // WHEN & THEN: Sin excepción en servicio (validación delegada al controlador)
             System.out.println("   ⚙️ Invocando createOrder (no debe lanzar excepciones a nivel de servicio)...");
+            Order savedOrder = new Order();
+            savedOrder.setId(1);
             when(orderMapper.toEntity(any())).thenReturn(new Order());
-            when(orderJpaRepository.save(any(Order.class))).thenReturn(new Order());
+            when(orderJpaRepository.save(any(Order.class))).thenReturn(savedOrder);
             when(orderMapper.toDto(any(Order.class))).thenReturn(new OrderDto());
             OrderDto result = assertDoesNotThrow(() -> orderService.createOrder(inputDto));
             assertNotNull(result, "El pedido creado no debe ser null");
@@ -259,8 +261,10 @@ class OrderServiceHuOrd05Test {
 
             // WHEN & THEN: Sin excepción en servicio (validación delegada al controlador)
             System.out.println("   ⚙️ Invocando createOrder (no debe lanzar excepciones a nivel de servicio)...");
+            Order savedOrder = new Order();
+            savedOrder.setId(1);
             when(orderMapper.toEntity(any())).thenReturn(new Order());
-            when(orderJpaRepository.save(any(Order.class))).thenReturn(new Order());
+            when(orderJpaRepository.save(any(Order.class))).thenReturn(savedOrder);
             when(orderMapper.toDto(any(Order.class))).thenReturn(new OrderDto());
             OrderDto result = assertDoesNotThrow(() -> orderService.createOrder(inputDto));
             assertNotNull(result, "El pedido creado no debe ser null");
@@ -282,8 +286,10 @@ class OrderServiceHuOrd05Test {
 
             // WHEN & THEN: Sin excepción en servicio (validación delegada al controlador)
             System.out.println("   ⚙️ Invocando createOrder (no debe lanzar excepciones a nivel de servicio)...");
+            Order savedOrder = new Order();
+            savedOrder.setId(1);
             when(orderMapper.toEntity(any())).thenReturn(new Order());
-            when(orderJpaRepository.save(any(Order.class))).thenReturn(new Order());
+            when(orderJpaRepository.save(any(Order.class))).thenReturn(savedOrder);
             when(orderMapper.toDto(any(Order.class))).thenReturn(new OrderDto());
             OrderDto result = assertDoesNotThrow(() -> orderService.createOrder(inputDto));
             assertNotNull(result, "El pedido creado no debe ser null");
@@ -312,8 +318,10 @@ class OrderServiceHuOrd05Test {
             System.out.println("   ⚙️ Invocando createOrder (debe lanzar IllegalArgumentException)...");
             // WHEN & THEN: Sin excepción en servicio (validación delegada al controlador)
             System.out.println("   ⚙️ Invocando createOrder (no debe lanzar excepciones a nivel de servicio)...");
+            Order savedOrder = new Order();
+            savedOrder.setId(1);
             when(orderMapper.toEntity(any())).thenReturn(new Order());
-            when(orderJpaRepository.save(any(Order.class))).thenReturn(new Order());
+            when(orderJpaRepository.save(any(Order.class))).thenReturn(savedOrder);
             when(orderMapper.toDto(any(Order.class))).thenReturn(new OrderDto());
             OrderDto result = assertDoesNotThrow(() -> orderService.createOrder(inputDto));
             assertNotNull(result, "El pedido creado no debe ser null");
@@ -337,8 +345,10 @@ class OrderServiceHuOrd05Test {
             System.out.println("   ⚙️ Invocando createOrder (debe lanzar IllegalArgumentException)...");
             // WHEN & THEN: Sin excepción en servicio (validación delegada al controlador)
             System.out.println("   ⚙️ Invocando createOrder (no debe lanzar excepciones a nivel de servicio)...");
+            Order savedOrder = new Order();
+            savedOrder.setId(1);
             when(orderMapper.toEntity(any())).thenReturn(new Order());
-            when(orderJpaRepository.save(any(Order.class))).thenReturn(new Order());
+            when(orderJpaRepository.save(any(Order.class))).thenReturn(savedOrder);
             when(orderMapper.toDto(any(Order.class))).thenReturn(new OrderDto());
             OrderDto result = assertDoesNotThrow(() -> orderService.createOrder(inputDto));
             assertNotNull(result, "El pedido creado no debe ser null");
@@ -362,8 +372,10 @@ class OrderServiceHuOrd05Test {
             System.out.println("   ⚙️ Invocando createOrder (debe lanzar IllegalArgumentException)...");
             // WHEN & THEN: Sin excepción en servicio (validación delegada al controlador)
             System.out.println("   ⚙️ Invocando createOrder (no debe lanzar excepciones a nivel de servicio)...");
+            Order savedOrder = new Order();
+            savedOrder.setId(1);
             when(orderMapper.toEntity(any())).thenReturn(new Order());
-            when(orderJpaRepository.save(any(Order.class))).thenReturn(new Order());
+            when(orderJpaRepository.save(any(Order.class))).thenReturn(savedOrder);
             when(orderMapper.toDto(any(Order.class))).thenReturn(new OrderDto());
             OrderDto result = assertDoesNotThrow(() -> orderService.createOrder(inputDto));
             assertNotNull(result, "El pedido creado no debe ser null");
@@ -387,8 +399,10 @@ class OrderServiceHuOrd05Test {
             System.out.println("   ⚙️ Invocando createOrder (debe lanzar IllegalArgumentException)...");
             // WHEN & THEN: Sin excepción en servicio (validación delegada al controlador)
             System.out.println("   ⚙️ Invocando createOrder (no debe lanzar excepciones a nivel de servicio)...");
+            Order savedOrder = new Order();
+            savedOrder.setId(1);
             when(orderMapper.toEntity(any())).thenReturn(new Order());
-            when(orderJpaRepository.save(any(Order.class))).thenReturn(new Order());
+            when(orderJpaRepository.save(any(Order.class))).thenReturn(savedOrder);
             when(orderMapper.toDto(any(Order.class))).thenReturn(new OrderDto());
             OrderDto result = assertDoesNotThrow(() -> orderService.createOrder(inputDto));
             assertNotNull(result, "El pedido creado no debe ser null");
@@ -503,8 +517,10 @@ class OrderServiceHuOrd05Test {
 
             // WHEN & THEN: Sin excepción en servicio (validación delegada al controlador)
             System.out.println("   ⚙️ Invocando createOrder (no debe lanzar excepciones a nivel de servicio)...");
+            Order savedOrder = new Order();
+            savedOrder.setId(1);
             when(orderMapper.toEntity(any())).thenReturn(new Order());
-            when(orderJpaRepository.save(any(Order.class))).thenReturn(new Order());
+            when(orderJpaRepository.save(any(Order.class))).thenReturn(savedOrder);
             when(orderMapper.toDto(any(Order.class))).thenReturn(new OrderDto());
             OrderDto result = assertDoesNotThrow(() -> orderService.createOrder(inputDto));
             assertNotNull(result, "El pedido creado no debe ser null");
@@ -626,8 +642,10 @@ class OrderServiceHuOrd05Test {
 
             // WHEN & THEN: Sin excepción en servicio (validación delegada al controlador)
             System.out.println("   ⚙️ Invocando createOrder (no debe lanzar excepciones a nivel de servicio)...");
+            Order savedOrder = new Order();
+            savedOrder.setId(1);
             when(orderMapper.toEntity(any())).thenReturn(new Order());
-            when(orderJpaRepository.save(any(Order.class))).thenReturn(new Order());
+            when(orderJpaRepository.save(any(Order.class))).thenReturn(savedOrder);
             when(orderMapper.toDto(any(Order.class))).thenReturn(new OrderDto());
             OrderDto result = assertDoesNotThrow(() -> orderService.createOrder(inputDto));
             assertNotNull(result, "El pedido creado no debe ser null");
@@ -650,8 +668,10 @@ class OrderServiceHuOrd05Test {
 
             // WHEN & THEN: Sin excepción en servicio (validación delegada al controlador)
             System.out.println("   ⚙️ Invocando createOrder (no debe lanzar excepciones a nivel de servicio)...");
+            Order savedOrder = new Order();
+            savedOrder.setId(1);
             when(orderMapper.toEntity(any())).thenReturn(new Order());
-            when(orderJpaRepository.save(any(Order.class))).thenReturn(new Order());
+            when(orderJpaRepository.save(any(Order.class))).thenReturn(savedOrder);
             when(orderMapper.toDto(any(Order.class))).thenReturn(new OrderDto());
             OrderDto result = assertDoesNotThrow(() -> orderService.createOrder(inputDto));
             assertNotNull(result, "El pedido creado no debe ser null");
@@ -728,8 +748,10 @@ class OrderServiceHuOrd05Test {
 
             // WHEN & THEN: Sin excepción en servicio (validación delegada al controlador)
             System.out.println("   ⚙️ Invocando createOrder (no debe lanzar excepciones a nivel de servicio)...");
+            Order savedOrder = new Order();
+            savedOrder.setId(1);
             when(orderMapper.toEntity(any())).thenReturn(new Order());
-            when(orderJpaRepository.save(any(Order.class))).thenReturn(new Order());
+            when(orderJpaRepository.save(any(Order.class))).thenReturn(savedOrder);
             when(orderMapper.toDto(any(Order.class))).thenReturn(new OrderDto());
             OrderDto result = assertDoesNotThrow(() -> orderService.createOrder(inputDto));
             assertNotNull(result, "El pedido creado no debe ser null");
@@ -752,8 +774,10 @@ class OrderServiceHuOrd05Test {
 
             // WHEN & THEN: Sin excepción en servicio (validación delegada al controlador)
             System.out.println("   ⚙️ Invocando createOrder (no debe lanzar excepciones a nivel de servicio)...");
+            Order savedOrder = new Order();
+            savedOrder.setId(1);
             when(orderMapper.toEntity(any())).thenReturn(new Order());
-            when(orderJpaRepository.save(any(Order.class))).thenReturn(new Order());
+            when(orderJpaRepository.save(any(Order.class))).thenReturn(savedOrder);
             when(orderMapper.toDto(any(Order.class))).thenReturn(new OrderDto());
             OrderDto result = assertDoesNotThrow(() -> orderService.createOrder(inputDto));
             assertNotNull(result, "El pedido creado no debe ser null");
@@ -776,8 +800,10 @@ class OrderServiceHuOrd05Test {
 
             // WHEN & THEN: Sin excepción en servicio (validación delegada al controlador)
             System.out.println("   ⚙️ Invocando createOrder (no debe lanzar excepciones a nivel de servicio)...");
+            Order savedOrder = new Order();
+            savedOrder.setId(1);
             when(orderMapper.toEntity(any())).thenReturn(new Order());
-            when(orderJpaRepository.save(any(Order.class))).thenReturn(new Order());
+            when(orderJpaRepository.save(any(Order.class))).thenReturn(savedOrder);
             when(orderMapper.toDto(any(Order.class))).thenReturn(new OrderDto());
             OrderDto result = assertDoesNotThrow(() -> orderService.createOrder(inputDto));
             assertNotNull(result, "El pedido creado no debe ser null");
@@ -800,8 +826,10 @@ class OrderServiceHuOrd05Test {
 
             // WHEN & THEN: Sin excepción en servicio (validación delegada al controlador)
             System.out.println("   ⚙️ Invocando createOrder (no debe lanzar excepciones a nivel de servicio)...");
+            Order savedOrder = new Order();
+            savedOrder.setId(1);
             when(orderMapper.toEntity(any())).thenReturn(new Order());
-            when(orderJpaRepository.save(any(Order.class))).thenReturn(new Order());
+            when(orderJpaRepository.save(any(Order.class))).thenReturn(savedOrder);
             when(orderMapper.toDto(any(Order.class))).thenReturn(new OrderDto());
             OrderDto result = assertDoesNotThrow(() -> orderService.createOrder(inputDto));
             assertNotNull(result, "El pedido creado no debe ser null");
@@ -824,8 +852,10 @@ class OrderServiceHuOrd05Test {
 
             // WHEN & THEN: Sin excepción en servicio (validación delegada al controlador)
             System.out.println("   ⚙️ Invocando createOrder (no debe lanzar excepciones a nivel de servicio)...");
+            Order savedOrder = new Order();
+            savedOrder.setId(1);
             when(orderMapper.toEntity(any())).thenReturn(new Order());
-            when(orderJpaRepository.save(any(Order.class))).thenReturn(new Order());
+            when(orderJpaRepository.save(any(Order.class))).thenReturn(savedOrder);
             when(orderMapper.toDto(any(Order.class))).thenReturn(new OrderDto());
             OrderDto result = assertDoesNotThrow(() -> orderService.createOrder(inputDto));
             assertNotNull(result, "El pedido creado no debe ser null");

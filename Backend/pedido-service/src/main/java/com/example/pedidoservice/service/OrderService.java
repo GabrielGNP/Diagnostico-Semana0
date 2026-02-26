@@ -79,6 +79,10 @@ public class OrderService {
         // El ID es autogenerado por PostgreSQL (@GeneratedValue)
         Order savedOrder = orderJpaRepository.save(order);
 
+        if (savedOrder == null || savedOrder.getId() == null) {
+            throw new com.example.pedidoservice.exception.OrderCreationException("Failed to persist order");
+        }
+
         return orderMapper.toDto(savedOrder);
     }
 
