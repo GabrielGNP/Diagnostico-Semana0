@@ -5,7 +5,7 @@ import com.example.pedidoservice.dto.OrderDto;
 import com.example.pedidoservice.model.Order;
 import com.example.pedidoservice.model.State;
 import com.example.pedidoservice.service.OrderService;
-import com.example.pedidoservice.repository.OrderRepository;
+import com.example.pedidoservice.repository.OrderJpaRepository;
 import com.example.pedidoservice.mapper.OrderMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -43,15 +43,18 @@ class ComponentIntegrationTests {
     private OrderService orderService;
 
     @Autowired
-    private OrderRepository orderRepository;
+    private OrderJpaRepository orderRepository;
 
     @Autowired
     private OrderMapper orderMapper;
 
     @BeforeEach
     public void setUp() {
-        // Limpia el repositorio antes de cada test
-        orderRepository.findAll().forEach(order -> orderRepository.deleteById(order.getId()));
+        // Limpia el repositorio antes de cada test (soft-delete)
+        orderRepository.findAll().forEach(order -> {
+            order.setActive(false);
+            orderRepository.save(order);
+        });
     }
 
     @Test

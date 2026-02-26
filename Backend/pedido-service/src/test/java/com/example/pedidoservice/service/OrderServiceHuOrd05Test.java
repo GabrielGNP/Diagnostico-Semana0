@@ -49,7 +49,7 @@ class OrderServiceHuOrd05Test {
     private OrderMapper orderMapper;
 
     @Mock
-    private com.example.pedidoservice.repository.OrderRepository orderRepository;
+    private com.example.pedidoservice.repository.OrderJpaRepository orderRepository;
 
     @Mock
     private UserServiceProducer userServiceProducer;
