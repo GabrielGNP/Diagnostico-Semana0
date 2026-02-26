@@ -3,13 +3,10 @@ package com.example.pedidoservice.service;
 import com.example.pedidoservice.dto.OrderDto;
 import com.example.pedidoservice.dto.OrderWithUserDto;
 import com.example.pedidoservice.mapper.OrderMapper;
-import com.example.pedidoservice.messaging.UserResponse;
-import com.example.pedidoservice.service.UserEnrichmentService;
+import com.example.pedidoservice.service.OrderEnrichmentFacade;
 import com.example.pedidoservice.model.Order;
 import com.example.pedidoservice.model.State;
 import com.example.pedidoservice.repository.OrderJpaRepository;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.slf4j.Logger;
@@ -38,13 +35,13 @@ public class OrderService {
 
     private final OrderMapper orderMapper;
 
-    private final UserEnrichmentService userEnrichmentService;
+    private final OrderEnrichmentFacade orderEnrichmentFacade;
 
     public OrderService(OrderJpaRepository orderJpaRepository, OrderMapper orderMapper,
-                        UserEnrichmentService userEnrichmentService) {
+                        OrderEnrichmentFacade orderEnrichmentFacade) {
         this.orderJpaRepository = orderJpaRepository;
         this.orderMapper = orderMapper;
-        this.userEnrichmentService = userEnrichmentService;
+        this.orderEnrichmentFacade = orderEnrichmentFacade;
     }
 
     private Order findOrderByIdOrThrow(Integer id) {
@@ -140,30 +137,14 @@ public class OrderService {
          */
         // Get the order first
         OrderDto orderDto = showOrderById(orderId);
-        if (orderDto == null) {
-            return null;
+
+        // Delegate enrichment and DTO composition to the facade
+        OrderWithUserDto enriched = orderEnrichmentFacade.enrich(orderDto);
+        if (enriched == null) {
+            throw new OrderNotFoundException("No se pudo enriquecer el pedido con ID " + orderId);
         }
 
-        // Request user information via RabbitMQ using the orderId's userId
-        Integer idUser = orderDto.getIdUser();
-        UserResponse userResponse = null;
-        try {
-            userResponse = userEnrichmentService.fetchUserInfo(idUser);
-        } catch (Exception ex) {
-            // Log and continue — return order with null user if enrichment fails
-            log.warn("Error fetching user info for userId={}", idUser, ex);
-        }
-
-        // Map to OrderWithUserDto including user information
-        return new OrderWithUserDto(
-                orderDto.getId(),
-                orderDto.getName(),
-                orderDto.getDescription(),
-                orderDto.getIdUser(),
-                orderDto.getState(),
-                orderDto.isActive(),
-                userResponse
-        );
+        return enriched;
     }
 
 

@@ -8,7 +8,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 @Service
-public class UserEnrichmentService {
+public class UserEnrichmentService implements IUserEnrichmentClient {
     private static final Logger log = LoggerFactory.getLogger(UserEnrichmentService.class);
 
     private final IUserInfoClient userInfoClient;

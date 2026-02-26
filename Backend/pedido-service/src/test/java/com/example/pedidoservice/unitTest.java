@@ -5,6 +5,7 @@ import com.example.pedidoservice.dto.OrderWithUserDto;
 import com.example.pedidoservice.mapper.OrderMapper;
 import com.example.pedidoservice.messaging.UserResponse;
 import com.example.pedidoservice.service.UserEnrichmentService;
+import com.example.pedidoservice.service.OrderEnrichmentFacade;
 import com.example.pedidoservice.model.Order;
 import com.example.pedidoservice.model.State;
 import com.example.pedidoservice.repository.OrderJpaRepository;
@@ -43,8 +44,25 @@ class OrderServiceTest {
 	@Mock
 	private UserEnrichmentService userEnrichmentService;
 
+	@Mock
+	private OrderEnrichmentFacade orderEnrichmentFacade;
+
 	@InjectMocks
 	private OrderService orderService;
+
+	@BeforeEach
+	void globalSetUpFacade() {
+		// Default behavior: delegate facade.enrich to the mocked userEnrichmentService
+		when(orderEnrichmentFacade.enrich(any())).thenAnswer(invocation -> {
+			OrderDto od = invocation.getArgument(0);
+			try {
+				com.example.pedidoservice.messaging.UserResponse ur = userEnrichmentService.fetchUserInfo(od.getIdUser());
+				return new OrderWithUserDto(od.getId(), od.getName(), od.getDescription(), od.getIdUser(), od.getState(), od.isActive(), ur);
+			} catch (Exception e) {
+				return new OrderWithUserDto(od.getId(), od.getName(), od.getDescription(), od.getIdUser(), od.getState(), od.isActive(), null);
+			}
+		});
+	}
 
 	@Nested
 	class CreateOrderTests {
