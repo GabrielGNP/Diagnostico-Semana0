@@ -10,7 +10,6 @@ import com.example.pedidoservice.mapper.OrderMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Disabled;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
@@ -33,7 +32,6 @@ import static org.junit.jupiter.api.Assertions.*;
     }
 )
 @DisplayName("Component Integration Tests - Order Service")
-@Disabled("Pruebas de integración antiguas deshabilitadas temporalmente")
 class ComponentIntegrationTests {
 
     @Autowired
@@ -128,12 +126,28 @@ class ComponentIntegrationTests {
 
         // Act
         ResponseEntity<?> deleteResponse = orderController.deleteOrder(orderId);
-        ResponseEntity<?> getResponse = orderController.showOrderById(orderId);
+        ResponseEntity<?> getResponse = null;
+        try {
+            getResponse = orderController.showOrderById(orderId);
+        } catch (Exception ignored) {
+            // when calling controller method directly the exception may propagate;
+        }
 
         // Assert
         assertNotNull(deleteResponse, "Delete response should not be null");
-        assertEquals(200, deleteResponse.getStatusCode().value(), "Status code should be 200");
-        assertEquals(404, getResponse.getStatusCode().value(), "Deleted order should return 404");
+        assertEquals(204, deleteResponse.getStatusCode().value(), "Status code should be 204 No Content");
+        // After deletion the retrieval should fail (either 404 response or exception)
+        if (getResponse != null) {
+            assertEquals(404, getResponse.getStatusCode().value(), "Deleted order should return 404");
+        } else {
+            // ensure service/controller throws OrderNotFoundException when requested
+            try {
+                orderController.showOrderById(orderId);
+                fail("Expected OrderNotFoundException when fetching a deleted order");
+            } catch (com.example.pedidoservice.exception.OrderNotFoundException ex) {
+                // expected
+            }
+        }
     }
 
     @Test
@@ -181,7 +195,8 @@ class ComponentIntegrationTests {
         assertNotNull(created2, "Second order should be created");
         assertNotNull(retrieved, "Order should be retrievable");
         assertEquals(created1.getId(), retrieved.getId(), "Retrieved order ID should match");
-        assertEquals(2, orderRepository.findAll().size(), "Repository should contain exactly 2 created orders");
+        // Only active orders should be considered for this assertion
+        assertEquals(2, orderRepository.findAllActive().size(), "Repository should contain exactly 2 active created orders");
     }
 
     @Test
@@ -208,13 +223,13 @@ class ComponentIntegrationTests {
     @Test
     @DisplayName("Integration: Non-existent Order Retrieval")
     public void     testNonExistentOrderRetrieval() {
-        // Act
-        ResponseEntity<?> response = orderController.showOrderById(99999);
-
-        // Assert
-        assertNotNull(response, "Response should not be null");
-        assertEquals(404, response.getStatusCode().value(), "Status code should be 404 for non-existent order");
-        assertNull(response.getBody(), "Response body should be null for non-existent order");
+        // Assert: direct controller invocation may throw OrderNotFoundException
+        try {
+            orderController.showOrderById(99999);
+            fail("Expected OrderNotFoundException for non-existent order");
+        } catch (com.example.pedidoservice.exception.OrderNotFoundException ex) {
+            assertTrue(ex.getMessage().contains("99999"));
+        }
     }
 
     @Test
@@ -227,8 +242,6 @@ class ComponentIntegrationTests {
         order.setIdUser(8);
         order.setState(State.PROCESSING);
         order.setActive(true);
-        order.setId(100);
-
         // Act
         Order saved = orderRepository.save(order);
         var retrieved = orderRepository.findById(saved.getId());
@@ -238,6 +251,7 @@ class ComponentIntegrationTests {
         assertTrue(retrieved.isPresent(), "Order should be retrievable from repository");
         assertEquals("Persistence Test Order", retrieved.get().getName(), "Order name should persist");
         assertEquals(8, retrieved.get().getIdUser(), "User ID should persist");
+        assertNotNull(retrieved.get().getId(), "Saved order should have generated id");
     }
 
 }

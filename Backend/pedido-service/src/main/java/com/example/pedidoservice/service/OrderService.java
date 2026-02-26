@@ -46,7 +46,8 @@ public class OrderService {
 
     private Order findOrderByIdOrThrow(Integer id) {
         return orderJpaRepository.findById(id)
-                .orElseThrow(() -> new OrderNotFoundException("Pedido con ID " + id + " no encontrado"));
+            .filter(Order::isActive)
+            .orElseThrow(() -> new OrderNotFoundException("Pedido con ID " + id + " no encontrado"));
     }
 
     public OrderDto createOrder(OrderDto orderDto) {
