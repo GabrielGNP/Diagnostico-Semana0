@@ -95,14 +95,6 @@ public class OrderWithUserDto {
         this.user = user;
     }
 
-    public UserResponse getUserResponse() {
-        return user;
-    }
-
-    public void setUserResponse(UserResponse user) {
-        this.user = user;
-    }
-
     @Override
     public String toString() {
         return "OrderWithUserDto{" +

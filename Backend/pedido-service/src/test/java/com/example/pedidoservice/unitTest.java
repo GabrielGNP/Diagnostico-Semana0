@@ -563,8 +563,8 @@ class OrderServiceTest {
 			assertEquals(1, result.getId());
 			assertEquals("Laptop", result.getName());
 			assertEquals(idUser, result.getIdUser());
-			assertNotNull(result.getUserResponse());
-			assertEquals("Juan", result.getUserResponse().getName());
+			assertNotNull(result.getUser());
+			assertEquals("Juan", result.getUser().getName());
 			verify(userServiceProducer, times(1)).requestUserInfo(idUser);
 			verify(userServiceConsumer, times(1)).getUserResponse(idUser, 3000);
 		}
@@ -605,7 +605,7 @@ class OrderServiceTest {
 			assertEquals(2, result.getId());
 			assertEquals("Monitor", result.getName());
 			// userResponse debe ser null cuando falla la comunicación
-			assertNull(result.getUserResponse());
+			assertNull(result.getUser());
 			verify(userServiceProducer, times(1)).requestUserInfo(idUser);
 		}
 
@@ -631,7 +631,7 @@ class OrderServiceTest {
 			assertNotNull(result);
 			assertEquals("Keyboard", result.getName());
 			// userResponse debe ser null cuando hay timeout
-			assertNull(result.getUserResponse());
+			assertNull(result.getUser());
 			verify(userServiceProducer, times(1)).requestUserInfo(idUser);
 			verify(userServiceConsumer, times(1)).getUserResponse(idUser, 3000);
 		}
@@ -663,8 +663,8 @@ class OrderServiceTest {
 			assertEquals(State.ON_THE_STREET, result.getState());
 			assertFalse(result.isActive());
 			// Validar datos del usuario
-			assertEquals("Maria", result.getUserResponse().getName());
-			assertEquals("maria@email.com", result.getUserResponse().getMail());
+			assertEquals("Maria", result.getUser().getName());
+			assertEquals("maria@email.com", result.getUser().getMail());
 		}
 
 		// Test 6: Manejo de Excepciones
@@ -689,7 +689,7 @@ class OrderServiceTest {
 			assertEquals(5, result.getId());
 			assertEquals("Tablet", result.getName());
 			// La excepción fue capturada, userResponse es null
-			assertNull(result.getUserResponse());
+			assertNull(result.getUser());
 			// Verificar que el flujo continuó sin lanzar excepción
 			verify(userServiceProducer, times(1)).requestUserInfo(idUser);
 		}
