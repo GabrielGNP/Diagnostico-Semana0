@@ -650,8 +650,8 @@ class OrderServiceTest {
 			// Arrange
 			int orderId = 4;
 			int idUser = 10;
-			Order order = new Order(4, "Mouse", "Wireless", idUser, State.ON_THE_STREET, false);
-			OrderDto orderDto = new OrderDto(4, "Mouse", "Wireless", idUser, State.ON_THE_STREET, false);
+			Order order = new Order(4, "Mouse", "Wireless", idUser, State.ON_THE_STREET, true);
+			OrderDto orderDto = new OrderDto(4, "Mouse", "Wireless", idUser, State.ON_THE_STREET, true);
 			UserResponse userResponse = new UserResponse(idUser, "Maria", "maria@email.com", true);
 
 			when(orderRepository.findById(orderId)).thenReturn(java.util.Optional.of(order));
@@ -669,7 +669,7 @@ class OrderServiceTest {
 			assertEquals("Wireless", result.getDescription());
 			assertEquals(idUser, result.getIdUser());
 			assertEquals(State.ON_THE_STREET, result.getState());
-			assertFalse(result.isActive());
+			assertTrue(result.isActive());
 			// Validar datos del usuario
 			assertEquals("Maria", result.getUser().getName());
 			assertEquals("maria@email.com", result.getUser().getMail());
@@ -935,8 +935,8 @@ class OrderServiceTest {
 		void testShowOrderById_DataConsistency() {
 			// Arrange
 			int orderId = 7;
-			Order order = new Order(7, "Monitor", "4K Monitor", 5, State.ON_THE_STREET, false);
-			OrderDto expectedDto = new OrderDto(7, "Monitor", "4K Monitor", 5, State.ON_THE_STREET, false);
+			Order order = new Order(7, "Monitor", "4K Monitor", 5, State.ON_THE_STREET, true);
+			OrderDto expectedDto = new OrderDto(7, "Monitor", "4K Monitor", 5, State.ON_THE_STREET, true);
 
 			when(orderRepository.findById(orderId)).thenReturn(java.util.Optional.of(order));
 			when(orderMapper.toDto(order)).thenReturn(expectedDto);
@@ -951,7 +951,7 @@ class OrderServiceTest {
 			assertEquals("4K Monitor", result.getDescription());
 			assertEquals(5, result.getIdUser());
 			assertEquals(State.ON_THE_STREET, result.getState());
-			assertFalse(result.isActive());
+			assertTrue(result.isActive());
 		}
 
 		// Test 5: Diferentes IDs
