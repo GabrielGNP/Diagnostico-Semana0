@@ -57,17 +57,41 @@ public class UsuarioService implements IUsuarioService {
             return Optional.empty();
         }
         
-        // Si es un email
-        if (identificador.contains("@")) {
+        // Si es un email, buscar por email
+        if (isEmail(identificador)) {
             log.debug("Buscando usuario por email: {}", identificador);
             return obtenerPorEmail(identificador);
         }
         
-        // Si es un ID
+        // Si es un ID numérico, buscar por ID
+        return tryParseId(identificador)
+            .flatMap(id -> {
+                log.debug("Buscando usuario por ID: {}", id);
+                return obtenerPorId(id);
+            });
+    }
+
+    /**
+     * Verifica si un identificador es un email.
+     * Un identificador se considera email si contiene el carácter '@'.
+     *
+     * @param identificador String a verificar
+     * @return true si es email, false en caso contrario
+     */
+    private boolean isEmail(String identificador) {
+        return identificador != null && identificador.contains("@");
+    }
+
+    /**
+     * Intenta parsear un identificador a un ID numérico.
+     * Encapsula el manejo de excepciones de parseo.
+     *
+     * @param identificador String a parsear
+     * @return Optional con el ID si es válido, vacío si no es numérico
+     */
+    private Optional<Integer> tryParseId(String identificador) {
         try {
-            int id = Integer.parseInt(identificador);
-            log.debug("Buscando usuario por ID: {}", id);
-            return obtenerPorId(id);
+            return Optional.of(Integer.parseInt(identificador));
         } catch (NumberFormatException e) {
             log.warn("Identificador inválido: no es email ni ID numérico: {}", identificador);
             return Optional.empty();
@@ -109,11 +133,8 @@ public class UsuarioService implements IUsuarioService {
         log.debug("Validación de negocio completada para: {}", request.getEmail());
         
         // Validar que el email no exista
-        if (userRepository.findByEmail(request.getEmail()) != null) {
-            log.warn("Intento de crear usuario con email duplicado: {}", request.getEmail());
-            throw new UsuarioYaExisteException("El email " + request.getEmail() + " ya está registrado");
-        }
-        
+        validateEmailUniqueness(request.getEmail(), null);
+
         // Crear entidad
         User usuario = new User();
         usuario.setName(request.getNombre());
@@ -128,6 +149,22 @@ public class UsuarioService implements IUsuarioService {
         return guardado;
     }
     
+    /**
+     * Valida que el email no esté registrado en otro usuario.
+     *
+     * @param email Email a validar
+     * @param excludeUserId ID de usuario a excluir de la validación (null si crear)
+     * @throws UsuarioYaExisteException si el email ya está registrado
+     */
+    private void validateEmailUniqueness(String email, Integer excludeUserId) {
+        User existingUser = userRepository.findByEmail(email);
+
+        if (existingUser != null && !existingUser.getId().equals(excludeUserId)) {
+            log.warn("Email duplicado: {}", email);
+            throw new UsuarioYaExisteException("El email " + email + " ya está registrado");
+        }
+    }
+
     @Override
     public Optional<User> actualizar(int id, UpdateUsuarioRequest request) {
         log.info("Actualizando usuario ID: {}", id);
@@ -144,10 +181,8 @@ public class UsuarioService implements IUsuarioService {
         
         // Validar email no duplicado si cambió
         if (request.getEmail() != null && 
-            !request.getEmail().equals(usuarioExistente.getMail()) &&
-            userRepository.findByEmail(request.getEmail()) != null) {
-            log.warn("Email duplicado al actualizar usuario {}: {}", id, request.getEmail());
-            throw new UsuarioYaExisteException("El email " + request.getEmail() + " ya está registrado");
+            !request.getEmail().equals(usuarioExistente.getMail())) {
+            validateEmailUniqueness(request.getEmail(), id);
         }
         
         // Actualizar campos
