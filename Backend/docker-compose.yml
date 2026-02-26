@@ -11,8 +11,8 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./Backend/usuario-service/init-db/01-init-users.sql:/docker-entrypoint-initdb.d/01-init-users.sql:ro
-      - ./Backend/pedido-service/init-db/01-init-orders.sql:/docker-entrypoint-initdb.d/01-init-orders.sql:ro
+      - ../Backend/usuario-service/init-db/01-init-users.sql:/docker-entrypoint-initdb.d/01-init-users.sql:ro
+      - ../Backend/pedido-service/init-db/01-init-orders.sql:/docker-entrypoint-initdb.d/01-init-orders.sql:ro
     networks:
       - microservicios-network
     healthcheck:
@@ -45,7 +45,7 @@ services:
       - microservicios-network
 
   usuario-service:
-    build: ./Backend/usuario-service
+    build: ../Backend/usuario-service
     ports:
       - "8083:8081"
     environment:
@@ -65,7 +65,7 @@ services:
       - microservicios-network
 
   pedido-service:
-    build: ./Backend/pedido-service
+    build: ../Backend/pedido-service
     ports:
       - "8082:8080"
     environment:
@@ -81,16 +81,6 @@ services:
         condition: service_healthy
       rabbitmq:
         condition: service_started
-    networks:
-      - microservicios-network
-
-  frontend:
-    build: ./Frontend
-    ports:
-      - "3000:80"
-    depends_on:
-      - usuario-service
-      - pedido-service
     networks:
       - microservicios-network
 
