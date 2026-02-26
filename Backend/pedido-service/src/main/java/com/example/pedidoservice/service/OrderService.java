@@ -10,6 +10,7 @@ import com.example.pedidoservice.model.Order;
 import com.example.pedidoservice.model.State;
 import com.example.pedidoservice.repository.OrderJpaRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.slf4j.Logger;
@@ -47,7 +48,8 @@ public class OrderService {
     @Autowired
     private UserServiceConsumer userServiceConsumer;
 
-    private static final long USER_REQUEST_TIMEOUT = 3000; // 3 seconds timeout
+    @Value("${user.service.timeout:3000}")
+    private long userRequestTimeout; // configurable timeout for user service requests
 
     @Autowired
     public OrderService(OrderJpaRepository orderJpaRepository, OrderMapper orderMapper,
@@ -161,7 +163,7 @@ public class OrderService {
         try {
             userServiceProducer.requestUserInfo(idUser);
             // Wait for user response
-            userResponse = userServiceConsumer.getUserResponse(idUser, USER_REQUEST_TIMEOUT);
+            userResponse = userServiceConsumer.getUserResponse(idUser, userRequestTimeout);
         } catch (Exception ex) {
             // Log and continue — return order with null user if messaging fails
             log.warn("Error requesting/receiving user info for userId={}", idUser, ex);

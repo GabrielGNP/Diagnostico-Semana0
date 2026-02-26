@@ -524,6 +524,8 @@ private static final long USER_REQUEST_TIMEOUT = 3000; // 3 seconds timeout
 ```java
 @Value("${user.service.timeout:3000}")
 private long userRequestTimeout;
+
+**Estado:** REFACTORIZADO — el timeout `USER_REQUEST_TIMEOUT` fue externalizado a `user.service.timeout` en `application.properties` y `OrderService` ahora usa `@Value`.
 ```
 
 ---

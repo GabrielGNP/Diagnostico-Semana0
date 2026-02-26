@@ -553,7 +553,7 @@ class OrderServiceTest {
 
 			when(orderRepository.findById(orderId)).thenReturn(java.util.Optional.of(order));
 			when(orderMapper.toDto(order)).thenReturn(orderDto);
-			when(userServiceConsumer.getUserResponse(idUser, 3000)).thenReturn(userResponse);
+			when(userServiceConsumer.getUserResponse(eq(idUser), anyLong())).thenReturn(userResponse);
 
 			// Act
 			OrderWithUserDto result = orderService.getOrderWithUserInfo(orderId);
@@ -566,7 +566,7 @@ class OrderServiceTest {
 			assertNotNull(result.getUser());
 			assertEquals("Juan", result.getUser().getName());
 			verify(userServiceProducer, times(1)).requestUserInfo(idUser);
-			verify(userServiceConsumer, times(1)).getUserResponse(idUser, 3000);
+			verify(userServiceConsumer, times(1)).getUserResponse(eq(idUser), anyLong());
 		}
 
 		// Test 2: Orden No Encontrada
@@ -622,7 +622,7 @@ class OrderServiceTest {
 			when(orderMapper.toDto(order)).thenReturn(orderDto);
 			doNothing().when(userServiceProducer).requestUserInfo(idUser);
 			// Simular timeout retornando null (comportamiento real tras timeout)
-			when(userServiceConsumer.getUserResponse(idUser, 3000)).thenReturn(null);
+			when(userServiceConsumer.getUserResponse(eq(idUser), anyLong())).thenReturn(null);
 
 			// Act
 			OrderWithUserDto result = orderService.getOrderWithUserInfo(orderId);
@@ -633,7 +633,7 @@ class OrderServiceTest {
 			// userResponse debe ser null cuando hay timeout
 			assertNull(result.getUser());
 			verify(userServiceProducer, times(1)).requestUserInfo(idUser);
-			verify(userServiceConsumer, times(1)).getUserResponse(idUser, 3000);
+			verify(userServiceConsumer, times(1)).getUserResponse(eq(idUser), anyLong());
 		}
 
 		// Test 5: Mapeo Correcto
@@ -648,7 +648,7 @@ class OrderServiceTest {
 
 			when(orderRepository.findById(orderId)).thenReturn(java.util.Optional.of(order));
 			when(orderMapper.toDto(order)).thenReturn(orderDto);
-			when(userServiceConsumer.getUserResponse(idUser, 3000)).thenReturn(userResponse);
+			when(userServiceConsumer.getUserResponse(eq(idUser), anyLong())).thenReturn(userResponse);
 
 			// Act
 			OrderWithUserDto result = orderService.getOrderWithUserInfo(orderId);
@@ -679,7 +679,7 @@ class OrderServiceTest {
 			when(orderRepository.findById(orderId)).thenReturn(java.util.Optional.of(order));
 			when(orderMapper.toDto(order)).thenReturn(orderDto);
 			doNothing().when(userServiceProducer).requestUserInfo(idUser);
-			when(userServiceConsumer.getUserResponse(idUser, 3000)).thenThrow(new IllegalStateException("Invalid user state"));
+			when(userServiceConsumer.getUserResponse(eq(idUser), anyLong())).thenThrow(new IllegalStateException("Invalid user state"));
 
 			// Act (debe no lanzar excepción)
 			OrderWithUserDto result = orderService.getOrderWithUserInfo(orderId);
