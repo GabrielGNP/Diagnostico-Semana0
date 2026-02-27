@@ -1,31 +1,30 @@
 package com.example.usuarioservice.repository;
 
 import com.example.usuarioservice.model.User;
-import com.example.usuarioservice.service.UserRepository;
+import com.example.usuarioservice.persistence.UserRepository;
 import org.junit.jupiter.api.*;
 import java.util.*;
-import java.io.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class UserRepositoryTest {
     private UserRepository userRepository;
-    private final String testFilePath = "test-users.json";
+
+    @org.junit.jupiter.api.io.TempDir
+    java.nio.file.Path tempDir;
 
     @BeforeEach
     void setUp() throws Exception {
-        // Usar un archivo temporal para pruebas
         userRepository = new UserRepository();
-        // Limpiar archivo antes de cada test
-        File file = new File(testFilePath);
-        if (file.exists()) file.delete();
+        java.nio.file.Path tempFile = tempDir.resolve("users-test.json");
+        userRepository.setFilePathForTests(tempFile.toString());
+        userRepository.initialize();
+        userRepository.deleteAll();
     }
 
     @AfterEach
     void tearDown() {
-        // Eliminar archivo temporal después de cada test
-        File file = new File(testFilePath);
-        if (file.exists()) file.delete();
+        // no-op: tempDir cleanup handled by JUnit
     }
 
     @Test

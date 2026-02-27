@@ -14,12 +14,6 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-/**
- * JPA implementation of IUserPersistence.
- * Uses PostgreSQL via Spring Data JPA.
- * 
- * @Primary annotation ensures this is used instead of the JSON file-based repository.
- */
 @Repository
 @Primary
 @RequiredArgsConstructor
@@ -98,22 +92,47 @@ public class UserJpaPersistence implements IUserPersistence {
         log.debug("Partially updating user ID: {}", id);
         return jpaRepository.findById(id)
                 .map(existing -> {
-                    if (updates.containsKey("name")) {
-                        existing.setName((String) updates.get("name"));
-                    }
-                    if (updates.containsKey("password")) {
-                        existing.setPassword((String) updates.get("password"));
-                    }
-                    if (updates.containsKey("mail")) {
-                        existing.setMail((String) updates.get("mail"));
-                    }
-                    if (updates.containsKey("active")) {
-                        existing.setActive(Boolean.parseBoolean(String.valueOf(updates.get("active"))));
-                    }
+                    applyUpdates(existing, updates);
                     UserEntity updated = jpaRepository.save(existing);
                     return mapper.toDomain(updated);
                 })
                 .orElse(null);
+    }
+
+    /**
+     * Aplica los updates a una entidad existente.
+     * Itera sobre los campos presentes en el mapa de updates y los aplica a la entidad.
+     *
+     * @param entity Entidad a actualizar
+     * @param updates Mapa de campos a actualizar con sus valores
+     */
+    private void applyUpdates(UserEntity entity, Map<String, Object> updates) {
+        if (updates.containsKey("name")) {
+            entity.setName((String) updates.get("name"));
+        }
+        if (updates.containsKey("password")) {
+            entity.setPassword((String) updates.get("password"));
+        }
+        if (updates.containsKey("mail")) {
+            entity.setMail((String) updates.get("mail"));
+        }
+        if (updates.containsKey("active")) {
+            entity.setActive(parseBoolean(updates.get("active")));
+        }
+    }
+
+    /**
+     * Parsea un objeto a booleano de forma segura.
+     * Maneja los casos donde el valor puede ser Boolean, String o null.
+     *
+     * @param value Valor a parsear
+     * @return Booleano parseado, o false si no es válido
+     */
+    private boolean parseBoolean(Object value) {
+        if (value instanceof Boolean) {
+            return (Boolean) value;
+        }
+        return Boolean.parseBoolean(String.valueOf(value));
     }
 
     @Override
@@ -126,5 +145,12 @@ public class UserJpaPersistence implements IUserPersistence {
         }
         log.warn("User {} not found for deletion", id);
         return false;
+    }
+
+    @Override
+    public void deleteAll() {
+        log.info("Deleting all users");
+        jpaRepository.deleteAll();
+        log.info("All users deleted successfully");
     }
 }
