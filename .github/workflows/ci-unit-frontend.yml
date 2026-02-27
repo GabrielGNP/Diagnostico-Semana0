@@ -1,4 +1,4 @@
- name: frontend - Unit Tests
+name: frontend - Unit Tests
 on:
   workflow_call:
 
