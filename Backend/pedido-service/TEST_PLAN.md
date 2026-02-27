@@ -38,10 +38,7 @@ El servicio `pedido-service` gestiona órdenes de compra con persistencia Postgr
 | `UserServiceConsumer` | Messaging | 0% (25 inst) | 🟡 ALTO |
 | `RabbitMQUserInfoClient` | Messaging | 0% (33 inst) | 🟡 ALTO |
 | `OrderEnrichmentFacade` | Service | 6.7% (56 inst missed) | 🟡 ALTO |
-| `UserEnrichmentService` | Service | 16% (21 inst missed) | 🟡 ALTO |mvn -f Backend/pedido-service/pom.xml -Dtest=OrderStateUpdateDtoTest test
-mvn -f Backend/pedido-service/pom.xml -Dtest=UserRequestTest test
-mvn -f Backend/pedido-service/pom.xml -Dtest=OrderWithUserDtoTest test
-mvn -f Backend/pedido-service/pom.xml -Dtest=ErrorResponseTest test
+| `UserEnrichmentService` | Service | 16% (21 inst missed) | 🟡 ALTO |
 | `ErrorResponse` + `Builder` | DTO | 0% (119 inst) | 🟢 MEDIO |
 | `OrderStateUpdateDto` | DTO | 0% (16 inst) | 🟢 MEDIO |
 | `UserRequest` | DTO | 0% (20 inst) | 🟢 MEDIO |
