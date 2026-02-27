@@ -10,20 +10,13 @@ import org.springframework.web.filter.CorsFilter;
 @Configuration
 public class CorsConfig {
 
-    @Value("${app.cors.allowed-origins:http://localhost:3001,http://localhost:3000,http://localhost:5173}")
-    private String allowedOrigins;
-
     @Bean
     public CorsFilter corsFilter() {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(false);
-        
-        // Parse origins from property
-        String[] origins = allowedOrigins.split(",");
-        for (String origin : origins) {
-            config.addAllowedOrigin(origin.trim());
-        }
-        
+        config.addAllowedOrigin("http://localhost:3001");
+        config.addAllowedOrigin("http://localhost:3000");
+        config.addAllowedOrigin("http://localhost:5173");
         config.addAllowedHeader("*");
         config.addAllowedMethod("GET");
         config.addAllowedMethod("POST");
