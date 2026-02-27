@@ -5,7 +5,7 @@ import { Usuario } from '../interfaces';
  * Retrieve all users from the usuario-service.
  */
 export const getUsers = async (): Promise<Usuario[]> => {
-    return await userApi.get<Usuario[]>('/api/v1/usuarios');
+    return await userApi.get<Usuario[]>('/users');
 };
 
 /**
@@ -13,7 +13,7 @@ export const getUsers = async (): Promise<Usuario[]> => {
  * @param email user's email address
  */
 export const getUserByEmail = async (email: string): Promise<Usuario> => {
-    return await userApi.get<Usuario>(`/api/v1/usuarios/${encodeURIComponent(email)}`);
+    return await userApi.get<Usuario>(`/users/${encodeURIComponent(email)}`);
 };
 
 /**
@@ -25,5 +25,5 @@ export const addUser = async (payload: {
     password: string;
     active: boolean;
 }): Promise<Usuario> => {
-    return await userApi.post<Usuario>('/api/v1/usuarios', payload);
+    return await userApi.post<Usuario>('/users', payload);
 };

@@ -21,18 +21,18 @@ import java.util.stream.Collectors;
  * Responsabilidad única: Mapear requests HTTP a casos de uso del servicio.
  */
 @RestController
-@RequestMapping("/v1/usuarios")
+@RequestMapping("/users")
 @RequiredArgsConstructor
 @Slf4j
 @CrossOrigin(origins = "${app.cors.allowed-origins:http://localhost:3001,http://localhost:3000}")
 public class UsuarioController {
 
-    private static final String API_PATH = "/api/v1/usuarios";
+    private static final String API_PATH = "/users";
     
     private final IUsuarioService usuarioService;
     
     /**
-     * GET /api/v1/usuarios
+     * GET /users
      * Obtiene todos los usuarios
      */
     @GetMapping
@@ -45,7 +45,7 @@ public class UsuarioController {
     }
     
     /**
-     * GET /api/v1/usuarios/{identificador}
+     * GET /users/{identificador}
      * Obtiene un usuario por ID o email
      */
     @GetMapping("/{identificador}")
@@ -62,7 +62,7 @@ public class UsuarioController {
     }
     
     /**
-     * POST /api/v1/usuarios
+     * POST /users
      * Crea un nuevo usuario
      */
     @PostMapping
@@ -78,7 +78,7 @@ public class UsuarioController {
     }
     
     /**
-     * PUT /api/v1/usuarios/{id}
+     * PUT /users/{id}
      * Actualiza completamente un usuario
      */
     @PutMapping("/{id}")
@@ -94,7 +94,7 @@ public class UsuarioController {
     }
     
     /**
-     * PATCH /api/v1/usuarios/{id}
+     * PATCH /users/{id}
      * Actualiza parcialmente un usuario
      */
     @PatchMapping("/{id}")
@@ -110,7 +110,7 @@ public class UsuarioController {
     }
     
     /**
-     * DELETE /api/v1/usuarios/{id}
+     * DELETE /users/{id}
      * Elimina un usuario
      */
     @DeleteMapping("/{id}")

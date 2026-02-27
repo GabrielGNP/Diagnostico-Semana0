@@ -14,13 +14,13 @@ Usaremos `@workspace/explain` para generar explicaciones y mantener este documen
 - Integración y pruebas rápidas con RabbitMQ y Postgres (entorno local con `docker compose`).
 
 **Servicios principales (puertos locales):**
-- usuario-service: http://localhost:8083  (endpoints bajo `/api/v1/usuarios`)
+- usuario-service: http://localhost:8083  (endpoints bajo `/users`)
 - pedido-service: http://localhost:8082  (endpoints bajo `/order/*`)
 - RabbitMQ management: http://localhost:15672
 - Frontend (opcional): http://localhost:3000
 
 **Endpoints útiles:**
-- `GET /api/v1/usuarios` — listar usuarios
+- `GET /users` — listar usuarios
 - `GET /order/all` — listar pedidos
 
 **Comandos rápidos (desde la raíz del repo):**
@@ -62,7 +62,7 @@ Arquitectura (vista simple):
 ```
 Frontend (Vite)  <--HTTP-->  pedido-service  <--RabbitMQ-->  usuario-service
 	|                                 |                             |
-	|--API clients (TS)               |--Order API (/order/*)       |--User API (/api/v1/usuarios)
+	|--API clients (TS)               |--Order API (/order/*)       |--User API (/users)
 	|                                 |                             |
 	`-> interactúa con backend        `-> produce/consume mensajes   `-> responde a requests
 Postgres (5432) <-persist-> pedido-service, usuario-service
@@ -70,7 +70,7 @@ RabbitMQ (15672/5672) -> user-exchange -> user-request/response-queues
 ```
 
 Componentes clave:
-- `usuario-service` (Spring Boot): puerto `8083`, endpoints bajo `/api/v1/usuarios`, DTOs RabbitMQ.
+- `usuario-service` (Spring Boot): puerto `8083`, endpoints bajo `/users`, DTOs RabbitMQ.
 - `pedido-service` (Spring Boot): puerto `8082`, endpoints bajo `/order/*`, envía `UserRequest` y espera `UserResponse`.
 - `Frontend` (Vite + TS): puerto `3000`, clientes en `Frontend/src/services`.
 
@@ -86,7 +86,7 @@ Checks y comandos útiles:
 docker compose up -d
 
 # Verificar endpoints
-curl -fsS http://localhost:8083/api/v1/usuarios
+curl -fsS http://localhost:8083/users
 curl -fsS http://localhost:8082/order/all
 
 # Logs y debug

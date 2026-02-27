@@ -39,7 +39,7 @@ class GlobalExceptionHandlerTest {
     void handleUsuarioNotFound_shouldReturn404() {
         // Given
         UsuarioNotFoundException exception = new UsuarioNotFoundException("Usuario no encontrado con ID: 1");
-        when(webRequest.getDescription(false)).thenReturn("uri=/api/v1/usuarios/1");
+        when(webRequest.getDescription(false)).thenReturn("uri=/users/1");
 
         // When
         ResponseEntity<ErrorResponse> response = exceptionHandler.handleUsuarioNotFound(exception, webRequest);
@@ -57,7 +57,7 @@ class GlobalExceptionHandlerTest {
     void handleUsuarioYaExiste_shouldReturn409() {
         // Given
         UsuarioYaExisteException exception = new UsuarioYaExisteException("Email ya está registrado");
-        when(webRequest.getDescription(false)).thenReturn("uri=/api/v1/usuarios");
+        when(webRequest.getDescription(false)).thenReturn("uri=/users");
 
         // When
         ResponseEntity<ErrorResponse> response = exceptionHandler.handleUsuarioYaExiste(exception, webRequest);
@@ -74,7 +74,7 @@ class GlobalExceptionHandlerTest {
     void handleValidationException_shouldReturn400() {
         // Given
         ValidationException exception = new ValidationException("Validación fallida");
-        when(webRequest.getDescription(false)).thenReturn("uri=/api/v1/usuarios");
+        when(webRequest.getDescription(false)).thenReturn("uri=/users");
 
         // When
         ResponseEntity<ErrorResponse> response = exceptionHandler.handleValidationException(exception, webRequest);
@@ -100,7 +100,7 @@ class GlobalExceptionHandlerTest {
             mock(org.springframework.core.MethodParameter.class),
             bindingResult
         );
-        when(webRequest.getDescription(false)).thenReturn("uri=/api/v1/usuarios");
+        when(webRequest.getDescription(false)).thenReturn("uri=/users");
 
         // When
         ResponseEntity<ErrorResponse> response = exceptionHandler.handleValidationErrors(exception, webRequest);
@@ -117,7 +117,7 @@ class GlobalExceptionHandlerTest {
     void handleGlobalException_shouldReturn500() {
         // Given
         Exception exception = new RuntimeException("Error inesperado");
-        when(webRequest.getDescription(false)).thenReturn("uri=/api/v1/usuarios");
+        when(webRequest.getDescription(false)).thenReturn("uri=/users");
 
         // When
         ResponseEntity<ErrorResponse> response = exceptionHandler.handleGlobalException(exception, webRequest);
@@ -134,7 +134,7 @@ class GlobalExceptionHandlerTest {
     void errorResponse_shouldIncludeTimestamp() {
         // Given
         UsuarioNotFoundException exception = new UsuarioNotFoundException("Test");
-        when(webRequest.getDescription(false)).thenReturn("uri=/api/v1/usuarios");
+        when(webRequest.getDescription(false)).thenReturn("uri=/users");
 
         // When
         ResponseEntity<ErrorResponse> response = exceptionHandler.handleUsuarioNotFound(exception, webRequest);
@@ -149,14 +149,14 @@ class GlobalExceptionHandlerTest {
     void errorResponse_shouldIncludePath() {
         // Given
         UsuarioNotFoundException exception = new UsuarioNotFoundException("Test");
-        when(webRequest.getDescription(false)).thenReturn("uri=/api/v1/usuarios/1");
+        when(webRequest.getDescription(false)).thenReturn("uri=/users/1");
 
         // When
         ResponseEntity<ErrorResponse> response = exceptionHandler.handleUsuarioNotFound(exception, webRequest);
 
         // Then
         assertNotNull(response.getBody());
-        assertEquals("/api/v1/usuarios/1", response.getBody().getPath());
+        assertEquals("/users/1", response.getBody().getPath());
     }
 
     @Test

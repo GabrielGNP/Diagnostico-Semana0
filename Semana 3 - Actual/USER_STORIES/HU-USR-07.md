@@ -16,6 +16,19 @@ Ensure logging, documentation, and actual API paths are synchronized to eliminat
 
 ---
 
+# ✅ STATUS: PARTIALLY COMPLETED (2026-02-27)
+
+## Path Consistency: ✅ RESOLVED
+- **Migration completed**: Ruta simplificada de `/api/v1/usuarios` a `/users`
+- `server.servlet.context-path=/api` fue **eliminado**
+- `@RequestMapping("/users")` y `API_PATH = "/users"` ahora son consistentes
+- Frontend actualizado en `usuarioService.ts`
+
+## Location Header: ⏳ PENDING
+- `POST /users` aún no retorna header `Location`
+
+---
+
 # 2️⃣ USER STORY
 
 ## Story ID: HU-USR-07  
@@ -32,26 +45,32 @@ Have consistent paths across logs, documentation, and actual endpoints; receive 
 Eliminate debugging confusion caused by path mismatches in logs vs actual requests; follow REST best practices for created resources.
 
 ### Detailed Description  
-Currently in usuario-service:
-- `@RequestMapping` is set to `/v1/usuarios`
-- `API_PATH` constant used in logs is `/api/v1/usuarios`
-- Context path in `application.properties` is `/api`
-- Actual full path is `/api/v1/usuarios`
 
-The `API_PATH` constant should match the relative path `/v1/usuarios` (without context path) or be dynamically resolved to avoid hardcoded discrepancies.
+**BEFORE (resolved):**
+- `@RequestMapping` was `/v1/usuarios`
+- `API_PATH` constant was `/api/v1/usuarios`
+- Context path in `application.properties` was `/api`
+- Full path was `/api/v1/usuarios`
 
-Additionally, `POST /v1/usuarios` returns `201 Created` but lacks the `Location` header pointing to the created resource.
+**AFTER (current state):**
+- `@RequestMapping("/users")` - simplified path
+- `API_PATH = "/users"` - consistent with mapping
+- No context-path - direct `/users` endpoint
+- Full path is now: `/users`
+
+**Remaining work:**
+`POST /users` returns `201 Created` but still lacks the `Location` header pointing to the created resource.
 
 ---
 
 ### 🔹 Functional Requirements
 
-| ID | Requirement |
-|----|-------------|
-| FR-USR-07-01 | Unify `API_PATH` constant to match `@RequestMapping` value (`/v1/usuarios`) |
-| FR-USR-07-02 | Alternatively, update logs to use request URI from `HttpServletRequest` instead of hardcoded constant |
-| FR-USR-07-03 | `POST /v1/usuarios` must return `Location` header with value `/api/v1/usuarios/{id}` |
-| FR-USR-07-04 | Audit all log statements using `API_PATH` to ensure correct path is displayed |
+| ID | Requirement | Status |
+|----|-------------|--------|
+| FR-USR-07-01 | Unify `API_PATH` constant to match `@RequestMapping` value | ✅ DONE - Unified at `/users` |
+| FR-USR-07-02 | Update logs to use consistent path | ✅ DONE - All logs use `/users` |
+| FR-USR-07-03 | `POST /users` must return `Location` header with value `/users/{id}` | ⏳ PENDING |
+| FR-USR-07-04 | Audit all log statements using `API_PATH` to ensure correct path | ✅ DONE |
 
 ---
 
@@ -70,29 +89,29 @@ Additionally, `POST /v1/usuarios` returns `201 Created` but lacks the `Location`
 
 **CA-01: User creation returns Location header**
 - **Given** a valid user payload with name, email, password
-- **When** I send `POST /api/v1/usuarios`
-- **Then** I receive HTTP `201 Created` with `Location: /api/v1/usuarios/{id}` header
+- **When** I send `POST /users`
+- **Then** I receive HTTP `201 Created` with `Location: /users/{id}` header
 
 **CA-02: Location header contains correct ID**
 - **Given** I create a new user
 - **When** I follow the `Location` header URL with `GET`
 - **Then** I receive HTTP `200 OK` with the created user data
 
-**CA-03: Logs show correct path**
-- **Given** I send `GET /api/v1/usuarios`
+**CA-03: Logs show correct path** ✅ VERIFIED
+- **Given** I send `GET /users`
 - **When** request is logged by the controller
-- **Then** log entry shows `/api/v1/usuarios` or `/v1/usuarios` (consistent with mapping)
+- **Then** log entry shows `/users` (consistent with mapping)
 
 #### Negative Scenarios
 
 **CA-04: Duplicate email returns 409 without Location**
 - **Given** user with email "test@test.com" already exists
-- **When** I send `POST /api/v1/usuarios` with same email
+- **When** I send `POST /users` with same email
 - **Then** I receive HTTP `409 Conflict` without `Location` header
 
 **CA-05: Invalid payload returns 400 without Location**
 - **Given** a user payload missing required `name` field
-- **When** I send `POST /api/v1/usuarios`
+- **When** I send `POST /users`
 - **Then** I receive HTTP `400 Bad Request` without `Location` header
 
 ---
@@ -112,7 +131,7 @@ Additionally, `POST /v1/usuarios` returns `201 Created` but lacks the `Location`
 
 # 4️⃣ ASSUMPTIONS
 
-- Context path `/api` will remain unchanged
+- ~~Context path `/api` will remain unchanged~~ **REMOVED** - No context-path needed
 - `ServletUriComponentsBuilder` is available for dynamic URI construction
 - Existing `GlobalExceptionHandler` will not interfere with `Location` header
 
@@ -154,7 +173,7 @@ public ResponseEntity<UserDTO> createUser(@Valid @RequestBody CreateUserDTO dto)
 **Files to Review:**
 - `Backend/usuario-service/src/main/java/com/example/usuarioservice/controller/UsuarioController.java`
 
-**Current Path Configuration:**
-- `@RequestMapping("/v1/usuarios")` in controller
-- `server.servlet.context-path=/api` in application.properties
-- Full path: `/api/v1/usuarios`
+**Current Path Configuration (UPDATED 2026-02-27):**
+- `@RequestMapping("/users")` in controller
+- No context-path (removed `server.servlet.context-path`)
+- Full path: `/users`
