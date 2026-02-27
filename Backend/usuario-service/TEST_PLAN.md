@@ -1,604 +1,798 @@
-# 📋 TEST PLAN - usuario-service
+# TEST_PLAN.md - Usuario Service
 
-**Proyecto:** usuario-service  
-**Fecha Análisis:** 26 de febrero de 2026  
-**Cobertura Actual:** 49%  
-**Meta:** >80%  
-**Gap:** +31 puntos porcentuales
+## 1. Overview
 
----
+| Campo | Valor |
+|-------|-------|
+| **Versión del documento** | 1.0 |
+| **Fecha** | 26 de febrero de 2026 |
+| **Microservicio** | usuario-service |
+| **Cobertura actual (JaCoCo)** | 49% (1.464/2.907 instrucciones) |
+| **Meta de cobertura** | ≥80% |
+| **Instrucciones a cubrir** | ~893 adicionales |
 
-## 🎯 RESUMEN EJECUTIVO
+### Resumen de Estado Actual
 
-### Estado Actual (JaCoCo Report)
+El servicio `usuario-service` gestiona órdenes de compra con persistencia PostgreSQL y comunicación asíncrona vía RabbitMQ con `usuario-service`. Actualmente solo `OrderService` tiene cobertura significativa (93.6%), mientras que componentes críticos como `OrderController`, `GlobalExceptionHandler`, y toda la capa de mensajería están **sin cobertura (0%)**.
 
-```
-Cobertura Total:           49% (1.464 de 2.907 instrucciones)
-Cobertura de Branches:     25% (59 de 229 branches)
-Métodos sin cubrir:        74 de 167 métodos
-Líneas sin cubrir:         374 de 743 líneas
-Clases sin cubrir:         5 de 30 clases
-```
+### Riesgos Brownfield Identificados
 
-### Objetivo del Plan
-Incrementar la cobertura del **49% al 80%+** mediante tests estratégicos enfocados en las áreas con mayor gap de cobertura.
-
----
-
-## 🔴 PRIORIZACIÓN POR IMPACTO
-
-### Nivel CRÍTICO (4-12% cobertura)
-
-**1. com.example.usuarioservice.messaging - 4%**
-- Instrucciones perdidas: 132
-- Branches perdidos: 4 (0% cobertura)
-- Métodos sin cubrir: 18 de 20
-- **Impacto estimado:** +4-5% cobertura total
-
-**2. com.example.usuarioservice.validation - 12%**
-- Instrucciones perdidas: 425 (Mayor gap del proyecto)
-- Branches perdidos: 60 (0% cobertura)
-- Métodos sin cubrir: 17 de 25
-- **Impacto estimado:** +14-16% cobertura total
-
-### Nivel ALTO (33-38% cobertura)
-
-**3. com.example.usuarioservice.mapper - 33%**
-- Instrucciones perdidas: 85
-- Branches perdidos: 16 (11% cobertura)
-- Métodos sin cubrir: 3 de 7
-- **Impacto estimado:** +3% cobertura total
-
-**4. com.example.usuarioservice.persistence - 38%**
-- Instrucciones perdidas: 680 (Segunda mayor brecha)
-- Branches perdidos: 65 (18% cobertura)
-- Métodos sin cubrir: 28 de 50
-- **Impacto estimado:** +23% cobertura total
-
-### Nivel MEDIO (73% cobertura)
-
-**5. com.example.usuarioservice.config - 73%**
-- Instrucciones perdidas: 91
-- Branches perdidos: 13 (31% cobertura)
-- Métodos sin cubrir: 4 de 24
-- **Impacto estimado:** +3% cobertura total
+- Código legacy con tests de integración deshabilitados (`@Disabled`)
+- Dependencias de RabbitMQ sin mocks adecuados
+- GlobalExceptionHandler sin cobertura = errores no validados en producción
+- OrderController 0% = endpoints HTTP sin validación de comportamiento
 
 ---
 
-## 📅 PLAN DE ACCIÓN - 5 FASES
+## 2. Alcance
 
-### FASE 1: Validation Tests (CRÍTICO) - Semana 1
+### 2.1 En Alcance
 
-**Objetivo:** Llevar validation de 12% → 85%
+| Componente | Tipo | Cobertura Actual | Prioridad |
+|------------|------|------------------|-----------|
+| `OrderController` | Controller | 0% (76 inst) | 🔴 CRÍTICO |
+| `GlobalExceptionHandler` | Exception Handler | 0% (212 inst) | 🔴 CRÍTICO |
+| `OrderMapper` | Mapper | 0% (43 inst) | 🟡 ALTO |
+| `UserResponseCache` | Messaging | 0% (86 inst) | 🟡 ALTO |
+| `UserServiceProducer` | Messaging | 0% (27 inst) | 🟡 ALTO |
+| `UserServiceConsumer` | Messaging | 0% (25 inst) | 🟡 ALTO |
+| `RabbitMQUserInfoClient` | Messaging | 0% (33 inst) | 🟡 ALTO |
+| `OrderEnrichmentFacade` | Service | 6.7% (56 inst missed) | 🟡 ALTO |
+| `UserEnrichmentService` | Service | 16% (21 inst missed) | 🟡 ALTO |
+| `ErrorResponse` + `Builder` | DTO | 0% (119 inst) | 🟢 MEDIO |
+| `OrderStateUpdateDto` | DTO | 0% (16 inst) | 🟢 MEDIO |
+| `UserRequest` | DTO | 0% (20 inst) | 🟢 MEDIO |
+| `OrderWithUserDto` | DTO | 47.9% (49 inst missed) | 🟢 MEDIO |
 
-**Clases a testear:**
-- `ValidationContext.java`
-- `LenientValidationStrategy.java`
-- `StrictValidationStrategy.java`
-- `ValidationException.java`
+### 2.2 Fuera de Alcance
 
-**Tests a crear (~25 tests):**
-
-1. **ValidationContextTest.java** (8 tests)
-   - Strategy selection (LENIENT, STRICT)
-   - validateForCreation() delegation
-   - validateForUpdate() delegation
-   - Invalid strategy handling
-   - Strategy not found exception
-   - Multiple strategies registered
-   - Strategy switching
-   - Null request handling
-
-2. **LenientValidationStrategyTest.java** (8 tests)
-   - Valid CreateUsuarioRequest (nombre, email, contraseña valid)
-   - Invalid nombre (null, empty, too short/long)
-   - Invalid email (null, invalid format)
-   - Invalid contraseña (null, too short)
-   - Valid UpdateUsuarioRequest (partial fields)
-   - Empty UpdateUsuarioRequest allowed
-   - Null fields in update allowed
-   - Edge cases (special characters, unicode)
-
-3. **StrictValidationStrategyTest.java** (8 tests)
-   - Similar a Lenient pero con reglas más estrictas
-   - Strong password validation (mayúscula, minúscula, número, especial)
-   - Email domain whitelist
-   - Nombre no permite números ni caracteres especiales
-   - All fields required en create
-   - UpdateUsuarioRequest requires at least one field
-   - Length validation más restrictiva
-   - Character set validation
-
-4. **ValidationExceptionTest.java** (1 test)
-   - Exception message and cause handling
-
-**Estimación:** 6-8 horas  
-**Ganancia esperada:** +14-16% cobertura
+| Componente | Razón |
+|------------|-------|
+| `Order` (model) | 100% cobertura |
+| `State` (enum) | 100% cobertura |
+| `OrderDto` | 100% cobertura |
+| `OrderNotFoundException` | 100% cobertura |
+| `OrderService` | 93.6% cobertura — solo 11 inst missed |
+| `RabbitMQConfig` | Configuración declarativa de beans |
+| `CorsConfig` | Configuración declarativa |
+| `RabbitMQMessageConverterConfig` | Configuración declarativa |
+| `PedidoServiceApplication` | Clase main de Spring Boot |
 
 ---
 
-### FASE 2: Messaging Tests (CRÍTICO) - Semana 1
+## 3. Niveles de Prueba
 
-**Objetivo:** Llevar messaging de 4% → 80%
+### 3.1 Pruebas Unitarias
 
-**Clases a testear:**
-- `UserServiceConsumer.java`
-- `RabbitMQConfig.java`
-- Message DTOs (UserRequest, UserResponse)
+| Campo | Descripción |
+|-------|-------------|
+| **Objetivo** | Validar lógica aislada de mappers, servicios de enriquecimiento, cache y DTOs |
+| **Herramientas** | JUnit 5, Mockito, AssertJ |
+| **Alcance** | `OrderMapper`, `OrderEnrichmentFacade`, `UserEnrichmentService`, `UserResponseCache`, DTOs |
+| **Estrategia de aislamiento** | Mock de `IUserEnrichmentClient`, `IUserInfoClient`, `UserResponseCache` |
+| **Contribución estimada** | +15-18% cobertura (~230 instrucciones) |
 
-**Tests a crear (~15 tests):**
+### 3.2 Pruebas de Integración
 
-1. **UserServiceConsumerTest.java** (10 tests)
-   - handleUserRequest() con UserRequest válido
-   - Usuario encontrado por ID retorna UserResponse
-   - Usuario encontrado por email retorna UserResponse
-   - Usuario no encontrado retorna error response
-   - Request null handling
-   - Request con identificador null
-   - Request con identificador inválido
-   - Exception en UserRepository propagada
-   - Logging verification
-   - Response format validation
-
-2. **RabbitMQConfigTest.java** (3 tests)
-   - userExchange bean creation
-   - userRequestQueue bean creation
-   - userResponseQueue bean creation
-
-3. **UserRequestResponseTest.java** (2 tests)
-   - UserRequest serialization/deserialization
-   - UserResponse serialization/deserialization
-
-**Estimación:** 4-5 horas  
-**Ganancia esperada:** +4-5% cobertura
+| Campo | Descripción |
+|-------|-------------|
+| **Objetivo** | Validar integración Controller↔Service, manejo de excepciones HTTP, flujos de mensajería |
+| **Herramientas** | `@WebMvcTest`, `MockMvc`, `@MockBean`, `@SpringBootTest` con H2 |
+| **Alcance** | `OrderController`, `GlobalExceptionHandler`, `UserServiceProducer`, `UserServiceConsumer` |
+| **Contribución estimada** | +25-30% cobertura (~400 instrucciones) |
 
 ---
 
-### FASE 3: Persistence Tests - Semana 2
+## 4. Principios de Testing Aplicados
 
-**Objetivo:** Llevar persistence de 38% → 80%
-
-**Clases a testear:**
-- `UserRepository.java` (JSON persistence)
-- `CachedUserPersistenceDecorator.java`
-- Integration tests con UserJpaPersistence
-
-**Tests a crear (~20 tests):**
-
-1. **UserRepositoryTest.java** (adicionales - 10 tests)
-   - init() carga desde archivo externo (USERS_FILE env)
-   - init() carga desde resources
-   - init() carga desde target
-   - init() crea archivo si no existe
-   - writeToFile() persiste cambios
-   - save() asigna ID auto-incremental
-   - save() con ID existente
-   - update() con usuario inexistente
-   - partialUpdate() con map vacío
-   - Error handling en writeToFile()
-
-2. **CachedUserPersistenceDecoratorTest.java** (10 tests)
-   - Cache hit en findById()
-   - Cache miss en findById() llama delegate
-   - Cache eviction en save()
-   - Cache eviction en update()
-   - Cache eviction en deleteById()
-   - findAll() no usa cache
-   - findAllActive() no usa cache
-   - findByEmail() cache behavior
-   - Cache size limits
-   - Cache expiration (si aplica)
-
-**Estimación:** 6-8 horas  
-**Ganancia esperada:** +23% cobertura
+| Principio | Aplicación |
+|-----------|------------|
+| **Testing shows presence of defects** | Los tests verifican comportamiento esperado pero no garantizan ausencia de bugs |
+| **Exhaustive testing is impossible** | Enfocamos en particiones de equivalencia y valores límite críticos |
+| **Early testing** | Priorizamos componentes 0% cobertura que bloquean CI |
+| **Defect clustering** | Priorizamos `GlobalExceptionHandler` (212 inst) y `OrderController` (76 inst) |
+| **Pesticide paradox** | Variamos escenarios entre particiones válidas e inválidas |
+| **Testing is context dependent** | Adaptamos técnicas al contexto brownfield con RabbitMQ |
+| **Absence-of-errors fallacy** | Tests de integración validan el sistema completo, no solo unidades |
 
 ---
 
-### FASE 4: Mapper Tests - Semana 2
+## 5. Aplicación de Técnicas de Diseño
 
-**Objetivo:** Llevar mapper de 33% → 90%
+### 5.1 Partición de Equivalencia
 
-**Clases a testear:**
-- `UserEntityMapper.java`
+| Campo | Partición | Tipo | Válida/Inválida | Escenario Mapeado |
+|-------|-----------|------|-----------------|-------------------|
+| `name` | String no vacío ("Test Order") | Dato | ✅ Válida | UC-01-01 |
+| `name` | String vacío ("") | Dato | ❌ Inválida | UC-01-02 |
+| `name` | null | Dato | ❌ Inválida | UC-01-03 |
+| `name` | Solo espacios ("   ") | Dato | ❌ Inválida | UC-01-04 |
+| `description` | String válido | Dato | ✅ Válida | UC-01-01 |
+| `description` | null | Dato | ❌ Inválida | UC-01-05 |
+| `idUser` | Entero positivo (1, 100) | Dato | ✅ Válida | UC-01-01 |
+| `idUser` | Cero (0) | Dato | ❌ Inválida | UC-01-06 |
+| `idUser` | Entero negativo (-1) | Dato | ❌ Inválida | UC-01-07 |
+| `idUser` | null | Dato | ❌ Inválida | UC-01-08 |
+| `orderId` | ID existente | Dato | ✅ Válida | UC-02-01 |
+| `orderId` | ID no existente | Dato | ❌ Inválida | UC-02-02 |
+| `state` | Estado válido (PROCESSING, DELIVERED) | Dato | ✅ Válida | UC-03-01 |
+| `state` | null | Dato | ❌ Inválida | UC-03-02 |
+| `userId` timeout | Respuesta dentro de timeout | Tiempo | ✅ Válida | UC-04-01 |
+| `userId` timeout | Respuesta después de timeout | Tiempo | ❌ Inválida | UC-04-02 |
 
-**Tests a crear (~10 tests):**
+### 5.2 Análisis de Valores Límite
 
-1. **UserEntityMapperTest.java** (10 tests)
-   - toDomain() convierte UserEntity → User correctamente
-   - toDomain() con UserEntity null
-   - toDomain() con campos null en entity
-   - toDomain() preserva todos los campos
-   - toEntity() convierte User → UserEntity correctamente
-   - toEntity() con User null
-   - toEntity() con campos null en user
-   - toEntity() no copia ID (para nuevos)
-   - Conversión bidireccional (entity → domain → entity)
-   - MapStruct mapping verification
+| Campo | Mínimo | Máximo | Valores Límite | Escenario Mapeado |
+|-------|--------|--------|----------------|-------------------|
+| `idUser` | 1 | Integer.MAX_VALUE | 0, 1, 2, MAX-1, MAX | BVA-01, BVA-02 |
+| `orderId` | 1 | - | 0, 1, -1 | BVA-03, BVA-04 |
+| `name.length` | 1 | 255 (asumido) | 0, 1, 254, 255, 256 | BVA-05, BVA-06 |
+| `timeout` (ms) | 0 | 3000 | 0, 1, 2999, 3000, 3001 | BVA-07, BVA-08 |
+| `userId` en cache | - | - | userId presente, userId ausente | BVA-09, BVA-10 |
 
-**Estimación:** 3-4 horas  
-**Ganancia esperada:** +3% cobertura
+### 5.3 Tabla de Decisión - Creación de Orden
 
----
+| Condición / Regla | R1 | R2 | R3 | R4 | R5 | R6 |
+|-------------------|----|----|----|----|----|----|
+| `name` válido | ✅ | ❌ | ✅ | ✅ | ✅ | ❌ |
+| `description` válido | ✅ | ✅ | ❌ | ✅ | ✅ | ❌ |
+| `idUser` > 0 | ✅ | ✅ | ✅ | ❌ | ✅ | ❌ |
+| **Acción** | 201 Created | 400 Bad Request | 400 Bad Request | 400 Bad Request | 201 Created | 400 Bad Request |
+| **Escenario** | DT-01 | DT-02 | DT-03 | DT-04 | DT-01 | DT-05 |
 
-### FASE 5: Config Tests - Semana 3
+### 5.4 Tabla de Decisión - Manejo de Excepciones
 
-**Objetivo:** Llevar config de 73% → 85%
-
-**Clases a testear:**
-- `UserPersistenceFactory.java`
-- `UsuariosInitializationConfig.java`
-- Otros beans de configuración
-
-**Tests a crear (~8 tests):**
-
-1. **UserPersistenceFactoryTest.java** (4 tests)
-   - createUserPersistence() con JSON mode
-   - createUserPersistence() con JPA mode
-   - createUserPersistence() con Cache decorator
-   - Mode selection por property
-
-2. **UsuariosInitializationConfigTest.java** (4 tests)
-   - initializeUsers() se ejecuta al startup
-   - initialize() llama a persistence.initialize()
-   - Error handling en initialization
-   - Logging verification
-
-**Estimación:** 3-4 horas  
-**Ganancia esperada:** +3-4% cobertura
-
----
-
-## 📊 PROYECCIÓN DE COBERTURA
-
-### Ganancia Estimada por Fase
-
-| Fase | Package | Tests | Horas | Ganancia | Cobertura Acum. |
-|------|---------|-------|-------|----------|-----------------|
-| Inicial | - | - | - | - | 49% |
-| FASE 1 | validation | 25 | 6-8h | +14-16% | 63-65% |
-| FASE 2 | messaging | 15 | 4-5h | +4-5% | 67-70% |
-| FASE 3 | persistence | 20 | 6-8h | +23% | 90-93% |
-| FASE 4 | mapper | 10 | 3-4h | +3% | 93-96% |
-| FASE 5 | config | 8 | 3-4h | +3-4% | **96-100%** |
-
-**Total tests a crear:** ~78 tests  
-**Tiempo total estimado:** 22-29 horas (~3 semanas)  
-**Cobertura final esperada:** 96-100% ✅
+| Condición / Regla | R1 | R2 | R3 | R4 | R5 | R6 |
+|-------------------|----|----|----|----|----|----|
+| Excepción tipo | OrderNotFound | IllegalArgument | ValidationError | MalformedJSON | OrderCreation | Generic |
+| **HTTP Status** | 404 | 400 | 400 | 400 | 500 | 500 |
+| **Escenario** | EH-01 | EH-02 | EH-03 | EH-04 | EH-05 | EH-06 |
 
 ---
 
-## 🛠️ ESTRATEGIA DE TESTING
+## 6. Escenarios Gherkin
 
-### Principios a Aplicar
+### 6.1 Escenarios de Pruebas Unitarias
 
-1. **Prioridad por ROI**
-   - Empezar por packages con mayor gap (validation, persistence)
-   - Cada test debe maximizar ganancia de cobertura
+#### Feature: OrderMapper - Conversión de entidades a DTOs
 
-2. **Testing Pyramid**
-   ```
-   E2E Tests (10%)         ← Ya cubierto en INFORME_COMPLETO
-   Integration Tests (20%) ← FASE 3 (persistence)
-   Unit Tests (70%)        ← FASE 1, 2, 4, 5
-   ```
+```gherkin
+Feature: OrderMapper - Entity to DTO Conversion
+  As a developer
+  I want to ensure OrderMapper correctly converts between Order and OrderDto
+  So that data integrity is maintained across layers
 
-3. **Cobertura de Branches**
-   - Testear todas las ramas condicionales
-   - If-else, switch, try-catch, loops
-   - Validaciones (null, empty, invalid)
+  # Cubre: mapper 0% — toDto method
+  @critical
+  Scenario: UM-01 - Convertir Order entity a OrderDto exitosamente
+    Given una entidad Order con id=1, name="Test", description="Desc", idUser=10, state=PROCESSING, active=true
+    When se invoca orderMapper.toDto(order)
+    Then el OrderDto resultante debe tener los mismos valores
+    And el id debe ser 1
+    And el state debe ser PROCESSING
 
-4. **Edge Cases**
-   - Valores límite (min, max, 0, negative)
-   - Null safety
-   - Empty collections
-   - Caracteres especiales
+  # Cubre: mapper 0% — toDto null handling
+  @high
+  Scenario: UM-02 - Convertir Order null retorna null
+    Given una entidad Order null
+    When se invoca orderMapper.toDto(null)
+    Then el resultado debe ser null
 
-### Herramientas
+  # Cubre: mapper 0% — toEntity method
+  @critical
+  Scenario: UM-03 - Convertir OrderDto a Order entity exitosamente
+    Given un OrderDto con name="New Order", description="New Desc", idUser=5
+    When se invoca orderMapper.toEntity(orderDto)
+    Then la entidad Order resultante debe tener los mismos valores
 
-```xml
-<dependency>
-    <groupId>org.junit.jupiter</groupId>
-    <artifactId>junit-jupiter</artifactId>
-    <scope>test</scope>
-</dependency>
-<dependency>
-    <groupId>org.mockito</groupId>
-    <artifactId>mockito-junit-jupiter</artifactId>
-    <scope>test</scope>
-</dependency>
-<dependency>
-    <groupId>org.springframework.boot</groupId>
-    <artifactId>spring-boot-starter-test</artifactId>
-    <scope>test</scope>
-</dependency>
+  # Cubre: mapper 0% — toEntity null handling
+  @high
+  Scenario: UM-04 - Convertir OrderDto null retorna null
+    Given un OrderDto null
+    When se invoca orderMapper.toEntity(null)
+    Then el resultado debe ser null
 ```
 
----
+#### Feature: OrderEnrichmentFacade - Enriquecimiento de pedidos
 
-## 📝 TEMPLATE DE TEST
+```gherkin
+Feature: OrderEnrichmentFacade - Order Enrichment with User Data
+  As a system
+  I want to enrich order data with user information
+  So that clients receive complete order+user payloads
 
-### Estructura Estándar
+  Background:
+    Given un mock de IUserEnrichmentClient configurado
 
-```java
-package com.example.usuarioservice.validation;
+  # Cubre: OrderEnrichmentFacade 6.7% — enrich happy path
+  @critical
+  Scenario: UE-01 - Enriquecer orden con datos de usuario exitosamente
+    Given un OrderDto válido con idUser=10
+    And el userEnrichmentClient retorna UserResponse(id=10, name="John", mail="john@test.com")
+    When se invoca orderEnrichmentFacade.enrich(orderDto)
+    Then el OrderWithUserDto resultante debe contener los datos del pedido
+    And debe contener el UserResponse con id=10
 
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+  # Cubre: OrderEnrichmentFacade — enrich with null orderDto
+  @high
+  Scenario: UE-02 - Enriquecer orden null retorna null
+    Given un OrderDto null
+    When se invoca orderEnrichmentFacade.enrich(null)
+    Then el resultado debe ser null
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+  # Cubre: OrderEnrichmentFacade — enrich when user service fails
+  @high
+  Scenario: UE-03 - Enriquecer orden cuando el servicio de usuario falla
+    Given un OrderDto válido con idUser=999
+    And el userEnrichmentClient lanza una excepción
+    When se invoca orderEnrichmentFacade.enrich(orderDto)
+    Then el OrderWithUserDto resultante debe contener los datos del pedido
+    And el campo user debe ser null
+```
 
-@ExtendWith(MockitoExtension.class)
-@DisplayName("ClassName - Method/Feature description")
-class ClassNameTest {
+#### Feature: UserEnrichmentService - Servicio de enriquecimiento
 
-    @Mock
-    private Dependency dependency;
+```gherkin
+Feature: UserEnrichmentService - User Info Fetching
+  As a service
+  I want to fetch user information from external service
+  So that orders can be enriched with user data
 
-    @InjectMocks
-    private ClassUnderTest classUnderTest;
+  # Cubre: UserEnrichmentService 16% — fetchUserInfo success
+  @high
+  Scenario: US-01 - Obtener información de usuario exitosamente
+    Given un mock de IUserInfoClient
+    And el cliente retorna UserResponse para userId=5
+    When se invoca userEnrichmentService.fetchUserInfo(5)
+    Then debe retornar el UserResponse correspondiente
 
-    @Test
-    @DisplayName("methodName should do X when Y")
-    void methodName_shouldDoX_whenY() {
-        // Given: Setup test data
-        InputObject input = new InputObject(...);
-        when(dependency.method()).thenReturn(...);
+  # Cubre: UserEnrichmentService — fetchUserInfo exception handling
+  @high
+  Scenario: US-02 - Manejar error al obtener información de usuario
+    Given un mock de IUserInfoClient
+    And el cliente lanza una excepción
+    When se invoca userEnrichmentService.fetchUserInfo(5)
+    Then debe retornar null
+    And debe logear una advertencia
+```
 
-        // When: Execute method under test
-        ResultObject result = classUnderTest.method(input);
+#### Feature: UserResponseCache - Cache de respuestas
 
-        // Then: Verify results
-        assertNotNull(result);
-        assertEquals(expected, result.getValue());
-        verify(dependency).method();
-    }
+```gherkin
+Feature: UserResponseCache - In-Memory Response Caching
+  As a messaging component
+  I want to cache user responses temporarily
+  So that async responses can be retrieved by waiting callers
 
-    @Test
-    @DisplayName("methodName should throw exception when invalid input")
-    void methodName_shouldThrowException_whenInvalidInput() {
-        // Given
-        InputObject invalidInput = null;
+  # Cubre: UserResponseCache 0% — store method
+  @critical
+  Scenario: UC-01 - Almacenar respuesta de usuario en cache
+    Given un UserResponseCache vacío
+    And un UserResponse con id=10, name="Test User"
+    When se invoca cache.store(userResponse)
+    Then la respuesta debe estar disponible para userId=10
 
-        // When & Then
-        assertThrows(ValidationException.class, 
-            () -> classUnderTest.method(invalidInput));
-    }
-}
+  # Cubre: UserResponseCache 0% — store null ignored
+  @high
+  Scenario: UC-02 - Ignorar almacenamiento de respuesta null
+    Given un UserResponseCache vacío
+    When se invoca cache.store(null)
+    Then el cache debe permanecer vacío
+
+  # Cubre: UserResponseCache 0% — awaitResponse success
+  @critical
+  Scenario: UC-03 - Esperar y obtener respuesta dentro del timeout
+    Given un UserResponseCache con UserResponse para userId=10
+    When se invoca cache.awaitResponse(10, 1000)
+    Then debe retornar el UserResponse para userId=10
+    And la respuesta debe ser removida del cache
+
+  # Cubre: UserResponseCache 0% — awaitResponse timeout
+  @critical
+  Scenario: UC-04 - Timeout al esperar respuesta no disponible
+    Given un UserResponseCache vacío
+    When se invoca cache.awaitResponse(999, 100)
+    Then debe retornar null después del timeout
+
+  # Cubre: UserResponseCache 0% — awaitResponse interrupted
+  @medium
+  Scenario: UC-05 - Manejar interrupción durante espera
+    Given un UserResponseCache vacío
+    And el thread será interrumpido durante la espera
+    When se invoca cache.awaitResponse(10, 5000)
+    Then debe retornar null
+    And el thread debe tener el flag interrupted activo
+```
+
+#### Feature: DTOs - Validación de modelos de datos
+
+```gherkin
+Feature: DTO Constructors and Accessors
+  As a developer
+  I want DTOs to correctly store and retrieve data
+  So that data transfer between layers works correctly
+
+  # Cubre: OrderStateUpdateDto 0% — constructor and accessors
+  @medium
+  Scenario: DTO-01 - OrderStateUpdateDto constructor y getters
+    Given un state DELIVERED
+    When se crea OrderStateUpdateDto(DELIVERED)
+    Then getState() debe retornar DELIVERED
+
+  # Cubre: OrderStateUpdateDto 0% — setter
+  @medium
+  Scenario: DTO-02 - OrderStateUpdateDto setter
+    Given un OrderStateUpdateDto con state PROCESSING
+    When se invoca setState(TRAVELING_TO_WAREHOUSE)
+    Then getState() debe retornar TRAVELING_TO_WAREHOUSE
+
+  # Cubre: UserRequest 0% — all methods
+  @medium
+  Scenario: DTO-03 - UserRequest constructor y accessors
+    Given un userId=25
+    When se crea UserRequest(25)
+    Then getUserId() debe retornar 25
+    And toString() debe contener "userId=25"
+
+  # Cubre: OrderWithUserDto 47.9% — remaining accessors
+  @medium
+  Scenario: DTO-04 - OrderWithUserDto setters
+    Given un OrderWithUserDto vacío
+    When se setean todos los campos
+    Then los getters deben retornar los valores seteados
+
+  # Cubre: ErrorResponse 0% — builder pattern
+  @high
+  Scenario: DTO-05 - ErrorResponse builder completo
+    Given valores para timestamp, status=400, error="Bad Request", message="Invalid"
+    When se construye con ErrorResponse.builder()
+    Then el ErrorResponse debe tener todos los campos correctos
+
+  # Cubre: ErrorResponse 0% — validationErrors map
+  @high
+  Scenario: DTO-06 - ErrorResponse con validationErrors
+    Given un mapa de errores de validación
+    When se construye ErrorResponse con validationErrors
+    Then getValidationErrors() debe retornar el mapa
+```
+
+### 6.2 Escenarios de Pruebas de Integración
+
+#### Feature: OrderController - Endpoints REST
+
+```gherkin
+Feature: OrderController - REST API Integration
+  As an API consumer
+  I want to interact with order endpoints
+  So that I can manage orders via HTTP
+
+  Background:
+    Given el servicio de pedidos está disponible
+    And el repositorio está mockeado con @MockBean
+    And el OrderService está configurado
+
+  # Cubre: controller 0% — POST /orders endpoint
+  @critical
+  Scenario: IC-01 - Crear pedido con datos válidos retorna 201
+    Given un OrderDto válido con name="Test Order", description="Desc", idUser=1
+    When se envía POST a "/orders" con el OrderDto
+    Then el status de respuesta debe ser 201 Created
+    And el header Location debe contener "/orders/{id}"
+    And el body debe contener el pedido creado con state=PROCESSING
+
+  # Cubre: controller 0% — POST /orders validation
+  @critical
+  Scenario: IC-02 - Crear pedido con name vacío retorna 400
+    Given un OrderDto con name="" (vacío)
+    When se envía POST a "/orders" con el OrderDto
+    Then el status de respuesta debe ser 400 Bad Request
+    And el body debe contener errores de validación
+
+  # Cubre: controller 0% — POST /orders null idUser
+  @high
+  Scenario: IC-03 - Crear pedido sin idUser retorna 400
+    Given un OrderDto con idUser=null
+    When se envía POST a "/orders" con el OrderDto
+    Then el status de respuesta debe ser 400 Bad Request
+
+  # Cubre: controller 0% — GET /orders/{id} found
+  @critical
+  Scenario: IC-04 - Obtener pedido por ID existente retorna 200
+    Given existe un pedido con id=1 en el repositorio
+    When se envía GET a "/orders/1"
+    Then el status de respuesta debe ser 200 OK
+    And el body debe contener el pedido con id=1
+
+  # Cubre: controller 0% — GET /orders/{id} not found
+  @critical
+  Scenario: IC-05 - Obtener pedido por ID inexistente retorna 404
+    Given no existe pedido con id=999
+    When se envía GET a "/orders/999"
+    Then el status de respuesta debe ser 404 Not Found
+    And el body debe contener mensaje de error
+
+  # Cubre: controller 0% — GET /orders list active
+  @high
+  Scenario: IC-06 - Listar pedidos activos retorna lista
+    Given existen 3 pedidos activos en el repositorio
+    When se envía GET a "/orders"
+    Then el status de respuesta debe ser 200 OK
+    And el body debe contener 3 pedidos
+
+  # Cubre: controller 0% — GET /orders empty
+  @high
+  Scenario: IC-07 - Listar pedidos sin datos retorna lista vacía
+    Given no existen pedidos activos
+    When se envía GET a "/orders"
+    Then el status de respuesta debe ser 200 OK
+    And el body debe ser una lista vacía
+
+  # Cubre: controller 0% — GET /orders/user/{userId}
+  @high
+  Scenario: IC-08 - Listar pedidos por usuario retorna filtrado
+    Given existen pedidos para userId=5
+    When se envía GET a "/orders/user/5"
+    Then el status de respuesta debe ser 200 OK
+    And todos los pedidos deben tener idUser=5
+
+  # Cubre: controller 0% — GET /orders/all
+  @medium
+  Scenario: IC-09 - Listar todos los pedidos (admin) incluye inactivos
+    Given existen pedidos activos e inactivos
+    When se envía GET a "/orders/all"
+    Then el status de respuesta debe ser 200 OK
+    And el body debe incluir pedidos con active=false
+
+  # Cubre: controller 0% — DELETE /orders/{id} success
+  @critical
+  Scenario: IC-10 - Eliminar pedido (soft-delete) retorna 204
+    Given existe un pedido con id=1
+    When se envía DELETE a "/orders/1"
+    Then el status de respuesta debe ser 204 No Content
+    And el pedido debe tener active=false
+
+  # Cubre: controller 0% — DELETE /orders/{id} not found
+  @high
+  Scenario: IC-11 - Eliminar pedido inexistente retorna 404
+    Given no existe pedido con id=999
+    When se envía DELETE a "/orders/999"
+    Then el status de respuesta debe ser 404 Not Found
+
+  # Cubre: controller 0% — PATCH /orders/{id} success
+  @high
+  Scenario: IC-12 - Cambiar estado de pedido retorna 200
+    Given existe un pedido con id=1 y state=PROCESSING
+    And un OrderStateUpdateDto con state=DELIVERED
+    When se envía PATCH a "/orders/1" con el DTO
+    Then el status de respuesta debe ser 200 OK
+    And el pedido debe tener state=DELIVERED
+
+  # Cubre: controller 0% — GET /orders/{id}/user enriched
+  @high
+  Scenario: IC-13 - Obtener pedido con información de usuario
+    Given existe un pedido con id=1 y idUser=10
+    And el servicio de usuario retorna datos para userId=10
+    When se envía GET a "/orders/1/user"
+    Then el status de respuesta debe ser 200 OK
+    And el body debe ser OrderWithUserDto con datos de usuario
+```
+
+#### Feature: GlobalExceptionHandler - Manejo de errores HTTP
+
+```gherkin
+Feature: GlobalExceptionHandler - HTTP Error Handling
+  As an API consumer
+  I want consistent error responses
+  So that I can handle errors predictably
+
+  Background:
+    Given el GlobalExceptionHandler está configurado
+    And MockMvc está disponible
+
+  # Cubre: GlobalExceptionHandler 0% — OrderNotFoundException
+  @critical
+  Scenario: EH-01 - OrderNotFoundException retorna 404 con ErrorResponse
+    Given el servicio lanza OrderNotFoundException("Pedido con ID 999 no encontrado")
+    When se procesa la excepción
+    Then el status debe ser 404
+    And el error debe ser "Not Found"
+    And el message debe contener "999"
+
+  # Cubre: GlobalExceptionHandler 0% — IllegalArgumentException
+  @high
+  Scenario: EH-02 - IllegalArgumentException retorna 400 con ErrorResponse
+    Given el servicio lanza IllegalArgumentException("Parámetro inválido")
+    When se procesa la excepción
+    Then el status debe ser 400
+    And el error debe ser "Bad Request"
+
+  # Cubre: GlobalExceptionHandler 0% — MethodArgumentNotValidException
+  @critical
+  Scenario: EH-03 - Validación fallida retorna 400 con errores específicos
+    Given una request con campos inválidos (name="", idUser=null)
+    When se envía POST a crear orden
+    Then el status debe ser 400
+    And el error debe ser "Validation Failed"
+    And validationErrors debe contener los campos inválidos
+
+  # Cubre: GlobalExceptionHandler 0% — HttpMessageNotReadableException
+  @high
+  Scenario: EH-04 - JSON malformado retorna 400
+    Given un body con JSON inválido
+    When se envía POST a "/orders"
+    Then el status debe ser 400
+    And el message debe ser "Request body is missing or malformed"
+
+  # Cubre: GlobalExceptionHandler 0% — OrderCreationException
+  @high
+  Scenario: EH-05 - Error de creación retorna 500
+    Given el servicio lanza OrderCreationException("Failed to persist order")
+    When se procesa la excepción
+    Then el status debe ser 500
+    And el error debe ser "Internal Server Error"
+
+  # Cubre: GlobalExceptionHandler 0% — Generic Exception
+  @medium
+  Scenario: EH-06 - Excepción genérica retorna 500
+    Given el servicio lanza RuntimeException("Unexpected error")
+    When se procesa la excepción
+    Then el status debe ser 500
+    And el message debe ser "An unexpected error occurred"
+```
+
+#### Feature: Messaging - RabbitMQ Integration
+
+```gherkin
+Feature: RabbitMQ Messaging Components
+  As a messaging system
+  I want to send and receive user info requests/responses
+  So that orders can be enriched asynchronously
+
+  Background:
+    Given RabbitMQ está mockeado con @MockBean RabbitTemplate
+    And los componentes de mensajería están configurados
+
+  # Cubre: UserServiceProducer 0% — requestUserInfo
+  @critical
+  Scenario: MSG-01 - Enviar solicitud de información de usuario
+    Given un UserServiceProducer con RabbitTemplate mockeado
+    When se invoca producer.requestUserInfo(userId=10)
+    Then rabbitTemplate.convertAndSend debe ser invocado
+    And el exchange debe ser "user-exchange"
+    And el routing key debe ser "user.request"
+    And el payload debe ser UserRequest con userId=10
+
+  # Cubre: UserServiceConsumer 0% — receiveUserResponse
+  @critical
+  Scenario: MSG-02 - Recibir respuesta de usuario via listener
+    Given un UserServiceConsumer con cache mockeado
+    And un UserResponse(id=10, name="John")
+    When se invoca consumer.receiveUserResponse(userResponse)
+    Then cache.store debe ser invocado con el UserResponse
+
+  # Cubre: UserServiceConsumer 0% — getUserResponse delegation
+  @high
+  Scenario: MSG-03 - Obtener respuesta delegando a cache
+    Given un UserServiceConsumer con cache mockeado
+    And cache.awaitResponse retorna UserResponse
+    When se invoca consumer.getUserResponse(10, 3000)
+    Then debe retornar el UserResponse del cache
+
+  # Cubre: RabbitMQUserInfoClient 0% — fetchUserInfo orchestration
+  @critical
+  Scenario: MSG-04 - Orquestar solicitud y espera de respuesta
+    Given un RabbitMQUserInfoClient con producer y consumer mockeados
+    And consumer.getUserResponse retorna UserResponse
+    When se invoca client.fetchUserInfo(10, 3000)
+    Then producer.requestUserInfo(10) debe ser invocado
+    And consumer.getUserResponse(10, 3000) debe ser invocado
+    And debe retornar el UserResponse
+
+  # Cubre: RabbitMQUserInfoClient 0% — fetchUserInfo error handling
+  @high
+  Scenario: MSG-05 - Manejar error en orquestación
+    Given un RabbitMQUserInfoClient con producer que lanza excepción
+    When se invoca client.fetchUserInfo(10, 3000)
+    Then debe retornar null
+    And debe logear advertencia
+```
+
+#### Feature: Integration Flow - Controller to Service to Repository
+
+```gherkin
+Feature: Full Integration Flow Tests
+  As a system
+  I want end-to-end integration between components
+  So that the full request lifecycle works correctly
+
+  Background:
+    Given @SpringBootTest con H2 in-memory database
+    And RabbitMQ deshabilitado via spring.autoconfigure.exclude
+    And el contexto de Spring está inicializado
+
+  # Cubre: Flujo completo Controller → Service → Repository
+  @critical
+  Scenario: FLOW-01 - Crear y recuperar pedido end-to-end
+    Given la base de datos está vacía
+    When se crea un pedido con name="E2E Test", idUser=1
+    And se obtiene el pedido por su ID generado
+    Then el pedido recuperado debe tener name="E2E Test"
+    And state=PROCESSING
+    And active=true
+
+  # Cubre: Flujo de soft-delete
+  @high
+  Scenario: FLOW-02 - Soft-delete no aparece en listado activo
+    Given existe un pedido activo con id=1
+    When se elimina el pedido con id=1 (soft-delete)
+    And se listan los pedidos activos
+    Then el pedido con id=1 no debe aparecer en la lista
+
+  # Cubre: Flujo de cambio de estado
+  @high
+  Scenario: FLOW-03 - Transición de estados completa
+    Given existe un pedido con state=PROCESSING
+    When se cambia el estado a TRAVELING_TO_WAREHOUSE
+    And se cambia el estado a DELIVERED
+    Then el pedido debe tener state=DELIVERED
 ```
 
 ---
 
-## ✅ CRITERIOS DE ACEPTACIÓN
+## 7. Priorización por Cobertura (JaCoCo-driven)
 
-### Por Fase
+### 7.1 Análisis de Brechas
 
-**FASE 1 (Validation):** ✅
-- [ ] 25 tests creados y pasando
-- [ ] Cobertura validation ≥ 85%
-- [ ] Cobertura total ≥ 63%
-- [ ] 0 errores de compilación
-- [ ] 0 tests fallando
+| Prioridad | Paquete/Clase | Cobertura Actual | Inst. Missed | Tipo Prueba | Escenarios |
+|-----------|---------------|------------------|--------------|-------------|------------|
+| 🔴 CRÍTICO | `GlobalExceptionHandler` | 0% | 212 | Integración | 6 |
+| 🔴 CRÍTICO | `OrderController` | 0% | 76 | Integración | 13 |
+| 🟡 ALTO | `UserResponseCache` | 0% | 86 | Unitaria | 5 |
+| 🟡 ALTO | `ErrorResponse` + `Builder` | 0% | 119 | Unitaria | 2 |
+| 🟡 ALTO | `OrderEnrichmentFacade` | 6.7% | 56 | Unitaria | 3 |
+| 🟡 ALTO | `OrderMapper` | 0% | 43 | Unitaria | 4 |
+| 🟡 ALTO | `RabbitMQUserInfoClient` | 0% | 33 | Unitaria | 2 |
+| 🟡 ALTO | `UserServiceProducer` | 0% | 27 | Integración | 1 |
+| 🟡 ALTO | `UserServiceConsumer` | 0% | 25 | Integración | 2 |
+| 🟢 MEDIO | `OrderWithUserDto` | 47.9% | 49 | Unitaria | 1 |
+| 🟢 MEDIO | `UserEnrichmentService` | 16% | 21 | Unitaria | 2 |
+| 🟢 MEDIO | `UserRequest` | 0% | 20 | Unitaria | 1 |
+| 🟢 MEDIO | `OrderStateUpdateDto` | 0% | 16 | Unitaria | 2 |
+| 🟢 MEDIO | `UserResponse` | 37.5% | 35 | Unitaria | 1 |
 
-**FASE 2 (Messaging):** ✅
-- [ ] 15 tests creados y pasando
-- [ ] Cobertura messaging ≥ 80%
-- [ ] Cobertura total ≥ 67%
-- [ ] Integración RabbitMQ testeada
+**Total instrucciones faltantes priorizadas:** ~818
 
-**FASE 3 (Persistence):** ✅
-- [ ] 20 tests creados y pasando
-- [ ] Cobertura persistence ≥ 80%
-- [ ] Cobertura total ≥ 90%
-- [ ] Cache decorator testeado
+### 7.2 Ganancia Estimada de Cobertura
 
-**FASE 4 (Mapper):** ✅
-- [ ] 10 tests creados y pasando
-- [ ] Cobertura mapper ≥ 90%
-- [ ] Cobertura total ≥ 93%
-- [ ] Conversiones bidireccionales OK
+| Grupo de Tests | Instrucciones Cubiertas | Ganancia Estimada |
+|----------------|-------------------------|-------------------|
+| Controller tests (`@WebMvcTest`) | ~76 | +5% |
+| Exception Handler tests | ~212 | +14% |
+| Mapper tests (Unitarios) | ~43 | +3% |
+| Cache + Messaging tests | ~171 | +11% |
+| Enrichment facade/service tests | ~77 | +5% |
+| DTO tests | ~139 | +9% |
+| Integration flow tests | ~50 (incrementales) | +3% |
 
-**FASE 5 (Config):** ✅
-- [ ] 8 tests creados y pasando
-- [ ] Cobertura config ≥ 85%
-- [ ] **Cobertura total ≥ 80% (META ALCANZADA)**
-
----
-
-## 🚀 EJECUCIÓN Y VERIFICACIÓN
-
-### Comandos
-
-**Ejecutar tests:**
-```bash
-mvn clean test
-```
-
-**Generar reporte JaCoCo:**
-```bash
-mvn jacoco:report
-```
-
-**Ver reporte HTML:**
-```bash
-open target/site/jacoco/index.html
-```
-
-**Ejecutar tests de una fase específica:**
-```bash
-# FASE 1
-mvn test -Dtest="*Validation*Test"
-
-# FASE 2
-mvn test -Dtest="*Messaging*Test,*RabbitMQ*Test"
-
-# FASE 3
-mvn test -Dtest="*Persistence*Test,*Repository*Test"
-
-# FASE 4
-mvn test -Dtest="*Mapper*Test"
-
-# FASE 5
-mvn test -Dtest="*Config*Test,*Factory*Test"
-```
+**Total ganancia estimada:** ~50% adicional → Cobertura final proyectada: **~75%**
 
 ---
 
-## 📈 TRACKING DE PROGRESO
+## 8. Gestión de Riesgos
 
-### Dashboard de Cobertura
+### 8.1 Registro de Riesgos
 
-```bash
-# Crear script para tracking
-cat > track-coverage.sh << 'EOF'
-#!/bin/bash
-echo "=== JaCoCo Coverage Report ==="
-mvn clean test jacoco:report -q
-echo ""
-echo "Cobertura por Package:"
-grep -A 50 "coveragetable" target/site/jacoco/index.html | \
-  grep -oP 'com\.example\.usuarioservice\.\w+|<td class="ctr2" id="c\d+">\d+ %' | \
-  paste -d " " - - | \
-  awk '{print $1 ": " $2}'
-EOF
-chmod +x track-coverage.sh
-```
+| ID | Riesgo | Probabilidad | Impacto | Severidad | Mitigación |
+|----|--------|--------------|---------|-----------|------------|
+| R01 | Tests pasan localmente pero fallan en CI por RabbitMQ | Alta | Alto | 🔴 Alto | `spring.autoconfigure.exclude=RabbitAutoConfiguration` |
+| R02 | Tests de integración lentos por contexto Spring | Media | Medio | 🟡 Medio | Usar `@WebMvcTest` en vez de `@SpringBootTest` donde posible |
+| R03 | Contaminación de estado de BD entre tests | Media | Alto | 🔴 Alto | `@Transactional` + `@Rollback` + H2 in-memory |
+| R04 | Meta de cobertura no alcanzada | Media | Alto | 🔴 Alto | Priorizar escenarios CRÍTICOS primero |
+| R05 | Mocks incorrectos no detectan bugs reales | Media | Alto | 🔴 Alto | Combinar tests unitarios con tests de integración |
+| R06 | `UserResponseCache` concurrencia difícil de testear | Alta | Medio | 🟡 Medio | Tests con threads controlados, timeouts cortos |
+| R07 | Cambios en DTOs rompen serialización | Media | Alto | 🔴 Alto | Tests de serialización JSON explícitos |
 
-**Ejecutar tracking:**
-```bash
-./track-coverage.sh
-```
+### 8.2 Estrategia de Respuesta a Riesgos
 
----
+- **R01:** Configurar `application-test.yml` excluyendo RabbitMQ auto-configuration
+- **R02:** Separar tests `@WebMvcTest` (controller) de `@SpringBootTest` (full integration)
+- **R03:** Usar perfil `test` con H2, cada test en transacción con rollback
+- **R04:** Ejecutar primero: `GlobalExceptionHandler` + `OrderController` = +19% cobertura
+- **R05:** Mantener proporción 60% unitarias / 40% integración
+- **R06:** Usar `CountDownLatch` y timeouts < 500ms en tests de cache
+- **R07:** Agregar tests de serialización/deserialización con ObjectMapper
 
-## 🎯 MÉTRICAS DE ÉXITO
+### 8.3 Umbrales de Riesgo por Cobertura
 
-### KPIs del Proyecto
-
-| Métrica | Actual | Meta | Estado |
-|---------|--------|------|--------|
-| Cobertura de Instrucciones | 49% | 80% | ❌ |
-| Cobertura de Branches | 25% | 70% | ❌ |
-| Métodos cubiertos | 93/167 (56%) | 147/167 (88%) | ❌ |
-| Clases cubiertas | 25/30 (83%) | 30/30 (100%) | ⚠️ |
-| Tests totales | 146 | ~224 | 65% |
-
-### Definición de "Done"
-
-✅ **Proyecto completado cuando:**
-1. Cobertura total ≥ 80%
-2. Cobertura de branches ≥ 70%
-3. Todos los packages críticos ≥ 80%
-4. 0 tests fallando
-5. Pipeline CI/CD verde
+| Umbral | Acción |
+|--------|--------|
+| < 50% | 🔴 Pipeline bloqueado — release no permitido |
+| 50%–69% | 🟡 Advertencia — requiere aprobación manual |
+| ≥80% | ✅ Aceptable — CI/CD continúa |
 
 ---
 
-## 📚 REFERENCIAS
+## 9. Calendario de Pruebas
 
-### Documentos Relacionados
-- `INFORME_COMPLETO_REFACTORIZACION.md` - Trabajo previo completado
-- `REFACTORING_PLAN_COVERAGE.md` - Plan maestro original
-- JaCoCo Report: `target/site/jacoco/index.html`
+| Fase | Actividad | Esfuerzo Est. | Prioridad |
+|------|-----------|---------------|-----------|
+| **Fase 1** | Tests unitarios: `OrderMapper`, `UserResponseCache` | 2-3h | 🔴 Crítica |
+| **Fase 2** | Tests integración: `OrderController` (`@WebMvcTest`) | 3-4h | 🔴 Crítica |
+| **Fase 3** | Tests integración: `GlobalExceptionHandler` | 2-3h | 🔴 Crítica |
+| **Fase 4** | Tests unitarios: `OrderEnrichmentFacade`, `UserEnrichmentService` | 2h | 🟡 Alta |
+| **Fase 5** | Tests unitarios: Messaging components | 2h | 🟡 Alta |
+| **Fase 6** | Tests unitarios: DTOs (`ErrorResponse`, etc.) | 1-2h | 🟢 Media |
+| **Fase 7** | Tests integración: Full flow (`@SpringBootTest`) | 2h | 🟢 Media |
+| **Fase 8** | Ejecución completa + análisis JaCoCo | 30min | — |
 
-### Best Practices
-- [JUnit 5 User Guide](https://junit.org/junit5/docs/current/user-guide/)
-- [Mockito Documentation](https://javadoc.io/doc/org.mockito/mockito-core/latest/org/mockito/Mockito.html)
-- [Spring Boot Testing](https://docs.spring.io/spring-boot/docs/current/reference/html/features.html#features.testing)
-
----
-
-## 🤝 ROLES Y RESPONSABILIDADES
-
-### Equipo Sugerido
-
-| Rol | Responsabilidad | Fases |
-|-----|-----------------|-------|
-| **QA Lead** | Coordinar plan, revisar tests | Todas |
-| **Dev 1** | FASE 1 + FASE 2 | Validation + Messaging |
-| **Dev 2** | FASE 3 | Persistence |
-| **Dev 3** | FASE 4 + FASE 5 | Mapper + Config |
-| **Tech Lead** | Code review, arquitectura | Consulta |
-
-### Estimación por Persona
-
-- **1 persona:** 3-4 semanas (22-29 horas)
-- **2 personas:** 1.5-2 semanas (11-15 horas cada uno)
-- **3 personas:** 1 semana (7-10 horas cada uno)
+**Esfuerzo total estimado:** 15-19 horas
 
 ---
 
-## 🔄 PROCESO DE REVISIÓN
+## 10. Herramientas y Entorno
 
-### Checklist por Pull Request
+| Herramienta | Propósito | Configuración |
+|-------------|-----------|---------------|
+| JUnit 5 | Framework de pruebas | Via Spring Boot Starter Test |
+| Mockito | Framework de mocking | Via Spring Boot Starter Test |
+| MockMvc | Testing capa HTTP | `@WebMvcTest(OrderController.class)` |
+| `@MockBean` | Mocking de beans Spring | Para Repository, RabbitTemplate |
+| H2 Database | BD in-memory para tests | `spring.datasource.url=jdbc:h2:mem:testdb` |
+| JaCoCo | Reporte de cobertura | Plugin Maven configurado |
+| AssertJ | Assertions fluidas | Opcional, mejora legibilidad |
 
-```markdown
-## Test Coverage PR Checklist
+### Configuración de Test Profile
 
-- [ ] Tests compilan sin errores
-- [ ] Todos los tests pasan (mvn test verde)
-- [ ] Cobertura incrementada según objetivo de la fase
-- [ ] Reporte JaCoCo actualizado
-- [ ] Nombres de tests descriptivos (Given/When/Then)
-- [ ] Edge cases cubiertos
-- [ ] Mocks utilizados correctamente
-- [ ] Sin código duplicado en tests
-- [ ] Javadoc en tests complejos
-- [ ] Sin @Disabled o @Ignore sin justificación
+```yaml
+# application-test.yml
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.amqp.RabbitAutoConfiguration
 
-## Fase Completada
-- [ ] FASE X: [Nombre]
-- [ ] Cobertura objetivo alcanzada: X%
-- [ ] Tests adicionales: X tests
+pedido:
+  migration:
+    enabled: false
+
+user:
+  service:
+    timeout: 100
 ```
 
 ---
 
-## 📞 CONTACTO Y SOPORTE
+## 11. Trazabilidad de Escenarios
 
-### Para Consultas Técnicas
-
-- **JaCoCo Issues:** Verificar configuración en pom.xml
-- **Mockito Problems:** Revisar anotaciones @Mock, @InjectMocks
-- **Spring Test Issues:** Verificar @SpringBootTest, @WebMvcTest, etc.
-
-### Escalación
-
-- **Cobertura no incrementa:** Revisar qué código ejecutan los tests
-- **Tests fallan intermitentemente:** Problemas de concurrencia o dependencias externas
-- **Performance lento:** Reducir uso de @SpringBootTest, preferir unit tests
-
----
-
-## 📝 NOTAS FINALES
-
-### Consideraciones Importantes
-
-1. **No buscar 100% a toda costa**
-   - Algunos constructores autogenerados (Lombok) no necesitan tests
-   - Código de configuración simple puede tener baja cobertura aceptable
-   - Focus en lógica de negocio y paths críticos
-
-2. **Mantener balance**
-   - Tests deben ser mantenibles
-   - Evitar over-mocking (tests frágiles)
-   - Preferir integration tests donde tenga sentido
-
-3. **Continuous Improvement**
-   - Este plan es iterativo
-   - Ajustar prioridades según hallazgos
-   - Celebrar incrementos progresivos
+| ID Escenario | Criterio/Brecha | Técnica Aplicada | Tipo Test |
+|--------------|-----------------|------------------|-----------|
+| IC-01 | controller 0%, POST 201 | Partición Equivalencia | Integración |
+| IC-02 | controller 0%, Validación | Partición Inválida | Integración |
+| IC-04, IC-05 | controller 0%, GET by ID | Partición Válida/Inválida | Integración |
+| EH-01 to EH-06 | GlobalExceptionHandler 0% | Tabla Decisión | Integración |
+| UM-01 to UM-04 | mapper 0% | Partición + Límite | Unitaria |
+| UC-01 to UC-05 | UserResponseCache 0% | Partición + Límite | Unitaria |
+| MSG-01 to MSG-05 | messaging 0% | Partición | Integración |
+| UE-01 to UE-03 | OrderEnrichmentFacade 6.7% | Partición | Unitaria |
+| DTO-01 to DTO-06 | DTOs 0-47% | Partición | Unitaria |
 
 ---
 
-**Documento creado:** 26 de febrero de 2026  
-**Basado en:** JaCoCo Report (49% coverage)  
-**Meta:** 80%+ coverage  
-**Estimación:** 3 semanas / 22-29 horas  
-**Tests a crear:** ~78 tests  
-**Estado:** ✅ PLAN APROBADO - Listo para ejecución
+## 12. Criterios de Éxito
 
+| Métrica | Valor Objetivo |
+|---------|----------------|
+| Cobertura de instrucciones | ≥80% |
+| Cobertura de branches | ≥60% |
+| Tests pasando | 100% |
+| Tiempo de ejecución total | < 60 segundos |
+| Escenarios CRÍTICOS implementados | 100% |
+
+---
+
+**Fin del documento TEST_PLAN.md**
