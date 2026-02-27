@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.DisplayName;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.http.ResponseEntity;
 
 import java.util.Collection;
@@ -30,6 +31,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * Prueba flujos de negocio completos del sistema de usuarios.
  */
 @SpringBootTest
+@ActiveProfiles("test")
 @DisplayName("Component Integration Tests - Usuario Service")
 public class componentIntegrationTests {
 

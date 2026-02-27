@@ -30,12 +30,3 @@ jobs:
           name: usuario-component-integration-results
           path: Backend/usuario-service/target/failsafe-reports/
 
-  create-issue-on-failure:
-    name: Create Issue on Failure
-    needs: [component-integration]
-    if: failure()
-    uses: ./.github/workflows/create-issue-on-failure.yml
-    with:
-      test-type: 'integration-component'
-      service-name: 'usuario'
-      workflow-name: 'usuario-service - Component Integration Tests'

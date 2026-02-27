@@ -34,12 +34,3 @@ jobs:
           name: frontend-component-integration-results
           path: Frontend/coverage/
 
-  create-issue-on-failure:
-    name: Create Issue on Failure
-    needs: [component-integration]
-    if: failure()
-    uses: ./.github/workflows/create-issue-on-failure.yml
-    with:
-      test-type: 'integration-component'
-      service-name: 'frontend'
-      workflow-name: 'frontend - Component Integration Tests'

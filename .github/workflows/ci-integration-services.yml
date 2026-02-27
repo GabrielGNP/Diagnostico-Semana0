@@ -56,12 +56,3 @@ jobs:
         if: always()
         run: docker compose down -v
 
-  create-issue-on-failure:
-    name: Create Issue on Failure
-    needs: [e2e-tests]
-    if: failure()
-    uses: ./.github/workflows/create-issue-on-failure.yml
-    with:
-      test-type: 'e2e-tests'
-      service-name: 'all-services'
-      workflow-name: 'E2E Integration Tests - Service Level'
