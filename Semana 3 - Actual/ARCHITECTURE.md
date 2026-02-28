@@ -45,7 +45,7 @@ El sistema consiste en dos microservicios Spring Boot (`usuario-service`, `pedid
 │    usuario-service      │◄────────────►│    pedido-service       │
 │    Puerto: 8083 (ext)   │   RabbitMQ   │    Puerto: 8082 (ext)   │
 │    Puerto: 8081 (int)   │              │    Puerto: 8080 (int)   │
-│    /api/v1/usuarios     │              │    /order/*             │
+│    /users               │              │    /order/*             │
 └───────────┬─────────────┘              └───────────┬─────────────┘
             │                                        │
             └──────────────┬─────────────────────────┘
@@ -244,16 +244,16 @@ USER_REQUEST_TIMEOUT = 3000ms // Hardcodeado, sin retry
 
 ---
 
-###### **usuario-service** (controller base: `/v1/usuarios`)
+###### **usuario-service** (controller base: `/users`)
 
 | Endpoint | Problema Detectado | Impacto | Severidad |
 |----------|-------------------|---------|-----------|
 | **Observación Global** | Capa de Controller delgada, usa DTOs, validación JSR-380, existe `GlobalExceptionHandler` que mapea correctamente `404`, `409`, `400`, `500` con cuerpos `ErrorResponse`. | Buen cumplimiento de responsabilidades. | 🟢 OK |
-| **Inconsistencia de ruta** | `@RequestMapping` en `/v1/usuarios` pero constante `API_PATH` es `/api/v1/usuarios` (incluye `/api`). | Logs y documentación muestran rutas diferentes; aumenta fricción para integradores. | 🟠 Medio |
-| `POST /v1/usuarios` | Retorna `201 Created` correctamente, pero NO establece `Location` header. | No cumple completamente buenas prácticas REST. | 🟢 Mejora |
-| `PUT /v1/usuarios/{id}` | Buen uso de verbo `PUT` para reemplazo completo. | OK | 🟢 OK |
-| `PATCH /v1/usuarios/{id}` | Buen uso de verbo `PATCH` para actualización parcial. | OK | 🟢 OK |
-| `DELETE /v1/usuarios/{id}` | Retorna `204 No Content` correctamente. Errores mapeados a `404` por `GlobalExceptionHandler`. | OK | 🟢 OK |
+| **Consistencia de ruta** | ✅ RESUELTO - `@RequestMapping` y `API_PATH` ahora son consistentes en `/users`. | Path simplificado, sin context-path. | 🟢 OK |
+| `POST /users` | Retorna `201 Created` correctamente, pero NO establece `Location` header. | No cumple completamente buenas prácticas REST. | 🟢 Mejora |
+| `PUT /users/{id}` | Buen uso de verbo `PUT` para reemplazo completo. | OK | 🟢 OK |
+| `PATCH /users/{id}` | Buen uso de verbo `PATCH` para actualización parcial. | OK | 🟢 OK |
+| `DELETE /users/{id}` | Retorna `204 No Content` correctamente. Errores mapeados a `404` por `GlobalExceptionHandler`. | OK | 🟢 OK |
 
 ---
 
@@ -265,7 +265,7 @@ USER_REQUEST_TIMEOUT = 3000ms // Hardcodeado, sin retry
 | **Códigos de estado en creación** | `pedido-service` retorna `200` en `POST`. | Normalizar a `201 Created` + `Location` header. |
 | **Nomenclatura REST** | Rutas con verbos (`/add`) y sufijos redundantes (`/all`). | Preferir rutas plurales (`/orders`, `/users`) sin verbos. |
 | **Logging y trazabilidad** | Uso de `System.err` y `println`. | Usar logger y correlación de request IDs. |
-| **Consistencia en constantes** | `API_PATH` vs `@RequestMapping` discordantes. | Unificar constantes de ruta. |
+| **Consistencia en constantes** | ✅ RESUELTO en `usuario-service` - Path simplificado a `/users`. | Aplicar mismo patrón a `pedido-service`. |
 | **Errores y exposición** | Posible retorno de stacktraces al cliente. | Retornar mensajes genéricos; registrar detalles en servidor. |
 
 ---
@@ -1235,16 +1235,16 @@ Basado en los criterios de aceptación de **HU-ORD-08**:
 
 ---
 
-#### 12.7.2 usuario-service (Base path: `/api/v1/usuarios`)
+#### 12.7.2 usuario-service (Base path: `/users`)
 
 | Endpoint | Verbo | Estado Actual | Estado Esperado | Cumple |
 |----------|-------|---------------|-----------------|--------|
-| `/api/v1/usuarios` | `GET` | 🟢 `200 OK` | 🟢 `200 OK` | ✅ |
-| `/api/v1/usuarios/{id}` | `GET` | 🟢 `200 OK` / `404` estructurado | 🟢 `200 OK` / `404` estructurado | ✅ |
-| `/api/v1/usuarios` | `POST` | 🟢 `201 Created` | 🟡 `201 Created` + `Location` | ⚠️ Falta `Location` header |
-| `/api/v1/usuarios/{id}` | `PUT` | 🟢 `200 OK` / `404` estructurado | 🟢 `200 OK` / `404` estructurado | ✅ |
-| `/api/v1/usuarios/{id}` | `PATCH` | 🟢 `200 OK` / `404` estructurado | 🟢 `200 OK` / `404` estructurado | ✅ |
-| `/api/v1/usuarios/{id}` | `DELETE` | 🟢 `204 No Content` / `404` | 🟢 `204 No Content` / `404` | ✅ |
+| `/users` | `GET` | 🟢 `200 OK` | 🟢 `200 OK` | ✅ |
+| `/users/{id}` | `GET` | 🟢 `200 OK` / `404` estructurado | 🟢 `200 OK` / `404` estructurado | ✅ |
+| `/users` | `POST` | 🟢 `201 Created` | 🟡 `201 Created` + `Location` | ⚠️ Falta `Location` header |
+| `/users/{id}` | `PUT` | 🟢 `200 OK` / `404` estructurado | 🟢 `200 OK` / `404` estructurado | ✅ |
+| `/users/{id}` | `PATCH` | 🟢 `200 OK` / `404` estructurado | 🟢 `200 OK` / `404` estructurado | ✅ |
+| `/users/{id}` | `DELETE` | 🟢 `204 No Content` / `404` | 🟢 `204 No Content` / `404` | ✅ |
 
 **Resumen usuario-service:**
 - ✅ Cumple: 5 endpoints
@@ -1327,5 +1327,5 @@ Para cumplir con los estándares de verbos HTTP, cada endpoint debe verificar:
 | `DELETE` retorna `204 No Content` | - | ✅ Completado |
 | Logging con SLF4J | - | ✅ Completado |
 | Respuestas de error estructuradas | - | ✅ Completado |
-| Añadir header `Location` en `POST /api/v1/usuarios` | 🟢 Baja | ❌ Pendiente |
-| Unificar constante `API_PATH` con `@RequestMapping` | 🟢 Baja | ❌ Pendiente |
+| Añadir header `Location` en `POST /users` | 🟢 Baja | ❌ Pendiente |
+| Unificar constante `API_PATH` con `@RequestMapping` | - | ✅ Completado (migrado a `/users`) |

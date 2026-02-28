@@ -204,12 +204,12 @@ DELETE /user/{id}
 
 **DESPUÉS:**
 ```
-GET    /api/v1/usuarios
-GET    /api/v1/usuarios/{id}
-POST   /api/v1/usuarios
-PUT    /api/v1/usuarios/{id}
-PATCH  /api/v1/usuarios/{id}
-DELETE /api/v1/usuarios/{id}
+GET    /users
+GET    /users/{id}
+POST   /users
+PUT    /users/{id}
+PATCH  /users/{id}
+DELETE /users/{id}
 ```
 
 ⚠️ **IMPORTANTE:** Actualizar frontend y tests con nuevas rutas.
@@ -261,9 +261,9 @@ fetch('/user/1')
 fetch('/user/add', {method: 'POST'})
 
 // DESPUÉS
-fetch('/api/v1/usuarios')
-fetch('/api/v1/usuarios/1')
-fetch('/api/v1/usuarios', {method: 'POST'})
+fetch('/users')
+fetch('/users/1')
+fetch('/users', {method: 'POST'})
 ```
 
 ---
@@ -296,7 +296,7 @@ public ResponseEntity<User> addUser(@RequestBody User incoming) {
 @PostMapping
 public ResponseEntity<UsuarioResponse> crear(
         @Valid @RequestBody CreateUsuarioRequest request) {
-    log.info("POST /api/v1/usuarios - Creando nuevo usuario: {}", request.getEmail());
+    log.info("POST /users - Creando nuevo usuario: {}", request.getEmail());
     User usuario = usuarioService.crear(request);
     return ResponseEntity
         .status(HttpStatus.CREATED)
