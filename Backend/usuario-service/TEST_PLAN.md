@@ -13,7 +13,7 @@
 
 ### Resumen de Estado Actual
 
-El servicio `usuario-service` gestiona órdenes de compra con persistencia PostgreSQL y comunicación asíncrona vía RabbitMQ con `usuario-service`. Actualmente solo `OrderService` tiene cobertura significativa (93.6%), mientras que componentes críticos como `OrderController`, `GlobalExceptionHandler`, y toda la capa de mensajería están **sin cobertura (0%)**.
+El servicio `usuario-service` gestiona órdenes de compra con persistencia PostgreSQL y comunicación asíncrona vía RabbitMQ con `usuario-service`. Actualmente solo `OrderService` tiene cobertura significativa (93.6%), mientras que componentes críticos como `UserController`, `GlobalExceptionHandler`, y toda la capa de mensajería están **sin cobertura (0%)**.
 
 ### Riesgos Brownfield Identificados
 
@@ -25,350 +25,109 @@ El servicio `usuario-service` gestiona órdenes de compra con persistencia Postg
 ---
 
 ## 2. Alcance
+# TEST_PLAN.md - Usuario Service (corregido)
 
-### 2.1 En Alcance
+Resumen de pasos:
+- Analizar JaCoCo (`target/site/jacoco/index.html`) y priorizar brechas.
+- Reescribir alcance para reflejar clases reales del módulo.
+- Implementar tests dirigidos a `persistence` y `mapper`.
 
-| Componente | Tipo | Cobertura Actual | Prioridad |
-|------------|------|------------------|-----------|
-| `OrderController` | Controller | 0% (76 inst) | 🔴 CRÍTICO |
-| `GlobalExceptionHandler` | Exception Handler | 0% (212 inst) | 🔴 CRÍTICO |
-| `OrderMapper` | Mapper | 0% (43 inst) | 🟡 ALTO |
-| `UserResponseCache` | Messaging | 0% (86 inst) | 🟡 ALTO |
-| `UserServiceProducer` | Messaging | 0% (27 inst) | 🟡 ALTO |
-| `UserServiceConsumer` | Messaging | 0% (25 inst) | 🟡 ALTO |
-| `RabbitMQUserInfoClient` | Messaging | 0% (33 inst) | 🟡 ALTO |
-| `OrderEnrichmentFacade` | Service | 6.7% (56 inst missed) | 🟡 ALTO |
-| `UserEnrichmentService` | Service | 16% (21 inst missed) | 🟡 ALTO |
-| `ErrorResponse` + `Builder` | DTO | 0% (119 inst) | 🟢 MEDIO |
-| `OrderStateUpdateDto` | DTO | 0% (16 inst) | 🟢 MEDIO |
-| `UserRequest` | DTO | 0% (20 inst) | 🟢 MEDIO |
-| `OrderWithUserDto` | DTO | 47.9% (49 inst missed) | 🟢 MEDIO |
+Fecha: 2026-03-01
 
-### 2.2 Fuera de Alcance
+## 1. Overview
+- Microservicio: `usuario-service`
+- Cobertura actual (JaCoCo): 82% instrucciones, 65% branches (informe local)
+- Objetivo inmediato: subir cobertura crítica a ≥80% enfocando paquetes con brechas.
 
-| Componente | Razón |
-|------------|-------|
-| `Order` (model) | 100% cobertura |
-| `State` (enum) | 100% cobertura |
-| `OrderDto` | 100% cobertura |
-| `OrderNotFoundException` | 100% cobertura |
-| `OrderService` | 93.6% cobertura — solo 11 inst missed |
-| `RabbitMQConfig` | Configuración declarativa de beans |
-| `CorsConfig` | Configuración declarativa |
-| `RabbitMQMessageConverterConfig` | Configuración declarativa |
-| `PedidoServiceApplication` | Clase main de Spring Boot |
+Resumen ejecutivo:
+- Paquetes con cobertura baja detectados en JaCoCo:
+  - `com.example.usuarioservice.persistence` — 65% (riesgo alto por I/O, init, partialUpdate)
+  - `com.example.usuarioservice.mapper` — 67% (null handling y paths no cubiertos)
+- Resto de paquetes (`controller`, `service`, `dto`, `validation`, `exception`, `messaging`) presentan cobertura alta y no son prioritarios ahora.
 
----
+## 2. Alcance
 
-## 3. Niveles de Prueba
+### 2.1 En alcance (prioridad)
+- `persistence`:
+  - `UserRepository` (JSON persistence) — escenarios: `init()`, `writeToFile()`, `loadUsers()`, `partialUpdate()`.
+  - `UserJpaPersistence` — `partialUpdate`, `update`, `deleteById`, parseBoolean edge-cases.
+  - `CachedUserPersistenceDecorator` — comportamientos de cache si aplica.
+- `mapper`:
+  - `UserEntityMapper`, `UsuarioMapper` — `toDomain`, `toEntity`, null / campos parciales, builder mapping.
 
-### 3.1 Pruebas Unitarias
+### 2.2 Fuera de alcance (por ahora)
+- `controller`, `service`, `dto`, `validation`, `exception`, `messaging` (alta cobertura actual).
 
-| Campo | Descripción |
-|-------|-------------|
-| **Objetivo** | Validar lógica aislada de mappers, servicios de enriquecimiento, cache y DTOs |
-| **Herramientas** | JUnit 5, Mockito, AssertJ |
-| **Alcance** | `OrderMapper`, `OrderEnrichmentFacade`, `UserEnrichmentService`, `UserResponseCache`, DTOs |
-| **Estrategia de aislamiento** | Mock de `IUserEnrichmentClient`, `IUserInfoClient`, `UserResponseCache` |
-| **Contribución estimada** | +15-18% cobertura (~230 instrucciones) |
+## 3. Niveles de Prueba y Herramientas
+- Unitarias: JUnit 5, Mockito, AssertJ — tests para mappers y lógica interna de `persistence`.
+- Integración ligera: `@DataJpaTest` o `@SpringBootTest` con H2 para `UserJpaPersistence`.
+- Tests filesystem: usar `java.nio.file.Files.createTempDirectory` y cleanup en `@AfterEach`.
 
-### 3.2 Pruebas de Integración
+## 4. Priorización JaCoCo-driven
 
-| Campo | Descripción |
-|-------|-------------|
-| **Objetivo** | Validar integración Controller↔Service, manejo de excepciones HTTP, flujos de mensajería |
-| **Herramientas** | `@WebMvcTest`, `MockMvc`, `@MockBean`, `@SpringBootTest` con H2 |
-| **Alcance** | `OrderController`, `GlobalExceptionHandler`, `UserServiceProducer`, `UserServiceConsumer` |
-| **Contribución estimada** | +25-30% cobertura (~400 instrucciones) |
+| Prioridad | Paquete | Cobertura | Nota |
+|---|---:|---:|---|
+| 🔴 CRÍTICO | `persistence` | 65% | Mucha lógica I/O y branches no cubiertos; foco primero |
+| 🟡 ALTO | `mapper` | 67% | Null/edge cases faltantes |
 
----
+Estimación: tests dirigidos a `persistence` + `mapper` → ganancia esperada +12–18% instrucciones.
 
-## 4. Principios de Testing Aplicados
+## 5. Técnicas de diseño y escenarios mapeados
+- Partición de Equivalencia: archivo JSON válido / ausente / corrupto; updates con keys válidas/invalidas.
+- Valores límite: `null` inputs en mappers; `id` nulo/negativo en `loadUsers`.
+- Decisión: partialUpdate aplica únicamente keys presentes; parseBoolean maneja Boolean/String/null.
 
-| Principio | Aplicación |
-|-----------|------------|
-| **Testing shows presence of defects** | Los tests verifican comportamiento esperado pero no garantizan ausencia de bugs |
-| **Exhaustive testing is impossible** | Enfocamos en particiones de equivalencia y valores límite críticos |
-| **Early testing** | Priorizamos componentes 0% cobertura que bloquean CI |
-| **Defect clustering** | Priorizamos `GlobalExceptionHandler` (212 inst) y `OrderController` (76 inst) |
-| **Pesticide paradox** | Variamos escenarios entre particiones válidas e inválidas |
-| **Testing is context dependent** | Adaptamos técnicas al contexto brownfield con RabbitMQ |
-| **Absence-of-errors fallacy** | Tests de integración validan el sistema completo, no solo unidades |
+## 6. Escenarios Gherkin prioritarios
 
----
-
-## 5. Aplicación de Técnicas de Diseño
-
-### 5.1 Partición de Equivalencia
-
-| Campo | Partición | Tipo | Válida/Inválida | Escenario Mapeado |
-|-------|-----------|------|-----------------|-------------------|
-| `name` | String no vacío ("Test Order") | Dato | ✅ Válida | UC-01-01 |
-| `name` | String vacío ("") | Dato | ❌ Inválida | UC-01-02 |
-| `name` | null | Dato | ❌ Inválida | UC-01-03 |
-| `name` | Solo espacios ("   ") | Dato | ❌ Inválida | UC-01-04 |
-| `description` | String válido | Dato | ✅ Válida | UC-01-01 |
-| `description` | null | Dato | ❌ Inválida | UC-01-05 |
-| `idUser` | Entero positivo (1, 100) | Dato | ✅ Válida | UC-01-01 |
-| `idUser` | Cero (0) | Dato | ❌ Inválida | UC-01-06 |
-| `idUser` | Entero negativo (-1) | Dato | ❌ Inválida | UC-01-07 |
-| `idUser` | null | Dato | ❌ Inválida | UC-01-08 |
-| `orderId` | ID existente | Dato | ✅ Válida | UC-02-01 |
-| `orderId` | ID no existente | Dato | ❌ Inválida | UC-02-02 |
-| `state` | Estado válido (PROCESSING, DELIVERED) | Dato | ✅ Válida | UC-03-01 |
-| `state` | null | Dato | ❌ Inválida | UC-03-02 |
-| `userId` timeout | Respuesta dentro de timeout | Tiempo | ✅ Válida | UC-04-01 |
-| `userId` timeout | Respuesta después de timeout | Tiempo | ❌ Inválida | UC-04-02 |
-
-### 5.2 Análisis de Valores Límite
-
-| Campo | Mínimo | Máximo | Valores Límite | Escenario Mapeado |
-|-------|--------|--------|----------------|-------------------|
-| `idUser` | 1 | Integer.MAX_VALUE | 0, 1, 2, MAX-1, MAX | BVA-01, BVA-02 |
-| `orderId` | 1 | - | 0, 1, -1 | BVA-03, BVA-04 |
-| `name.length` | 1 | 255 (asumido) | 0, 1, 254, 255, 256 | BVA-05, BVA-06 |
-| `timeout` (ms) | 0 | 3000 | 0, 1, 2999, 3000, 3001 | BVA-07, BVA-08 |
-| `userId` en cache | - | - | userId presente, userId ausente | BVA-09, BVA-10 |
-
-### 5.3 Tabla de Decisión - Creación de Orden
-
-| Condición / Regla | R1 | R2 | R3 | R4 | R5 | R6 |
-|-------------------|----|----|----|----|----|----|
-| `name` válido | ✅ | ❌ | ✅ | ✅ | ✅ | ❌ |
-| `description` válido | ✅ | ✅ | ❌ | ✅ | ✅ | ❌ |
-| `idUser` > 0 | ✅ | ✅ | ✅ | ❌ | ✅ | ❌ |
-| **Acción** | 201 Created | 400 Bad Request | 400 Bad Request | 400 Bad Request | 201 Created | 400 Bad Request |
-| **Escenario** | DT-01 | DT-02 | DT-03 | DT-04 | DT-01 | DT-05 |
-
-### 5.4 Tabla de Decisión - Manejo de Excepciones
-
-| Condición / Regla | R1 | R2 | R3 | R4 | R5 | R6 |
-|-------------------|----|----|----|----|----|----|
-| Excepción tipo | OrderNotFound | IllegalArgument | ValidationError | MalformedJSON | OrderCreation | Generic |
-| **HTTP Status** | 404 | 400 | 400 | 400 | 500 | 500 |
-| **Escenario** | EH-01 | EH-02 | EH-03 | EH-04 | EH-05 | EH-06 |
-
----
-
-## 6. Escenarios Gherkin
-
-### 6.1 Escenarios de Pruebas Unitarias
-
-#### Feature: OrderMapper - Conversión de entidades a DTOs
-
+Unitarios - Mapper
 ```gherkin
-Feature: OrderMapper - Entity to DTO Conversion
-  As a developer
-  I want to ensure OrderMapper correctly converts between Order and OrderDto
-  So that data integrity is maintained across layers
-
-  # Cubre: mapper 0% — toDto method
-  @critical
-  Scenario: UM-01 - Convertir Order entity a OrderDto exitosamente
-    Given una entidad Order con id=1, name="Test", description="Desc", idUser=10, state=PROCESSING, active=true
-    When se invoca orderMapper.toDto(order)
-    Then el OrderDto resultante debe tener los mismos valores
-    And el id debe ser 1
-    And el state debe ser PROCESSING
-
-  # Cubre: mapper 0% — toDto null handling
+Feature: UserEntityMapper
   @high
-  Scenario: UM-02 - Convertir Order null retorna null
-    Given una entidad Order null
-    When se invoca orderMapper.toDto(null)
-    Then el resultado debe ser null
+  Scenario: toDomain maps correctly
+    Given a UserEntity fully populated
+    When toDomain(entity)
+    Then result has same field values
 
-  # Cubre: mapper 0% — toEntity method
-  @critical
-  Scenario: UM-03 - Convertir OrderDto a Order entity exitosamente
-    Given un OrderDto con name="New Order", description="New Desc", idUser=5
-    When se invoca orderMapper.toEntity(orderDto)
-    Then la entidad Order resultante debe tener los mismos valores
-
-  # Cubre: mapper 0% — toEntity null handling
   @high
-  Scenario: UM-04 - Convertir OrderDto null retorna null
-    Given un OrderDto null
-    When se invoca orderMapper.toEntity(null)
-    Then el resultado debe ser null
+  Scenario: toDomain with null returns null
 ```
 
-#### Feature: OrderEnrichmentFacade - Enriquecimiento de pedidos
-
+Unitarios/Integración - Persistence (JSON)
 ```gherkin
-Feature: OrderEnrichmentFacade - Order Enrichment with User Data
-  As a system
-  I want to enrich order data with user information
-  So that clients receive complete order+user payloads
-
-  Background:
-    Given un mock de IUserEnrichmentClient configurado
-
-  # Cubre: OrderEnrichmentFacade 6.7% — enrich happy path
+Feature: UserRepository JSON persistence
   @critical
-  Scenario: UE-01 - Enriquecer orden con datos de usuario exitosamente
-    Given un OrderDto válido con idUser=10
-    And el userEnrichmentClient retorna UserResponse(id=10, name="John", mail="john@test.com")
-    When se invoca orderEnrichmentFacade.enrich(orderDto)
-    Then el OrderWithUserDto resultante debe contener los datos del pedido
-    And debe contener el UserResponse con id=10
+  Scenario: init loads existing file into memory
 
-  # Cubre: OrderEnrichmentFacade — enrich with null orderDto
-  @high
-  Scenario: UE-02 - Enriquecer orden null retorna null
-    Given un OrderDto null
-    When se invoca orderEnrichmentFacade.enrich(null)
-    Then el resultado debe ser null
+  @critical
+  Scenario: init creates file when missing
 
-  # Cubre: OrderEnrichmentFacade — enrich when user service fails
   @high
-  Scenario: UE-03 - Enriquecer orden cuando el servicio de usuario falla
-    Given un OrderDto válido con idUser=999
-    And el userEnrichmentClient lanza una excepción
-    When se invoca orderEnrichmentFacade.enrich(orderDto)
-    Then el OrderWithUserDto resultante debe contener los datos del pedido
-    And el campo user debe ser null
+  Scenario: writeToFile wraps IOException as RuntimeException
+
+  @high
+  Scenario: partialUpdate updates only provided keys
 ```
 
-#### Feature: UserEnrichmentService - Servicio de enriquecimiento
+## 7. Plan de ejecución (pasos)
+1. Implementar tests unitarios para `UserEntityMapper`. (≈1h)
+2. Implementar tests unitarios para `UserRepository` usando temp files y mocks de `ObjectMapper`. (≈2–3h)
+3. Añadir `@DataJpaTest` para `UserJpaPersistence` (partialUpdate/update/delete). (≈2h)
+4. Ejecutar `mvn test jacoco:report` y ajustar según brechas restantes. (iterar)
 
-```gherkin
-Feature: UserEnrichmentService - User Info Fetching
-  As a service
-  I want to fetch user information from external service
-  So that orders can be enriched with user data
+## 8. Riesgos específicos y mitigaciones
+- Filesystem tests: usar temp dir y limpiar; no escribir fuera de `/tmp`.
+- JPA tests: usar H2 con `create-drop` y aislamiento por test.
+- Mocking de ObjectMapper: preferir `@Spy` o envolver en wrapper para no alterar producción.
 
-  # Cubre: UserEnrichmentService 16% — fetchUserInfo success
-  @high
-  Scenario: US-01 - Obtener información de usuario exitosamente
-    Given un mock de IUserInfoClient
-    And el cliente retorna UserResponse para userId=5
-    When se invoca userEnrichmentService.fetchUserInfo(5)
-    Then debe retornar el UserResponse correspondiente
+## 9. Calendario reducido
+- Día 1: mapper tests + init/create file tests.
+- Día 2: partialUpdate, writeToFile error path, JPA tests + ejecutar JaCoCo.
 
-  # Cubre: UserEnrichmentService — fetchUserInfo exception handling
-  @high
-  Scenario: US-02 - Manejar error al obtener información de usuario
-    Given un mock de IUserInfoClient
-    And el cliente lanza una excepción
-    When se invoca userEnrichmentService.fetchUserInfo(5)
-    Then debe retornar null
-    And debe logear una advertencia
-```
+## 10. Criterios de éxito
+- Reducir missed instructions en `persistence` y `mapper` hasta llevar cobertura global ≥80%.
+- No añadir más tests si cobertura supera 90% (regla del request).
 
-#### Feature: UserResponseCache - Cache de respuestas
-
-```gherkin
-Feature: UserResponseCache - In-Memory Response Caching
-  As a messaging component
-  I want to cache user responses temporarily
-  So that async responses can be retrieved by waiting callers
-
-  # Cubre: UserResponseCache 0% — store method
-  @critical
-  Scenario: UC-01 - Almacenar respuesta de usuario en cache
-    Given un UserResponseCache vacío
-    And un UserResponse con id=10, name="Test User"
-    When se invoca cache.store(userResponse)
-    Then la respuesta debe estar disponible para userId=10
-
-  # Cubre: UserResponseCache 0% — store null ignored
-  @high
-  Scenario: UC-02 - Ignorar almacenamiento de respuesta null
-    Given un UserResponseCache vacío
-    When se invoca cache.store(null)
-    Then el cache debe permanecer vacío
-
-  # Cubre: UserResponseCache 0% — awaitResponse success
-  @critical
-  Scenario: UC-03 - Esperar y obtener respuesta dentro del timeout
-    Given un UserResponseCache con UserResponse para userId=10
-    When se invoca cache.awaitResponse(10, 1000)
-    Then debe retornar el UserResponse para userId=10
-    And la respuesta debe ser removida del cache
-
-  # Cubre: UserResponseCache 0% — awaitResponse timeout
-  @critical
-  Scenario: UC-04 - Timeout al esperar respuesta no disponible
-    Given un UserResponseCache vacío
-    When se invoca cache.awaitResponse(999, 100)
-    Then debe retornar null después del timeout
-
-  # Cubre: UserResponseCache 0% — awaitResponse interrupted
-  @medium
-  Scenario: UC-05 - Manejar interrupción durante espera
-    Given un UserResponseCache vacío
-    And el thread será interrumpido durante la espera
-    When se invoca cache.awaitResponse(10, 5000)
-    Then debe retornar null
-    And el thread debe tener el flag interrupted activo
-```
-
-#### Feature: DTOs - Validación de modelos de datos
-
-```gherkin
-Feature: DTO Constructors and Accessors
-  As a developer
-  I want DTOs to correctly store and retrieve data
-  So that data transfer between layers works correctly
-
-  # Cubre: OrderStateUpdateDto 0% — constructor and accessors
-  @medium
-  Scenario: DTO-01 - OrderStateUpdateDto constructor y getters
-    Given un state DELIVERED
-    When se crea OrderStateUpdateDto(DELIVERED)
-    Then getState() debe retornar DELIVERED
-
-  # Cubre: OrderStateUpdateDto 0% — setter
-  @medium
-  Scenario: DTO-02 - OrderStateUpdateDto setter
-    Given un OrderStateUpdateDto con state PROCESSING
-    When se invoca setState(TRAVELING_TO_WAREHOUSE)
-    Then getState() debe retornar TRAVELING_TO_WAREHOUSE
-
-  # Cubre: UserRequest 0% — all methods
-  @medium
-  Scenario: DTO-03 - UserRequest constructor y accessors
-    Given un userId=25
-    When se crea UserRequest(25)
-    Then getUserId() debe retornar 25
-    And toString() debe contener "userId=25"
-
-  # Cubre: OrderWithUserDto 47.9% — remaining accessors
-  @medium
-  Scenario: DTO-04 - OrderWithUserDto setters
-    Given un OrderWithUserDto vacío
-    When se setean todos los campos
-    Then los getters deben retornar los valores seteados
-
-  # Cubre: ErrorResponse 0% — builder pattern
-  @high
-  Scenario: DTO-05 - ErrorResponse builder completo
-    Given valores para timestamp, status=400, error="Bad Request", message="Invalid"
-    When se construye con ErrorResponse.builder()
-    Then el ErrorResponse debe tener todos los campos correctos
-
-  # Cubre: ErrorResponse 0% — validationErrors map
-  @high
-  Scenario: DTO-06 - ErrorResponse con validationErrors
-    Given un mapa de errores de validación
-    When se construye ErrorResponse con validationErrors
-    Then getValidationErrors() debe retornar el mapa
-```
-
-### 6.2 Escenarios de Pruebas de Integración
-
-#### Feature: OrderController - Endpoints REST
-
-```gherkin
-Feature: OrderController - REST API Integration
-  As an API consumer
-  I want to interact with order endpoints
-  So that I can manage orders via HTTP
-
-  Background:
-    Given el servicio de pedidos está disponible
-    And el repositorio está mockeado con @MockBean
+Fin del plan corregido — foco en `persistence` y `mapper` del `usuario-service`.
     And el OrderService está configurado
 
   # Cubre: controller 0% — POST /orders endpoint
