@@ -17,11 +17,12 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: Frontend/package-lock.json
 
-      - name: Install dependencies
-        run: npm ci
+      - name: Clean install dependencies
+        run: |
+          rm -rf node_modules
+          npm install
+          npm install --no-save @rollup/rollup-linux-x64-gnu@4.57.1
 
       - name: Run integration tests
         run: npm run test:integration

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Mail, Lock, Eye, EyeOff } from "lucide-react";
+import { addUser } from "../services/usuarioService";
 
 interface FormData {
   nombre: string;
@@ -27,22 +28,12 @@ const AddUser: React.FC = () => {
     setError(null);
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_APIUSER}/user/add`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name: formData.nombre,
-          mail: formData.email,
-          password: formData.password,
-          active: true,
-        }),
+      await addUser({
+        name: formData.nombre,
+        mail: formData.email,
+        password: formData.password,
+        active: true,
       });
-
-      if (!response.ok) {
-        throw new Error("Error al crear el usuario");
-      }
 
       console.log("Usuario creado exitosamente");
       navigate("/");
@@ -83,10 +74,11 @@ const AddUser: React.FC = () => {
             </div>
           )}
           <div className="space-y-2">
-            <label className="text-sm font-bold text-slate-800 ml-1">
+            <label htmlFor="nombre" className="text-sm font-bold text-slate-800 ml-1">
               Nombre completo
             </label>
             <input
+              id="nombre"
               type="text"
               placeholder="Ej. Juan Pérez"
               className="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl outline-none focus:ring-2 focus:ring-blue-100 transition-all text-slate-700 placeholder:text-slate-400"
@@ -99,11 +91,12 @@ const AddUser: React.FC = () => {
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-bold text-slate-800 ml-1">
+            <label htmlFor="email" className="text-sm font-bold text-slate-800 ml-1">
               Correo electrónico
             </label>
             <div className="relative group">
               <input
+                id="email"
                 type="email"
                 placeholder="nombre@empresa.com"
                 className="w-full pl-14 pr-6 py-4 bg-slate-50 border-none rounded-2xl outline-none focus:ring-2 focus:ring-blue-100 transition-all text-slate-700 placeholder:text-slate-400"
@@ -121,11 +114,12 @@ const AddUser: React.FC = () => {
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-bold text-slate-800 ml-1">
+            <label htmlFor="password" className="text-sm font-bold text-slate-800 ml-1">
               Contraseña
             </label>
             <div className="relative group">
               <input
+                id="password"
                 type={showPassword ? "text" : "password"}
                 placeholder="••••••••"
                 className="w-full pl-14 pr-14 py-4 bg-slate-50 border-none rounded-2xl outline-none focus:ring-2 focus:ring-blue-100 transition-all text-slate-700 placeholder:text-slate-400"

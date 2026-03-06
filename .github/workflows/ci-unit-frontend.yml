@@ -1,5 +1,4 @@
 name: frontend - Unit Tests
-
 on:
   workflow_call:
 
@@ -16,12 +15,18 @@ jobs:
       - name: Set up Node.js 20
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: Frontend/package-lock.json
+          node-version: "20"
+          # cache: 'npm'  # Deshabilitado temporalmente por bug de Rollup
+          # cache-dependency-path: Frontend/package-lock.json
 
-      - name: Install dependencies
-        run: npm ci
+      - name: Clean npm cache
+        run: npm cache clean --force
+
+      - name: Clean and install dependencies
+        run: |
+          rm -rf node_modules package-lock.json
+          npm install
+          npm install --no-save @rollup/rollup-linux-x64-gnu@4.57.1
 
       - name: Run unit tests
         run: npm run test
@@ -39,6 +44,6 @@ jobs:
     if: failure()
     uses: ./.github/workflows/create-issue-on-failure.yml
     with:
-      test-type: 'unit'
-      service-name: 'frontend'
-      workflow-name: 'frontend - Unit Tests'
+      test-type: "unit"
+      service-name: "frontend"
+      workflow-name: "frontend - Unit Tests"

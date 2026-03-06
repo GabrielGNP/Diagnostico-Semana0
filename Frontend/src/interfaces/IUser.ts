@@ -1,8 +1,6 @@
-import { IOrder } from "./Orders";
+// DEPRECATED: moved to `src/interfaces/index.ts` — use `Usuario` from there as source of truth.
+// This file kept as a compatibility shim for a short transition period.
 
-export interface IUser {
-  id: number;
-  name: string;
-  password: string;
-  email: string;
-}
+import { Usuario } from "./index";
+
+export type IUser = Usuario;

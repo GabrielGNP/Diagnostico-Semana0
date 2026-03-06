@@ -1,37 +1,31 @@
-[
-  {
-    "id": 1,
-    "name": "Ana Pérez",
-    "password": "anaPass1",
-    "mail": "ana.perez@example.com",
-    "active": true
-  },
-  {
-    "id": 2,
-    "name": "Carlos Gómez",
-    "password": "carlosPass2",
-    "mail": "carlos.gomez@example.com",
-    "active": true
-  },
-  {
-    "id": 3,
-    "name": "María López",
-    "password": "mariaPass3",
-    "mail": "maria.lopez@example.com",
-    "active": false
-  },
-  {
-    "id": 4,
-    "name": "Juan Rodríguez",
-    "password": "juanPass4",
-    "mail": "juan.rodriguez@example.com",
-    "active": true
-  },
-  {
-    "id": 5,
-    "name": "Lucía Fernández",
-    "password": "luciaPass5",
-    "mail": "lucia.fernandez@example.com",
-    "active": true
-  }
-]
+[ {
+  "id" : 1,
+  "name" : "Alice",
+  "password" : "alice123",
+  "mail" : "alice@example.com",
+  "active" : true
+}, {
+  "id" : 2,
+  "name" : "Bob",
+  "password" : "bob123",
+  "mail" : "bob@example.com",
+  "active" : true
+}, {
+  "id" : 3,
+  "name" : "Clara",
+  "password" : "clara123",
+  "mail" : "clara@example.com",
+  "active" : true
+}, {
+  "id" : 4,
+  "name" : "Clara",
+  "password" : "clara123",
+  "mail" : "clara@example.com",
+  "active" : true
+}, {
+  "id" : 5,
+  "name" : "TestPersist",
+  "password" : "t",
+  "mail" : "t@example.com",
+  "active" : true
+} ]

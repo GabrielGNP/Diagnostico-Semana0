@@ -2,10 +2,10 @@ package com.example.pedidoservice.model;
 
 public enum State {
     PROCESSING,
-    TRAVELINGTOWAREHOUSE,
+    TRAVELING_TO_WAREHOUSE,
     IN_WAREHOUSE,
-    TRAVELINGTOYOURHOUSE,
-    ONTHESTREET,
+    TRAVELING_TO_YOUR_HOUSE,
+    ON_THE_STREET,
     DELIVERED,
-    CANCELED
+    CANCELED,
 }

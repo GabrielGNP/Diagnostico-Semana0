@@ -1,6 +1,9 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Mail, ArrowRight } from "lucide-react";
+import { OrderState } from "../interfaces";
+import { addOrder } from "../services/pedidoService";
+import { getUserByEmail } from "../services/usuarioService";
 
 interface FormData {
   email: string;
@@ -28,39 +31,16 @@ const AddOrder: React.FC = () => {
     setError(null);
 
     try {
-      const userResponse = await fetch(
-        `${import.meta.env.VITE_APIUSER}/user/${formData.email}`,
-      );
+      const userData = await getUserByEmail(formData.email);
 
-      let idUser: number;
-      if (userResponse.ok) {
-        const userData = await userResponse.json();
-        idUser = userData.id;
-      } else {
-        throw new Error("Usuario no encontrado. Verifica el email.");
-      }
-
-      const response = await fetch(
-        `${import.meta.env.VITE_APIORDER}/order/add`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            id: 0,
-            name: formData.producto,
-            description: formData.notas || formData.producto,
-            idUser: idUser,
-            state: "PROCESSING",
-            active: true,
-          }),
-        },
-      );
-
-      if (!response.ok) {
-        throw new Error("Error al crear el pedido");
-      }
+      await addOrder({
+        id: 0,
+        name: formData.producto,
+        description: formData.notas || formData.producto,
+        idUser: userData.id,
+        state: OrderState.PROCESSING,
+        active: true,
+      });
 
       console.log("Pedido creado exitosamente");
       navigate("/");
@@ -108,11 +88,12 @@ const AddOrder: React.FC = () => {
               </div>
             )}
             <div className="space-y-3">
-              <label className="text-sm font-bold text-slate-800 ml-1">
+              <label htmlFor="email" className="text-sm font-bold text-slate-800 ml-1">
                 Email del Usuario
               </label>
               <div className="relative group">
                 <input
+                  id="email"
                   type="email"
                   placeholder="ejemplo@correo.com"
                   className="w-full px-5 py-4 bg-white border-2 border-slate-100 rounded-2xl outline-none focus:border-blue-400 transition-all text-slate-700 placeholder:text-slate-300 shadow-sm"
@@ -130,10 +111,11 @@ const AddOrder: React.FC = () => {
             </div>
 
             <div className="space-y-3">
-              <label className="text-sm font-bold text-slate-800 ml-1">
+              <label htmlFor="producto" className="text-sm font-bold text-slate-800 ml-1">
                 Nombre del Producto
               </label>
               <input
+                id="producto"
                 type="text"
                 placeholder="Ej. Zapatillas Running X"
                 className="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl outline-none focus:ring-2 focus:ring-blue-100 transition-all text-slate-700 placeholder:text-slate-400"
@@ -146,10 +128,11 @@ const AddOrder: React.FC = () => {
             </div>
 
             <div className="space-y-3">
-              <label className="text-sm font-bold text-slate-800 ml-1">
+              <label htmlFor="notas" className="text-sm font-bold text-slate-800 ml-1">
                 Notas adicionales
               </label>
               <textarea
+                id="notas"
                 placeholder="Instrucciones especiales de entrega, envoltorio para regalo, etc."
                 rows={4}
                 className="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl outline-none focus:ring-2 focus:ring-blue-100 transition-all text-slate-700 placeholder:text-slate-400 resize-none"
